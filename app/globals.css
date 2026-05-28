@@ -1,6 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+
+.font-handwritten {
+  font-family: 'Caveat', cursive;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
 
 @custom-variant dark (&:is(.dark *));
 

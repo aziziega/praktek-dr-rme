@@ -1,0 +1,280 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
+import { logActivity } from '@/lib/activity-logger'
+import type { UserRole } from '@/types/database'
+
+// ---------------------------------------------------------------------------
+// 1. MANAJEMEN USER
+// ---------------------------------------------------------------------------
+
+export async function createUser(data: { email: string; nama: string; role: string; password: string }) {
+  const supabase = await createClient()
+  const serviceRoleClient = createServiceRoleClient()
+
+  // Pastikan user adalah admin
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const { data: authData, error: authError } = await serviceRoleClient.auth.admin.createUser({
+    email: data.email,
+    password: data.password,
+    email_confirm: true,
+  })
+
+  if (authError) throw new Error(authError.message)
+  if (!authData.user) throw new Error('Gagal membuat user di Auth')
+
+  // Cek apakah data user sudah dibuat oleh trigger database auth.users -> public.users
+  const newUserId = authData.user.id
+  const { data: existingUser } = await (supabase.from('users') as any)
+    .select('id')
+    .eq('id', newUserId)
+    .maybeSingle()
+
+  let dbError;
+  if (existingUser) {
+    // Jika sudah ada (dibuat oleh trigger), update nama dan role sesuai form input
+    const { error } = await (supabase.from('users') as any)
+      .update({
+        nama: data.nama,
+        role: data.role as UserRole,
+        aktif: true
+      })
+      .eq('id', newUserId)
+    dbError = error
+  } else {
+    // Jika belum ada trigger, lakukan insert manual
+    const { error } = await (supabase.from('users') as any).insert({
+      id: newUserId,
+      email: data.email,
+      nama: data.nama,
+      role: data.role as UserRole,
+      aktif: true
+    })
+    dbError = error
+  }
+
+  if (dbError) {
+    // Cleanup if db operation fails (delete from both Auth and public.users to prevent orphaned records)
+    await serviceRoleClient.auth.admin.deleteUser(newUserId)
+    await (supabase.from('users') as any).delete().eq('id', newUserId)
+    throw new Error(dbError.message)
+  }
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'TAMBAH_USER',
+    targetTabel: 'users',
+    targetId: newUserId,
+    detail: { email: data.email, nama: data.nama, role: data.role },
+  })
+}
+
+export async function updateUser(id: string, data: { nama: string; role: string }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Cek jika edit role diri sendiri
+  if (id === user.id && data.role !== 'admin') {
+    throw new Error('Tidak bisa menghapus role admin dari diri sendiri.')
+  }
+
+  const { error } = await (supabase.from('users') as any)
+    .update({ nama: data.nama, role: data.role })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'EDIT_USER',
+    targetTabel: 'users',
+    targetId: id,
+    detail: { nama: data.nama, role: data.role },
+  })
+}
+
+export async function toggleUserStatus(id: string, aktif: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  if (id === user.id) throw new Error('Tidak bisa menonaktifkan diri sendiri.')
+
+  const { error } = await (supabase.from('users') as any)
+    .update({ aktif })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: aktif ? 'AKTIF_USER' : 'NONAKTIF_USER',
+    targetTabel: 'users',
+    targetId: id,
+    detail: { aktif },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// 2. MANAJEMEN STOK OBAT
+// ---------------------------------------------------------------------------
+
+export async function createObat(data: { nama: string; satuan: string; stok: number; harga_jual: number }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: newObat, error } = await (supabase.from('obat') as any)
+    .insert({
+      nama: data.nama,
+      satuan: data.satuan,
+      stok: data.stok,
+      harga_jual: data.harga_jual,
+      aktif: true
+    })
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'TAMBAH_OBAT',
+    targetTabel: 'obat',
+    targetId: newObat.id,
+    detail: { nama: data.nama, stok: data.stok },
+  })
+}
+
+export async function updateObat(id: string, data: { nama: string; satuan: string; harga_jual: number }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await (supabase.from('obat') as any)
+    .update({ nama: data.nama, satuan: data.satuan, harga_jual: data.harga_jual, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'EDIT_OBAT',
+    targetTabel: 'obat',
+    targetId: id,
+    detail: data,
+  })
+}
+
+export async function addObatStock(id: string, amount: number) {
+  if (amount <= 0) throw new Error('Jumlah stok tambahan harus lebih dari 0')
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Ambil stok saat ini
+  const { data: obat, error: fetchError } = await (supabase.from('obat') as any)
+    .select('stok, nama')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !obat) throw new Error('Obat tidak ditemukan')
+
+  const newStock = obat.stok + amount
+
+  const { error: updateError } = await (supabase.from('obat') as any)
+    .update({ stok: newStock, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (updateError) throw new Error(updateError.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'TAMBAH_STOK',
+    targetTabel: 'obat',
+    targetId: id,
+    detail: { obat: obat.nama, tambah: amount, stok_akhir: newStock },
+  })
+}
+
+export async function toggleObatStatus(id: string, aktif: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await (supabase.from('obat') as any)
+    .update({ aktif, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: aktif ? 'AKTIF_OBAT' : 'NONAKTIF_OBAT',
+    targetTabel: 'obat',
+    targetId: id,
+    detail: { aktif },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// 3. MANAJEMEN PASIEN
+// ---------------------------------------------------------------------------
+
+export async function updatePasien(id: string, data: { nama: string; tanggal_lahir?: string; tempat_lahir?: string; jenis_kelamin?: string; alamat?: string; no_hp?: string; alergi_obat?: string }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { error } = await (supabase.from('pasien') as any)
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'EDIT_PASIEN',
+    targetTabel: 'pasien',
+    targetId: id,
+    detail: { nama: data.nama },
+  })
+}
+
+export async function importPasien(data: { nrm: number; nama: string; tanggal_lahir?: string; tempat_lahir?: string; jenis_kelamin?: string; alamat?: string; no_hp?: string; alergi_obat?: string }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Pastikan NRM unik
+  const { count } = await (supabase.from('pasien') as any)
+    .select('*', { count: 'exact', head: true })
+    .eq('nrm', data.nrm)
+  
+  if (count && count > 0) {
+    throw new Error(`NRM ${data.nrm} sudah terdaftar.`)
+  }
+
+  const { data: newPasien, error } = await (supabase.from('pasien') as any)
+    .insert(data)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'IMPORT_PASIEN',
+    targetTabel: 'pasien',
+    targetId: newPasien.id,
+    detail: { nrm: data.nrm, nama: data.nama },
+  })
+}

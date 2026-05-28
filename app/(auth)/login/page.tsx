@@ -1,0 +1,142 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import type { UserRole } from '@/types/database'
+
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Stethoscope, Loader2 } from 'lucide-react'
+
+import { loginWithEmail } from '@/app/actions/auth'
+
+const ROLE_REDIRECTS: Record<UserRole, string> = {
+  staf: '/dashboard/staf/pendaftaran',
+  dokter: '/dashboard/dokter/antrian',
+  admin: '/dashboard/admin/users',
+}
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const result = await loginWithEmail(email, password)
+
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
+
+      if (result?.success && result.redirectUrl) {
+        router.push(result.redirectUrl)
+        router.refresh()
+      }
+    } catch {
+      setError('Terjadi kesalahan. Coba lagi.')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="w-full max-w-md space-y-6">
+      {/* Header / Branding */}
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 shadow-lg shadow-sky-500/25">
+          <Stethoscope className="w-8 h-8 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          Praktek Dr. Umum Sudiman
+        </h1>
+        <p className="text-sm text-gray-500">
+          Sistem Rekam Medis Elektronik
+        </p>
+      </div>
+
+      {/* Login Card */}
+      <Card className="border-0 shadow-xl shadow-gray-200/50">
+        <CardHeader className="space-y-1 pb-4">
+          <CardTitle className="text-xl">Masuk ke Sistem</CardTitle>
+          <CardDescription>
+            Gunakan email dan password yang telah didaftarkan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="nama@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Masukkan password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-700 hover:to-emerald-700 text-white shadow-md"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                'Masuk'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Footer */}
+      <p className="text-center text-xs text-gray-400">
+        Gupolo Rt. 04 Rw. 02, Cucukan, Prambanan, Klaten 57454
+      </p>
+    </div>
+  )
+}
