@@ -67,6 +67,8 @@ function SheetContent({
         )}
         {...props}
       >
+        <SheetPrimitive.Title className="sr-only">Navigasi Panel</SheetPrimitive.Title>
+        <SheetPrimitive.Description className="sr-only">Panel navigasi menu dan konten terkait.</SheetPrimitive.Description>
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
