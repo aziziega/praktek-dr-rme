@@ -122,6 +122,40 @@ export async function toggleUserStatus(id: string, aktif: boolean) {
   })
 }
 
+export async function changeUserPassword(userId: string, newPassword: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  if (newPassword.length < 6) throw new Error('Password minimal harus 6 karakter.')
+
+  // Update in auth using service role
+  const serviceRoleClient = createServiceRoleClient()
+  const { error } = await serviceRoleClient.auth.admin.updateUserById(userId, {
+    password: newPassword,
+  })
+
+  if (error) throw new Error(error.message)
+
+  // Get name for logging
+  const { data: targetUser } = await (supabase.from('users') as any)
+    .select('email')
+    .eq('id', userId)
+    .single()
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'GANTI_PASSWORD_USER',
+    targetTabel: 'users',
+    targetId: userId,
+    detail: { email: targetUser?.email },
+  })
+}
+
 // ---------------------------------------------------------------------------
 // 2. MANAJEMEN STOK OBAT
 // ---------------------------------------------------------------------------
@@ -485,12 +519,14 @@ export async function getRiwayatKunjunganPasien(pasienId: string) {
   const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
   if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
 
-  const { data, error } = await supabase
+  const serviceRoleClient = createServiceRoleClient()
+  const { data, error } = await serviceRoleClient
     .from('kunjungan')
     .select(`
       *,
       rekam_medis (*),
-      dokter:users!kunjungan_dokter_id_fkey(nama)
+      dokter:users!kunjungan_dokter_id_fkey(nama),
+      resep_obat (nama_obat, dosis, jumlah)
     `)
     .eq('pasien_id', pasienId)
     .order('jam_daftar', { ascending: false })

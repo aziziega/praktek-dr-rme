@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getActiveDokters, createKunjungan, updateAlergiObat } from '@/app/actions/staf'
+import { getActiveDokters, createKunjungan, updateAlergiObat, getRiwayatPendaftaranPasien } from '@/app/actions/staf'
 import type { PasienRow } from '@/types/database'
 
 import { Button } from '@/components/ui/button'
@@ -38,6 +38,8 @@ import {
   Hash,
   User,
   Pencil,
+  Save,
+  CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -63,6 +65,141 @@ export function FormKunjungan({
   const [suhu, setSuhu] = useState('')
   const [keluhanUtama, setKeluhanUtama] = useState('')
   const [dokterId, setDokterId] = useState('')
+
+  // Riwayat Kunjungan Pendaftaran
+  const [riwayat, setRiwayat] = useState<any[]>([])
+  const [loadingRiwayat, setLoadingRiwayat] = useState(true)
+
+  // Draf states
+  const [isReady, setIsReady] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`draft_kunjungan_${pasien.id}`)
+      if (saved) {
+        const data = JSON.parse(saved)
+        if (data.tensiSistolik) setTensiSistolik(data.tensiSistolik)
+        if (data.tensiDiastolik) setTensiDiastolik(data.tensiDiastolik)
+        if (data.nadi) setNadi(data.nadi)
+        if (data.suhu) setSuhu(data.suhu)
+        if (data.keluhanUtama) setKeluhanUtama(data.keluhanUtama)
+        if (data.dokterId) setDokterId(data.dokterId)
+        if (data.lastSaved) setLastSaved(new Date(data.lastSaved))
+      }
+    } catch (err) {
+      console.error('Gagal memuat draf:', err)
+    } finally {
+      setIsReady(true)
+    }
+  }, [pasien.id])
+
+  // Debounced Auto-save to localStorage
+  useEffect(() => {
+    if (!isReady) return
+
+    setIsTyping(true)
+    const timer = setTimeout(() => {
+      setSavingDraft(true)
+      try {
+        const draft = {
+          tensiSistolik,
+          tensiDiastolik,
+          nadi,
+          suhu,
+          keluhanUtama,
+          dokterId,
+          lastSaved: new Date().toISOString(),
+        }
+        localStorage.setItem(`draft_kunjungan_${pasien.id}`, JSON.stringify(draft))
+        setLastSaved(new Date())
+        setIsTyping(false)
+      } catch (err) {
+        console.error('Gagal menyimpan draf:', err)
+      } finally {
+        setSavingDraft(false)
+      }
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [tensiSistolik, tensiDiastolik, nadi, suhu, keluhanUtama, dokterId, isReady, pasien.id])
+
+  const handleManualSave = () => {
+    setSavingDraft(true)
+    try {
+      const draft = {
+        tensiSistolik,
+        tensiDiastolik,
+        nadi,
+        suhu,
+        keluhanUtama,
+        dokterId,
+        lastSaved: new Date().toISOString(),
+      }
+      localStorage.setItem(`draft_kunjungan_${pasien.id}`, JSON.stringify(draft))
+      setLastSaved(new Date())
+      toast.success('Draf pendaftaran berhasil disimpan secara lokal')
+    } catch (err) {
+      toast.error('Gagal menyimpan draf')
+    } finally {
+      setSavingDraft(false)
+    }
+  }
+
+  function formatLastSaved(): string {
+    if (!lastSaved) return ''
+    return lastSaved.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  // Pagination states for past visit history list
+  const [historyPage, setHistoryPage] = useState(1)
+  const historyItemsPerPage = 5
+  const totalHistoryPages = Math.ceil(riwayat.length / historyItemsPerPage)
+  const paginatedRiwayat = riwayat.slice((historyPage - 1) * historyItemsPerPage, historyPage * historyItemsPerPage)
+
+  useEffect(() => {
+    async function fetchRiwayat() {
+      try {
+        const data = await getRiwayatPendaftaranPasien(pasien.id)
+        setRiwayat(data)
+      } catch (err) {
+        console.error('Gagal memuat riwayat:', err)
+      } finally {
+        setLoadingRiwayat(false)
+      }
+    }
+    fetchRiwayat()
+  }, [pasien.id])
+
+  // Helper: Format date & time with day, date, month, year, and WIB local time
+  function formatIndonesianDateTime(dateStr: string | null | Date): string {
+    if (!dateStr) return '-'
+    try {
+      const date = new Date(dateStr)
+      const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ]
+      const dayName = days[date.getDay()]
+      const day = String(date.getDate()).padStart(2, '0')
+      const monthName = months[date.getMonth()]
+      const year = date.getFullYear()
+
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+
+      return `${dayName}, ${day} ${monthName} ${year} · ${hours}:${minutes} WIB`
+    } catch {
+      return String(dateStr)
+    }
+  }
 
   // Alergi Obat states
   const [alergiObatState, setAlergiObatState] = useState(pasien.alergi_obat ?? '')
@@ -135,6 +272,11 @@ export function FormKunjungan({
       toast.success(`Kunjungan ${pasien.nama} berhasil didaftarkan`, {
         description: 'Pasien masuk antrian menunggu.',
       })
+      try {
+        localStorage.removeItem(`draft_kunjungan_${pasien.id}`)
+      } catch (err) {
+        console.error('Gagal menghapus draf:', err)
+      }
       onSuccess()
     } catch {
       toast.error('Terjadi kesalahan. Coba lagi.')
@@ -156,260 +298,470 @@ export function FormKunjungan({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Patient Info Header */}
-      <Card
-        className={`border-l-4 ${
-          alergiObatState
-            ? 'border-l-red-500 bg-red-50/30'
-            : 'border-l-sky-500 bg-sky-50/30'
-        }`}
-      >
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white shadow-sm text-sm font-semibold text-sky-600 border border-sky-100">
-                {pasien.nama.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-gray-900">{pasien.nama}</p>
-                  <span className="inline-flex items-center gap-1 text-xs text-gray-500 font-mono bg-white px-1.5 py-0.5 rounded border border-gray-100">
-                    <Hash className="h-3 w-3" />
-                    {pasien.nrm}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
-                  <span>{formatDate(pasien.tanggal_lahir)}</span>
-                  <span>{pasien.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
-                  {pasien.alamat && <span>{pasien.alamat}</span>}
-                </div>
-              </div>
+    <div className="space-y-6">
+      {/* Header outside cream paper */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            disabled={saving}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Kembali
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-gray-900">
+              Pendaftaran Kunjungan Pasien
+            </h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {pasien.nama} · #{pasien.nrm}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 💾 Draf Auto-save Status Bar */}
+      <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-2.5 px-4 text-xs">
+        <div className="flex items-center gap-2">
+          {isTyping ? (
+            <Badge className="bg-sky-50 text-sky-700 hover:bg-sky-50 border border-sky-200">
+              <Loader2 className="h-3 w-3 mr-1 animate-pulse" />
+              Sedang mengetik...
+            </Badge>
+          ) : savingDraft ? (
+            <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50 border border-blue-200">
+              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              Menyimpan draf...
+            </Badge>
+          ) : lastSaved ? (
+            <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Draf tersimpan otomatis pukul {formatLastSaved()} WIB
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-gray-400 border-gray-200 bg-white">
+              Auto-save aktif (lokal browser)
+            </Badge>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleManualSave}
+          disabled={savingDraft}
+          className="h-7 text-xs gap-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all bg-white shadow-xs"
+        >
+          <Save className="h-3 w-3" />
+          Simpan Draf Sekarang
+        </Button>
+      </div>
+
+      {/* 📄 LEBARAN KERTAS IVORY REKAM MEDIS PASIEN (Hanya berisi Formulir & Riwayat Klinis) */}
+      <div className="bg-[#FAF9F6] border-2 border-[#EADFC9] shadow-xl rounded-xl p-6 md:p-8 space-y-6 relative overflow-hidden select-none">
+        
+        {/* Kop Lembar Rekam Medis (Sesuai Foto Asli) */}
+        <div className="text-center space-y-1">
+          <h2 className="text-2xl font-extrabold tracking-widest text-gray-800 border-b border-gray-400 pb-1 inline-block">
+            REKAM MEDIS PASIEN
+          </h2>
+          <p className="text-xs text-gray-500 font-medium">
+            Alamat : Gupolo Rt. 04 Rw. 02, Cucukan, Prambanan, Klaten 57454
+          </p>
+          <div className="border-t-4 border-double border-gray-800 my-3" />
+        </div>
+
+        {/* Metadata Pasien dengan Garis Dotted */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-800">
+          {/* Kolom Kiri */}
+          <div className="space-y-3">
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Nama Pasien</span>
+              <span className="text-gray-400">:</span>
+              <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
+                {pasien.nama}
+              </span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBack}
-              disabled={saving}
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Kembali
-            </Button>
+
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
+              <span className="text-gray-400">:</span>
+              <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
+                {pasien.tempat_lahir ?? 'Sragen'}, {formatDate(pasien.tanggal_lahir)}
+              </span>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Alamat</span>
+              <span className="text-gray-400">:</span>
+              <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all leading-snug">
+                {pasien.alamat ?? '-'}
+              </span>
+            </div>
           </div>
 
-          {/* Allergy Info Bar */}
-          <div className={`mt-3 flex items-center justify-between gap-3 border rounded-lg px-3 py-2 ${
-            alergiObatState 
-              ? 'bg-red-50/80 border-red-200 text-red-900' 
-              : 'bg-gray-50 border-gray-150 text-gray-800'
-          }`}>
-            <div className="flex items-start gap-2 min-w-0">
-              <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${
-                alergiObatState ? 'text-red-600' : 'text-gray-400'
-              }`} />
-              <div className="min-w-0">
-                <p className={`text-[10px] font-bold uppercase tracking-wider ${
-                  alergiObatState ? 'text-red-800' : 'text-gray-400'
-                }`}>
-                  Alergi Obat
-                </p>
-                <p className={`text-xs font-semibold mt-0.5 ${
-                  alergiObatState ? 'text-red-700' : 'text-gray-600'
-                } truncate`}>
-                  {alergiObatState || 'Tidak ada alergi obat terdaftar'}
-                </p>
-              </div>
+          {/* Kolom Kanan */}
+          <div className="space-y-3">
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. RM</span>
+              <span className="text-gray-400">:</span>
+              <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
+                {pasien.nrm}
+              </span>
             </div>
+
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Alergi Obat</span>
+              <span className="text-gray-400">:</span>
+              <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all flex items-center justify-between ${alergiObatState ? 'text-red-600 border-red-300' : 'text-blue-900'}`}>
+                <span className="flex items-center gap-1">
+                  {alergiObatState ? <AlertTriangle className="h-3.5 w-3.5 text-red-500 inline" /> : null}
+                  {alergiObatState || '-'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 p-0 hover:bg-gray-250 text-sky-600 rounded ml-1"
+                  onClick={() => {
+                    setTempAlergi(alergiObatState)
+                    setIsAlergiOpen(true)
+                  }}
+                >
+                  <Pencil className="h-3 w-3" />
+                </Button>
+              </span>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. HP</span>
+              <span className="text-gray-400">:</span>
+              <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
+                {pasien.no_hp ?? '-'}
+              </span>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
+              <span className="text-gray-400">:</span>
+              <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
+                {pasien.jenis_kelamin === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 📚 TABEL REKAM MEDIS GRID 4 KOLOM UTAMA (Sama Persis Seperti Tampilan Dokter) */}
+        <div className="border border-gray-400 bg-white rounded-lg overflow-x-auto mt-6">
+          <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
+            <thead>
+              <tr className="bg-gray-100 border-b border-gray-400 text-center font-bold">
+                <th className="p-3 border-r border-gray-400 w-[20%] bg-gray-100 sticky top-0 z-10 shadow-xs">Tanggal</th>
+                <th className="p-3 border-r border-gray-400 w-[45%] bg-gray-100 sticky top-0 z-10 shadow-xs">Anamnesa / Pemeriksaan</th>
+                <th className="p-3 border-r border-gray-400 w-[18%] bg-gray-100 sticky top-0 z-10 shadow-xs">Diagnosis</th>
+                <th className="p-3 bg-gray-100 w-[17%] sticky top-0 z-10 shadow-xs">Terapi</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              {/* 🛑 BARIS UTAMA EDITABLE STAF (HARI INI) */}
+              {historyPage === 1 && (
+                <tr className="border-b border-gray-300 align-top bg-amber-50/20 hover:bg-amber-50/30 transition-colors">
+                  
+                  {/* 1. Tanggal + Form Vital Signs */}
+                  <td className="p-3 border-r border-gray-300 space-y-3">
+                    <div className="font-bold text-gray-900 leading-snug">
+                      {formatIndonesianDateTime(new Date())}
+                    </div>
+
+                    <div className="space-y-3 pt-2 border-t border-dashed border-gray-200">
+                      <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
+                        <Heart className="h-3 w-3 text-red-500 shrink-0" />
+                        Tanda Vital (Edit)
+                      </div>
+
+                      {/* Tensi Input sistolik & diastolik */}
+                      <div className="space-y-1">
+                        <Label className="text-[10px] text-gray-500">Tekanan Darah (mmHg)</Label>
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            placeholder="Sistolik"
+                            value={tensiSistolik}
+                            onChange={(e) => setTensiSistolik(e.target.value)}
+                            disabled={saving}
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                          />
+                          <span className="text-gray-400">/</span>
+                          <Input
+                            type="number"
+                            placeholder="Diastolik"
+                            value={tensiDiastolik}
+                            onChange={(e) => setTensiDiastolik(e.target.value)}
+                            disabled={saving}
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Nadi & Suhu */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                            <Activity className="h-2.5 w-2.5 text-blue-500" />
+                            Nadi (/m)
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="Nadi"
+                            value={nadi}
+                            onChange={(e) => setNadi(e.target.value)}
+                            disabled={saving}
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                            <Thermometer className="h-2.5 w-2.5 text-amber-500" />
+                            Suhu (°C)
+                          </Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Suhu"
+                            value={suhu}
+                            onChange={(e) => setSuhu(e.target.value)}
+                            disabled={saving}
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* 2. Anamnesa / Keluhan Utama Textarea */}
+                  <td className="p-2 border-r border-gray-300">
+                    <Textarea
+                      placeholder="Petugas Pendaftaran menulis keluhan utama pasien saat datang di sini..."
+                      value={keluhanUtama}
+                      onChange={(e) => setKeluhanUtama(e.target.value)}
+                      disabled={saving}
+                      rows={12}
+                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                    />
+                  </td>
+
+                  {/* 3. Diagnosis (Read-Only diisi oleh dokter) */}
+                  <td className="p-3 border-r border-gray-300 text-center align-middle">
+                    <span className="text-xs text-gray-400 italic font-medium block p-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                      (Diisi oleh Dokter)
+                    </span>
+                  </td>
+
+                  {/* 4. Terapi (Read-Only diisi oleh dokter) */}
+                  <td className="p-3 text-center align-middle">
+                    <span className="text-xs text-gray-400 italic font-medium block p-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                      (Diisi oleh Dokter)
+                    </span>
+                  </td>
+
+                </tr>
+              )}
+
+              {/* 📜 RIWAYAT KUNJUNGAN SEBELUMNYA (READ-ONLY) */}
+              {loadingRiwayat ? (
+                <tr>
+                  <td colSpan={4} className="p-4 text-center text-gray-400">
+                    <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
+                    Memuat riwayat rekam medis terdahulu...
+                  </td>
+                </tr>
+              ) : riwayat.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-gray-400 font-medium italic">
+                    Belum ada riwayat kunjungan medis pasien sebelumnya pada sistem.
+                  </td>
+                </tr>
+              ) : (
+                paginatedRiwayat.map((row) => {
+                  const rm = Array.isArray(row.rekam_medis) ? row.rekam_medis[0] : row.rekam_medis;
+                  return (
+                    <tr key={row.id} className="border-b border-gray-200 align-top opacity-85 hover:opacity-100 transition-opacity">
+                      
+                      {/* Kolom Tanggal Riwayat + Vital Signs */}
+                      <td className="p-3 border-r border-gray-200 text-gray-600 font-semibold leading-normal">
+                        <div>{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>
+                        <div className="text-[11px] text-sky-700 mt-1 font-sans font-medium">
+                          Dr. {row.dokter?.nama || 'Tidak diketahui'}
+                        </div>
+
+                        {/* Tampilan Vital Signs Riwayat */}
+                        {(row.tensi_sistolik || row.nadi || row.suhu) && (
+                          <div className="mt-2.5 space-y-1 pt-1.5 border-t border-dashed border-gray-200 text-[11px] font-handwritten text-blue-800 text-xs">
+                            {row.tensi_sistolik && (
+                              <div>BP: {row.tensi_sistolik}/{row.tensi_diastolik ?? '-'} mmHg</div>
+                            )}
+                            {row.nadi && (
+                              <div>HR: {row.nadi} /menit</div>
+                            )}
+                            {row.suhu && (
+                              <div>Temp: {row.suhu} °C</div>
+                            )}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Kolom Anamnesa / Pemeriksaan Riwayat */}
+                      <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
+                        {rm?.anamnesis || '-'}
+                        {rm?.pemeriksaan_fisik && (
+                          <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
+                            {rm.pemeriksaan_fisik}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Kolom Diagnosis Riwayat */}
+                      <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
+                        {rm?.diagnosis_nama || '-'}
+                        {rm?.diagnosis_kode && (
+                          <span className="font-sans text-[10px] text-gray-500 block mt-1 font-normal select-all">
+                            ({rm.diagnosis_kode})
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Kolom Terapi Riwayat */}
+                      <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
+                        {rm?.terapi || '-'}
+
+                        {/* Tampilan Resep Riwayat */}
+                        {row.resep_obat && row.resep_obat.length > 0 && (
+                          <div className="mt-2.5 pt-2 border-t border-dashed border-gray-200 text-xs">
+                            <ul className="space-y-1 list-disc list-inside text-blue-800 font-medium">
+                              {row.resep_obat.map((r: any, idx: number) => (
+                                <li key={idx} className="leading-snug">
+                                  {r.nama_obat} ({r.dosis}) x{r.jumlah}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+
+            </tbody>
+          </table>
+        </div>
+
+        {/* Kontrol Navigasi Halaman Riwayat */}
+        {totalHistoryPages > 1 && (
+          <div className="flex items-center justify-center gap-4 py-4 mt-2">
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs font-semibold shrink-0 gap-1 border-gray-200 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 transition-colors"
-              onClick={() => {
-                setTempAlergi(alergiObatState)
-                setIsAlergiOpen(true)
-              }}
+              onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 1))}
+              disabled={historyPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6] shadow-sm"
             >
-              <Pencil className="h-3 w-3" />
-              Ubah
+              Sebelumnya
+            </Button>
+
+            <span className="text-sm font-semibold text-gray-700 font-mono">
+              {historyPage} / {totalHistoryPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHistoryPage((prev) => Math.min(prev + 1, totalHistoryPages))}
+              disabled={historyPage === totalHistoryPages}
+              className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6] shadow-sm"
+            >
+              Selanjutnya
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {/* Visit Form */}
-      <Card className="border-gray-100 shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 shadow-md shadow-sky-500/20">
-              <Stethoscope className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">Form Kunjungan</CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Input vital sign dan assign dokter
-              </p>
-            </div>
-          </div>
-        </CardHeader>
+      </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Vital Signs */}
-            <div>
-              <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-3">
-                <Heart className="h-4 w-4 text-rose-500" />
-                Vital Sign
-              </Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="tensi-sistolik" className="text-xs text-gray-500">
-                    Sistolik (mmHg)
-                  </Label>
-                  <Input
-                    id="tensi-sistolik"
-                    type="number"
-                    placeholder="120"
-                    value={tensiSistolik}
-                    onChange={(e) => setTensiSistolik(e.target.value)}
-                    disabled={saving}
-                    min={50}
-                    max={300}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="tensi-diastolik" className="text-xs text-gray-500">
-                    Diastolik (mmHg)
-                  </Label>
-                  <Input
-                    id="tensi-diastolik"
-                    type="number"
-                    placeholder="80"
-                    value={tensiDiastolik}
-                    onChange={(e) => setTensiDiastolik(e.target.value)}
-                    disabled={saving}
-                    min={30}
-                    max={200}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="nadi" className="text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Activity className="h-3 w-3" />
-                      Nadi (/menit)
-                    </span>
-                  </Label>
-                  <Input
-                    id="nadi"
-                    type="number"
-                    placeholder="80"
-                    value={nadi}
-                    onChange={(e) => setNadi(e.target.value)}
-                    disabled={saving}
-                    min={30}
-                    max={250}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="suhu" className="text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Thermometer className="h-3 w-3" />
-                      Suhu (°C)
-                    </span>
-                  </Label>
-                  <Input
-                    id="suhu"
-                    type="number"
-                    step="0.1"
-                    placeholder="36.5"
-                    value={suhu}
-                    onChange={(e) => setSuhu(e.target.value)}
-                    disabled={saving}
-                    min={30}
-                    max={45}
-                  />
-                </div>
+      {/* ⚙️ BAGIAN ADMINISTRASI DI LUAR FORMULIR REKAM MEDIS (DI BAWAH KERTAS CREAM) */}
+      <div className="bg-[#FAF9F6] border-2 border-[#EADFC9] rounded-2xl p-5 shadow-md space-y-4">
+        <div className="text-xs uppercase font-extrabold tracking-wider text-sky-700 flex items-center gap-1.5 border-b border-[#EADFC9] pb-2">
+          <Stethoscope className="h-4 w-4 text-sky-600 shrink-0" />
+          Rujukan & Pengiriman Berkas RME
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="dokter" className="text-xs text-gray-500 font-semibold">
+              Kirim Berkas ke Dokter Pemeriksa <span className="text-red-500">*</span>
+            </Label>
+            {loadingDokters ? (
+              <Skeleton className="h-10 w-full" />
+            ) : dokters.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                <AlertTriangle className="h-4 w-4" />
+                Tidak ada dokter aktif. Hubungi admin.
               </div>
-            </div>
-
-            {/* Keluhan Utama */}
-            <div className="space-y-2">
-              <Label htmlFor="keluhan-utama">Keluhan Utama</Label>
-              <Textarea
-                id="keluhan-utama"
-                placeholder="Keluhan utama pasien saat datang..."
-                value={keluhanUtama}
-                onChange={(e) => setKeluhanUtama(e.target.value)}
+            ) : (
+              <Select
+                value={dokterId}
+                onValueChange={setDokterId}
                 disabled={saving}
-                rows={3}
-              />
-            </div>
+              >
+                <SelectTrigger id="dokter" className="border-gray-300 focus:ring-sky-500 max-w-md bg-white">
+                  <SelectValue placeholder="Pilih dokter pemeriksa..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {dokters.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      <span className="flex items-center gap-2">
+                        <User className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
+                        {d.nama}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-            {/* Assign Dokter */}
-            <div className="space-y-2">
-              <Label htmlFor="dokter">
-                Assign ke Dokter <span className="text-red-500">*</span>
-              </Label>
-              {loadingDokters ? (
-                <Skeleton className="h-10 w-full" />
-              ) : dokters.length === 0 ? (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Tidak ada dokter aktif. Hubungi admin.
-                </div>
+          {/* Form Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onBack}
+              disabled={saving}
+              className="border-gray-300 hover:bg-gray-50 text-gray-700 bg-white"
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving || loadingDokters || dokters.length === 0}
+              className="bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white shadow-md shadow-sky-500/20 gap-2 font-semibold"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Mengirim Berkas...
+                </>
               ) : (
-                <Select
-                  value={dokterId}
-                  onValueChange={setDokterId}
-                  disabled={saving}
-                >
-                  <SelectTrigger id="dokter">
-                    <SelectValue placeholder="Pilih dokter..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dokters.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        <span className="flex items-center gap-2">
-                          <User className="h-3.5 w-3.5 text-emerald-500" />
-                          {d.nama}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <>
+                  <Send className="h-4 w-4" />
+                  Kirim Berkas RME ke Dokter
+                </>
               )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onBack}
-                disabled={saving}
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                disabled={saving || loadingDokters || dokters.length === 0}
-                className="bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white shadow-md shadow-sky-500/20"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Mendaftarkan...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Daftarkan Kunjungan
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </Button>
+          </div>
+        </form>
+      </div>
 
       {/* Modal Kelola Alergi Obat */}
       <Dialog open={isAlergiOpen} onOpenChange={setIsAlergiOpen}>

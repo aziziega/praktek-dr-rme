@@ -262,7 +262,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50/50">
+    <div className="flex h-screen overflow-hidden bg-gray-50/50">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex lg:w-64 lg:flex-col border-r border-gray-200 bg-white">
         <SidebarContent />

@@ -222,7 +222,7 @@ export async function getRiwayatKunjungan(
     .eq('pasien_id', pasienId)
     .neq('id', currentKunjunganId)
     .order('jam_daftar', { ascending: false })
-    .limit(5)
+    .limit(100)
 
   if (!data) return []
 

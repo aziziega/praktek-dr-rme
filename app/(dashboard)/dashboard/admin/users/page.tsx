@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminUsers, createUser, updateUser, toggleUserStatus } from '@/app/actions/admin'
+import { getAdminUsers, createUser, updateUser, toggleUserStatus, changeUserPassword } from '@/app/actions/admin'
 import type { UserRole } from '@/types/database'
 import { userSchema } from '@/lib/validations'
 
@@ -46,7 +46,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { UserPlus, Pencil } from 'lucide-react'
+import { UserPlus, Pencil, KeyRound, Eye, EyeOff } from 'lucide-react'
 
 interface UserData {
   id: string
@@ -70,6 +70,10 @@ export default function AdminUsersPage() {
   // Dialog Edit State
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editForm, setEditForm] = useState({ id: '', nama: '', role: 'staf' })
+
+  // Dialog Password Reset State
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({ id: '', email: '', nama: '', password: '', showPassword: true })
 
   // Confirm Status Toggle State
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -139,6 +143,26 @@ export default function AdminUsersPage() {
       toast.success('User berhasil diperbarui')
       setIsEditOpen(false)
       fetchUsers()
+    } catch (err: any) {
+      toast.error(err.message || 'Terjadi kesalahan')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (passwordForm.password.length < 6) {
+      toast.error('Password minimal 6 karakter')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await changeUserPassword(passwordForm.id, passwordForm.password)
+      toast.success('Password berhasil diperbarui')
+      setIsPasswordOpen(false)
     } catch (err: any) {
       toast.error(err.message || 'Terjadi kesalahan')
     } finally {
@@ -335,16 +359,30 @@ export default function AdminUsersPage() {
                     })}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setEditForm({ id: user.id, nama: user.nama, role: user.role })
-                        setIsEditOpen(true)
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setEditForm({ id: user.id, nama: user.nama, role: user.role })
+                          setIsEditOpen(true)
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        onClick={() => {
+                          setPasswordForm({ id: user.id, email: user.email, nama: user.nama, password: '', showPassword: true })
+                          setIsPasswordOpen(true)
+                        }}
+                        title="Ganti Password"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -426,6 +464,50 @@ export default function AdminUsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog Ganti Password */}
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Ganti Password User</DialogTitle>
+            <DialogDescription>
+              Ubah password untuk user <strong className="text-gray-900">{passwordForm.nama}</strong> ({passwordForm.email}).
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Password Baru</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  required
+                  type={passwordForm.showPassword ? 'text' : 'password'}
+                  placeholder="Minimal 6 karakter"
+                  value={passwordForm.password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, password: e.target.value })}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPasswordForm({ ...passwordForm, showPassword: !passwordForm.showPassword })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  {passwordForm.showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={isSubmitting || passwordForm.password.length < 6}>
+                {isSubmitting ? 'Menyimpan...' : 'Simpan Password Baru'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { logActivity } from '@/lib/activity-logger'
 import type { PasienRow, KunjunganInsert } from '@/types/database'
 
@@ -343,4 +344,28 @@ export async function updateAlergiObat(
   })
 
   return { success: true }
+}
+
+export async function getRiwayatPendaftaranPasien(pasienId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: dbUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (!dbUser) throw new Error('Unauthorized')
+
+  const serviceRoleClient = createServiceRoleClient()
+  const { data, error } = await serviceRoleClient
+    .from('kunjungan')
+    .select(`
+      *,
+      rekam_medis (*),
+      dokter:users!kunjungan_dokter_id_fkey(nama),
+      resep_obat (nama_obat, dosis, jumlah)
+    `)
+    .eq('pasien_id', pasienId)
+    .order('jam_daftar', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data || []
 }

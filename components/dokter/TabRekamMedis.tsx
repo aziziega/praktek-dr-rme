@@ -10,13 +10,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Save, 
-  Loader2, 
-  CheckCircle2, 
-  Activity, 
-  Thermometer, 
-  Heart, 
+import {
+  Save,
+  Loader2,
+  CheckCircle2,
+  Activity,
+  Thermometer,
+  Heart,
   Calendar,
   AlertTriangle
 } from 'lucide-react'
@@ -82,12 +82,19 @@ export function TabRekamMedis({
   const [loadingRiwayat, setLoadingRiwayat] = useState(true)
   const isDirty = useRef(false)
 
+  // Pagination states for past visit history list
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+  const totalPages = Math.ceil(riwayat.length / itemsPerPage)
+  const paginatedRiwayat = riwayat.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   // Fetch complete previous visits' record history
   useEffect(() => {
     async function fetchRiwayat() {
       try {
         const data = await getRiwayatKunjungan(pasien.id, kunjungan.id)
         setRiwayat(data)
+        setCurrentPage(1) // Reset pagination to first page when patient changes
       } catch (err) {
         console.error('Gagal memuat riwayat rekam medis:', err)
       } finally {
@@ -111,10 +118,10 @@ export function TabRekamMedis({
       const day = String(date.getDate()).padStart(2, '0')
       const monthName = months[date.getMonth()]
       const year = date.getFullYear()
-      
+
       const hours = String(date.getHours()).padStart(2, '0')
       const minutes = String(date.getMinutes()).padStart(2, '0')
-      
+
       return `${dayName}, ${day} ${monthName} ${year} · ${hours}:${minutes} WIB`
     } catch {
       return String(dateStr)
@@ -357,10 +364,10 @@ export function TabRekamMedis({
               </Badge>
             )}
           </div>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={handleManualSave} 
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleManualSave}
             disabled={saving}
             className="h-7 text-xs gap-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all"
           >
@@ -372,7 +379,7 @@ export function TabRekamMedis({
 
       {/* 📄 1. LEBARAN KERTAS IVORY REKAM MEDIS PASIEN */}
       <div className="bg-[#FAF9F6] border-2 border-[#EADFC9] shadow-xl rounded-xl p-6 md:p-8 space-y-6 relative overflow-hidden select-none">
-        
+
         {/* Kop Lembar Rekam Medis (Sesui Foto Asli) */}
         <div className="text-center space-y-1">
           <h2 className="text-2xl font-extrabold tracking-widest text-gray-800 border-b border-gray-400 pb-1 inline-block">
@@ -386,7 +393,7 @@ export function TabRekamMedis({
 
         {/* Metadata Pasien dengan Garis Dotted */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-800">
-          
+
           {/* Kolom Kiri */}
           <div className="space-y-3">
             <div className="flex items-end gap-2">
@@ -396,7 +403,7 @@ export function TabRekamMedis({
                 {pasien.nama}
               </span>
             </div>
-            
+
             <div className="flex items-end gap-2">
               <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
               <span className="text-gray-400">:</span>
@@ -456,148 +463,150 @@ export function TabRekamMedis({
         </div>
 
         {/* 📚 TABEL REKAM MEDIS GRID 4 KOLOM UTAMA */}
-        <div className="border border-gray-400 bg-white rounded-lg overflow-hidden mt-6">
-          <table className="w-full table-fixed border-collapse text-xs md:text-sm text-gray-800">
+        <div className="border border-gray-400 bg-white rounded-lg overflow-x-auto mt-6">
+          <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
             <thead>
               <tr className="bg-gray-100 border-b border-gray-400 text-center font-bold">
-                <th className="p-3 border-r border-gray-400 w-[20%]">Tanggal</th>
-                <th className="p-3 border-r border-gray-400 w-[45%]">Anamnesa / Pemeriksaan</th>
-                <th className="p-3 border-r border-gray-400 w-[18%]">Diagnosis</th>
-                <th className="p-3 w-[17%]">Terapi</th>
+                <th className="p-3 border-r border-gray-400 w-[20%] bg-gray-100 sticky top-0 z-10 shadow-xs">Tanggal</th>
+                <th className="p-3 border-r border-gray-400 w-[45%] bg-gray-100 sticky top-0 z-10 shadow-xs">Anamnesa / Pemeriksaan</th>
+                <th className="p-3 border-r border-gray-400 w-[18%] bg-gray-100 sticky top-0 z-10 shadow-xs">Diagnosis</th>
+                <th className="p-3 bg-gray-100 w-[17%] sticky top-0 z-10 shadow-xs">Terapi</th>
               </tr>
             </thead>
             <tbody>
-              
+
               {/* 🛑 HARI INI (BARIS UTAMA EDITABLE DOKTER) */}
-              <tr className="border-b border-gray-300 align-top bg-amber-50/20 hover:bg-amber-50/30 transition-colors">
-                
-                {/* 1. KOLOM TANGGAL + INPUT VITAL SIGNS OLEH DOKTER */}
-                <td className="p-3 border-r border-gray-300 space-y-3">
-                  <div className="font-bold text-gray-900 leading-snug">
-                    {formatIndonesianDateTime(kunjungan.jam_daftar || new Date())}
-                  </div>
-                  
-                  {/* Form Input Vital Signs Inline */}
-                  <div className="space-y-3 pt-2 border-t border-dashed border-gray-200">
-                    <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
-                      <Heart className="h-3 w-3 text-red-500 shrink-0" />
-                      Tanda Vital (Edit)
-                    </div>
-                    
-                    {/* Tensi Input */}
-                    <div className="space-y-1">
-                      <Label className="text-[10px] text-gray-500">Tekanan Darah (mmHg)</Label>
-                      <div className="flex items-center gap-1.5">
-                        <Input
-                          type="number"
-                          placeholder="Sistolik"
-                          value={tensiSistolik}
-                          onChange={(e) => handleChange(setTensiSistolik, e.target.value)}
-                          disabled={readOnly}
-                          className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
-                        />
-                        <span className="text-gray-400">/</span>
-                        <Input
-                          type="number"
-                          placeholder="Diastolik"
-                          value={tensiDiastolik}
-                          onChange={(e) => handleChange(setTensiDiastolik, e.target.value)}
-                          disabled={readOnly}
-                          className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
-                        />
-                      </div>
+              {currentPage === 1 && (
+                <tr className="border-b border-gray-300 align-top bg-amber-50/20 hover:bg-amber-50/30 transition-colors">
+
+                  {/* 1. KOLOM TANGGAL + INPUT VITAL SIGNS OLEH DOKTER */}
+                  <td className="p-3 border-r border-gray-300 space-y-3">
+                    <div className="font-bold text-gray-900 leading-snug">
+                      {formatIndonesianDateTime(kunjungan.jam_daftar || new Date())}
                     </div>
 
-                    {/* Nadi & Suhu Inline Grid */}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Form Input Vital Signs Inline */}
+                    <div className="space-y-3 pt-2 border-t border-dashed border-gray-200">
+                      <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
+                        <Heart className="h-3 w-3 text-red-500 shrink-0" />
+                        Tanda Vital (Edit)
+                      </div>
+
+                      {/* Tensi Input */}
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 flex items-center gap-0.5">
-                          <Activity className="h-2.5 w-2.5 text-blue-500" />
-                          Nadi (/m)
-                        </Label>
-                        <Input
-                          type="number"
-                          placeholder="Nadi"
-                          value={nadi}
-                          onChange={(e) => handleChange(setNadi, e.target.value)}
-                          disabled={readOnly}
-                          className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
-                        />
+                        <Label className="text-[10px] text-gray-500">Tekanan Darah (mmHg)</Label>
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            placeholder="Sistolik"
+                            value={tensiSistolik}
+                            onChange={(e) => handleChange(setTensiSistolik, e.target.value)}
+                            disabled={readOnly}
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                          />
+                          <span className="text-gray-400">/</span>
+                          <Input
+                            type="number"
+                            placeholder="Diastolik"
+                            value={tensiDiastolik}
+                            onChange={(e) => handleChange(setTensiDiastolik, e.target.value)}
+                            disabled={readOnly}
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] text-gray-500 flex items-center gap-0.5">
-                          <Thermometer className="h-2.5 w-2.5 text-amber-500" />
-                          Suhu (°C)
-                        </Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          placeholder="Suhu"
-                          value={suhu}
-                          onChange={(e) => handleChange(setSuhu, e.target.value)}
-                          disabled={readOnly}
-                          className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
-                        />
+
+                      {/* Nadi & Suhu Inline Grid */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                            <Activity className="h-2.5 w-2.5 text-blue-500" />
+                            Nadi (/m)
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder="Nadi"
+                            value={nadi}
+                            onChange={(e) => handleChange(setNadi, e.target.value)}
+                            disabled={readOnly}
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                            <Thermometer className="h-2.5 w-2.5 text-amber-500" />
+                            Suhu (°C)
+                          </Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Suhu"
+                            value={suhu}
+                            onChange={(e) => handleChange(setSuhu, e.target.value)}
+                            disabled={readOnly}
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
+                  </td>
 
-                {/* 2. KOLOM ANAMNESA / PEMERIKSAAN (INPUT BEBAS TEXTAREA BESAR) */}
-                <td className="p-2 border-r border-gray-300">
-                  <Textarea
-                    placeholder="Tulis anamnesis lengkap keluhan pasien & hasil pemeriksaan fisik di sini secara bebas..."
-                    value={anamnesis}
-                    onChange={(e) => handleChange(setAnamnesis, e.target.value)}
-                    disabled={readOnly}
-                    rows={12}
-                    className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                  />
-                </td>
+                  {/* 2. KOLOM ANAMNESA / PEMERIKSAAN (INPUT BEBAS TEXTAREA BESAR) */}
+                  <td className="p-2 border-r border-gray-300">
+                    <Textarea
+                      placeholder="Tulis anamnesis lengkap keluhan pasien & hasil pemeriksaan fisik di sini secara bebas..."
+                      value={anamnesis}
+                      onChange={(e) => handleChange(setAnamnesis, e.target.value)}
+                      disabled={readOnly}
+                      rows={12}
+                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                    />
+                  </td>
 
-                {/* 3. KOLOM DIAGNOSIS (INPUT TEKS DIAGNOSA BEBAS) */}
-                <td className="p-2 border-r border-gray-300">
-                  <Textarea
-                    placeholder="Diagnosis..."
-                    value={diagnosisNama}
-                    onChange={(e) => handleChange(setDiagnosisNama, e.target.value)}
-                    disabled={readOnly}
-                    rows={10}
-                    className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                  />
-                </td>
+                  {/* 3. KOLOM DIAGNOSIS (INPUT TEKS DIAGNOSA BEBAS) */}
+                  <td className="p-2 border-r border-gray-300">
+                    <Textarea
+                      placeholder="Diagnosis..."
+                      value={diagnosisNama}
+                      onChange={(e) => handleChange(setDiagnosisNama, e.target.value)}
+                      disabled={readOnly}
+                      rows={10}
+                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                    />
+                  </td>
 
-                {/* 4. KOLOM TERAPI (INPUT TINDAKAN + AUTO-SINKRON RESEP OBAT) */}
-                <td className="p-2 space-y-4">
-                  <Textarea
-                    placeholder="Terapi non-obat, edukasi, catatan..."
-                    value={terapi}
-                    onChange={(e) => handleChange(setTerapi, e.target.value)}
-                    disabled={readOnly}
-                    rows={6}
-                    className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                  />
-                  
-                  {/* Sinkronisasi Daftar Resep Obat */}
-                  {resepItems.length > 0 && (
-                    <div className="pt-2.5 border-t border-dashed border-gray-300 px-2 text-xs">
-                      <div className="font-bold text-gray-500 uppercase text-[9px] tracking-wider mb-1.5">
-                        Resep Obat Terintegrasi:
+                  {/* 4. KOLOM TERAPI (INPUT TINDAKAN + AUTO-SINKRON RESEP OBAT) */}
+                  <td className="p-2 space-y-4">
+                    <Textarea
+                      placeholder="Terapi non-obat, edukasi, catatan..."
+                      value={terapi}
+                      onChange={(e) => handleChange(setTerapi, e.target.value)}
+                      disabled={readOnly}
+                      rows={6}
+                      className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                    />
+
+                    {/* Sinkronisasi Daftar Resep Obat */}
+                    {resepItems.length > 0 && (
+                      <div className="pt-2.5 border-t border-dashed border-gray-300 px-2 text-xs">
+                        <div className="font-bold text-gray-500 uppercase text-[9px] tracking-wider mb-1.5">
+                          Resep Obat Terintegrasi:
+                        </div>
+                        <ul className="space-y-1.5 list-disc list-inside font-handwritten text-blue-800 text-sm">
+                          {resepItems.map((item, idx) => (
+                            <li key={idx} className="leading-snug">
+                              {item.nama_obat} ({item.dosis})
+                              <span className="font-sans text-[10px] text-gray-500 ml-1.5 font-normal">
+                                x{item.jumlah}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-1.5 list-disc list-inside font-handwritten text-blue-800 text-sm">
-                        {resepItems.map((item, idx) => (
-                          <li key={idx} className="leading-snug">
-                            {item.nama_obat} ({item.dosis})
-                            <span className="font-sans text-[10px] text-gray-500 ml-1.5 font-normal">
-                              x{item.jumlah}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </td>
-              </tr>
+                    )}
+                  </td>
+                </tr>
+              )}
 
               {/* 📜 RIWAYAT KUNJUNGAN SEBELUMNYA (READ-ONLY BARIS DI BAWAH HARI INI) */}
               {loadingRiwayat ? (
@@ -614,13 +623,13 @@ export function TabRekamMedis({
                   </td>
                 </tr>
               ) : (
-                riwayat.map((row) => (
+                paginatedRiwayat.map((row) => (
                   <tr key={row.id} className="border-b border-gray-200 align-top opacity-85 hover:opacity-100 transition-opacity">
-                    
+
                     {/* Kolom Tanggal Riwayat + Vital Signs */}
                     <td className="p-3 border-r border-gray-200 text-gray-600 font-semibold leading-normal">
                       <div>{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>
-                      
+
                       {/* Tampilan Vital Signs Riwayat */}
                       {(row.tensi_sistolik || row.nadi || row.suhu) && (
                         <div className="mt-2.5 space-y-1 pt-1.5 border-t border-dashed border-gray-200 text-[11px] font-handwritten text-blue-800 text-xs">
@@ -660,7 +669,7 @@ export function TabRekamMedis({
                     {/* Kolom Terapi Riwayat */}
                     <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
                       {row.terapi || '-'}
-                      
+
                       {/* Tampilan Resep Riwayat */}
                       {row.resep && row.resep.length > 0 && (
                         <div className="mt-2.5 pt-2 border-t border-dashed border-gray-200 text-xs">
@@ -681,6 +690,35 @@ export function TabRekamMedis({
             </tbody>
           </table>
         </div>
+
+        {/* Kontrol Navigasi Halaman Riwayat (Gaya Sederhana: Sebelumnya | 1 / 1 | Selanjutnya) */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-4 py-4 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6]"
+            >
+              Sebelumnya
+            </Button>
+
+            <span className="text-sm font-semibold text-gray-700 font-mono">
+              {currentPage} / {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6]"
+            >
+              Selanjutnya
+            </Button>
+          </div>
+        )}
 
       </div>
     </div>
