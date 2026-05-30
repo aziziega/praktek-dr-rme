@@ -4,7 +4,6 @@ import { useState, useCallback } from 'react'
 import type { KunjunganRow, PasienRow, RekamMedisRow } from '@/types/database'
 import type { ResepItem } from '@/app/actions/dokter'
 
-import { PasienInfoSidebar } from '@/components/dokter/PasienInfoSidebar'
 import { TabRekamMedis } from '@/components/dokter/TabRekamMedis'
 import { TabResepObat } from '@/components/dokter/TabResepObat'
 import { TabPembayaran } from '@/components/dokter/TabPembayaran'
@@ -31,7 +30,7 @@ export function PeriksaClient({
 
   // Shared state between tabs
   const [rekamMedisData, setRekamMedisData] = useState({
-    anamnesis: rekamMedis?.anamnesis ?? '',
+    anamnesis: rekamMedis ? (rekamMedis.anamnesis ?? '') : (kunjungan.keluhan_utama ?? ''),
     pemeriksaan_fisik: rekamMedis?.pemeriksaan_fisik ?? '',
     diagnosis_kode: rekamMedis?.diagnosis_kode ?? '',
     diagnosis_nama: rekamMedis?.diagnosis_nama ?? '',
@@ -88,78 +87,68 @@ export function PeriksaClient({
         )}
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Left: Patient Info Sidebar */}
-        <div className="lg:col-span-1">
-          <PasienInfoSidebar pasien={pasien} kunjungan={kunjungan} />
-        </div>
+      {/* Full-width Layout (Sidebar Deleted for a Cleaner, Non-Redundant Aesthetic) */}
+      <Card className="shadow-lg border-gray-100">
+        <CardContent className="p-4 md:p-6">
+          <Tabs defaultValue="rekam-medis">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger
+                value="rekam-medis"
+                className="gap-1.5 text-xs md:text-sm"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">Rekam Medis</span>
+                <span className="sm:hidden">RM</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="resep-obat"
+                className="gap-1.5 text-xs md:text-sm"
+              >
+                <Pill className="h-4 w-4" />
+                <span className="hidden sm:inline">Resep & Obat</span>
+                <span className="sm:hidden">Resep</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="pembayaran"
+                className="gap-1.5 text-xs md:text-sm"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span className="hidden sm:inline">Pembayaran</span>
+                <span className="sm:hidden">Bayar</span>
+              </TabsTrigger>
+            </TabsList>
 
-        {/* Right: 3 Tabs */}
-        <div className="lg:col-span-2">
-          <Card className="shadow-lg border-gray-100">
-            <CardContent className="p-4 md:p-6">
-              <Tabs defaultValue="rekam-medis">
-                <TabsList className="grid w-full grid-cols-3 mb-6">
-                  <TabsTrigger
-                    value="rekam-medis"
-                    className="gap-1.5 text-xs md:text-sm"
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span className="hidden sm:inline">Rekam Medis</span>
-                    <span className="sm:hidden">RM</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="resep-obat"
-                    className="gap-1.5 text-xs md:text-sm"
-                  >
-                    <Pill className="h-4 w-4" />
-                    <span className="hidden sm:inline">Resep & Obat</span>
-                    <span className="sm:hidden">Resep</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="pembayaran"
-                    className="gap-1.5 text-xs md:text-sm"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    <span className="hidden sm:inline">Pembayaran</span>
-                    <span className="sm:hidden">Bayar</span>
-                  </TabsTrigger>
-                </TabsList>
+            <TabsContent value="rekam-medis">
+              <TabRekamMedis
+                kunjungan={kunjungan}
+                pasien={pasien}
+                initialData={rekamMedisData}
+                readOnly={isSelesai}
+                resepItems={resepItems}
+                onDataChange={handleRekamMedisChange}
+              />
+            </TabsContent>
 
-                <TabsContent value="rekam-medis">
-                  <TabRekamMedis
-                    kunjungan={kunjungan}
-                    pasien={pasien}
-                    initialData={rekamMedisData}
-                    readOnly={isSelesai}
-                    resepItems={resepItems}
-                    onDataChange={handleRekamMedisChange}
-                  />
-                </TabsContent>
+            <TabsContent value="resep-obat">
+              <TabResepObat
+                kunjunganId={kunjungan.id}
+                readOnly={isSelesai}
+                onItemsChange={handleResepChange}
+              />
+            </TabsContent>
 
-                <TabsContent value="resep-obat">
-                  <TabResepObat
-                    kunjunganId={kunjungan.id}
-                    readOnly={isSelesai}
-                    onItemsChange={handleResepChange}
-                  />
-                </TabsContent>
-
-                <TabsContent value="pembayaran">
-                  <TabPembayaran
-                    kunjunganId={kunjungan.id}
-                    readOnly={isSelesai}
-                    totalObat={totalObat}
-                    resepItems={resepItems}
-                    rekamMedisData={rekamMedisData}
-                  />
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            <TabsContent value="pembayaran">
+              <TabPembayaran
+                kunjunganId={kunjungan.id}
+                readOnly={isSelesai}
+                totalObat={totalObat}
+                resepItems={resepItems}
+                rekamMedisData={rekamMedisData}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }
