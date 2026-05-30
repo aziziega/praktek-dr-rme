@@ -70,6 +70,13 @@ export function TabPembayaran({
   }
 
   async function handleSelesai() {
+    const hasEmptyDosis = resepItems.some(item => !item.dosis || !item.dosis.trim())
+    if (hasEmptyDosis) {
+      toast.error('Dosis obat wajib diisi untuk semua resep!')
+      setDialogOpen(false)
+      return
+    }
+
     setSaving(true)
     try {
       const result = await selesaikanKunjungan({
@@ -184,15 +191,23 @@ export function TabPembayaran({
       {/* Tombol Selesai */}
       {!readOnly && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              size="lg"
-              className="w-full bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-600 hover:to-sky-600 text-white shadow-lg shadow-emerald-500/20 text-base"
-            >
-              <CheckCircle2 className="h-5 w-5 mr-2" />
-              Selesai & Tandai Lunas
-            </Button>
-          </DialogTrigger>
+          <Button
+            size="lg"
+            className="w-full bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-600 hover:to-sky-600 text-white shadow-lg shadow-emerald-500/20 text-base"
+            onClick={(e) => {
+              const hasEmptyDosis = resepItems.some(item => !item.dosis || !item.dosis.trim())
+              if (hasEmptyDosis) {
+                e.preventDefault()
+                e.stopPropagation()
+                toast.error('Dosis obat wajib diisi untuk semua resep sebelum menyelesaikan kunjungan!')
+                return
+              }
+              setDialogOpen(true)
+            }}
+          >
+            <CheckCircle2 className="h-5 w-5 mr-2" />
+            Selesai & Tandai Lunas
+          </Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Konfirmasi Selesai</DialogTitle>

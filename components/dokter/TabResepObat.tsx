@@ -275,7 +275,9 @@ export function TabResepObat({
             <TableHeader>
               <TableRow className="bg-gray-50/80">
                 <TableHead className="w-[30%]">Nama Obat</TableHead>
-                <TableHead className="w-[15%]">Dosis</TableHead>
+                <TableHead className="w-[15%]">
+                  Dosis <span className="text-red-500">*</span>
+                </TableHead>
                 <TableHead className="w-[10%] text-center">Jml</TableHead>
                 <TableHead className="w-[18%] text-right">Harga</TableHead>
                 <TableHead className="w-[18%] text-right">Subtotal</TableHead>

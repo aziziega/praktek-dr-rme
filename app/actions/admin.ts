@@ -225,6 +225,38 @@ export async function toggleObatStatus(id: string, aktif: boolean) {
   })
 }
 
+export async function deleteObat(id: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  // Get name first for logging
+  const { data: obat, error: fetchError } = await (supabase.from('obat') as any)
+    .select('nama')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !obat) throw new Error('Obat tidak ditemukan')
+
+  const { error } = await (supabase.from('obat') as any)
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'HAPUS_OBAT',
+    targetTabel: 'obat',
+    targetId: id,
+    detail: { nama: obat.nama },
+  })
+}
+
 // ---------------------------------------------------------------------------
 // 3. MANAJEMEN PASIEN
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminObat, createObat, updateObat, addObatStock, toggleObatStatus } from '@/app/actions/admin'
+import { getAdminObat, createObat, updateObat, addObatStock, toggleObatStatus, deleteObat } from '@/app/actions/admin'
 import { formatRupiah } from '@/lib/utils'
 import { obatSchema } from '@/lib/validations'
 
@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Pill, Pencil, PlusCircle, AlertTriangle } from 'lucide-react'
+import { Pill, Pencil, PlusCircle, AlertTriangle, Trash2 } from 'lucide-react'
 
 interface ObatData {
   id: string
@@ -66,6 +66,10 @@ export default function AdminObatPage() {
   // Dialog Add Stock State
   const [isStockOpen, setIsStockOpen] = useState(false)
   const [stockForm, setStockForm] = useState({ id: '', nama: '', stokSaatIni: 0, tambah: 0 })
+
+  // Dialog Delete State
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; nama: string } | null>(null)
 
   const [debugError, setDebugError] = useState<string | null>(null)
 
@@ -389,6 +393,17 @@ export default function AdminObatPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => {
+                          setDeleteTarget({ id: item.id, nama: item.nama })
+                          setIsDeleteOpen(true)
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -476,6 +491,56 @@ export default function AdminObatPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Konfirmasi Hapus */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <DialogTitle className="text-center text-lg font-semibold text-gray-900">
+              Hapus Master Obat
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-gray-500 pt-2">
+              Apakah Anda yakin ingin menghapus obat <strong className="text-gray-900">"{deleteTarget?.nama}"</strong>? <br />
+              Tindakan ini tidak dapat dibatalkan dan obat akan dihapus permanen dari sistem.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-center gap-2 pt-4 sm:justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteOpen(false)}
+              disabled={isSubmitting}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isSubmitting}
+              onClick={async () => {
+                if (!deleteTarget) return
+                setIsSubmitting(true)
+                try {
+                  await deleteObat(deleteTarget.id)
+                  toast.success(`Obat "${deleteTarget.nama}" berhasil dihapus`)
+                  setIsDeleteOpen(false)
+                  setDeleteTarget(null)
+                  fetchObat()
+                } catch (err: any) {
+                  toast.error(err.message || 'Terjadi kesalahan saat menghapus obat')
+                } finally {
+                  setIsSubmitting(false)
+                }
+              }}
+            >
+              {isSubmitting ? 'Menghapus...' : 'Ya, Hapus'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { logActivity } from '@/lib/activity-logger'
 import type {
   KunjunganRow,
@@ -526,9 +527,10 @@ export async function selesaikanKunjungan(input: {
     })
 
     // 5. Reduce obat stock for items with obat_id
+    const serviceRoleClient = createServiceRoleClient()
     for (const item of input.resepItems) {
       if (item.obat_id) {
-        const { data: obatData } = await supabase
+        const { data: obatData } = await serviceRoleClient
           .from('obat')
           .select('stok')
           .eq('id', item.obat_id)
@@ -536,7 +538,7 @@ export async function selesaikanKunjungan(input: {
 
         if (obatData) {
           const newStok = Math.max(0, (obatData as any).stok - item.jumlah)
-          await (supabase.from('obat') as any)
+          await (serviceRoleClient.from('obat') as any)
             .update({ stok: newStok, updated_at: new Date().toISOString() })
             .eq('id', item.obat_id)
         }
