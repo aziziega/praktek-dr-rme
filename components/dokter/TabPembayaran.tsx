@@ -39,6 +39,10 @@ interface TabPembayaranProps {
     diagnosis_nama: string
     terapi: string
     catatan: string
+    tensi_sistolik?: string
+    tensi_diastolik?: string
+    nadi?: string
+    suhu?: string
   }
 }
 
@@ -76,6 +80,10 @@ export function TabPembayaran({
         diagnosis_nama: rekamMedisData.diagnosis_nama || undefined,
         terapi: rekamMedisData.terapi || undefined,
         catatan_medis: rekamMedisData.catatan || undefined,
+        tensi_sistolik: rekamMedisData.tensi_sistolik ? parseInt(rekamMedisData.tensi_sistolik, 10) : undefined,
+        tensi_diastolik: rekamMedisData.tensi_diastolik ? parseInt(rekamMedisData.tensi_diastolik, 10) : undefined,
+        nadi: rekamMedisData.nadi ? parseInt(rekamMedisData.nadi, 10) : undefined,
+        suhu: rekamMedisData.suhu ? parseFloat(rekamMedisData.suhu) : undefined,
         resepItems,
         tarif_periksa: tarifPeriksa,
         catatan_bayar: catatanBayar || undefined,

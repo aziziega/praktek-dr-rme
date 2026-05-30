@@ -37,6 +37,10 @@ export function PeriksaClient({
     diagnosis_nama: rekamMedis?.diagnosis_nama ?? '',
     terapi: rekamMedis?.terapi ?? '',
     catatan: rekamMedis?.catatan ?? '',
+    tensi_sistolik: kunjungan.tensi_sistolik ? String(kunjungan.tensi_sistolik) : '',
+    tensi_diastolik: kunjungan.tensi_diastolik ? String(kunjungan.tensi_diastolik) : '',
+    nadi: kunjungan.nadi ? String(kunjungan.nadi) : '',
+    suhu: kunjungan.suhu ? String(kunjungan.suhu) : '',
   })
   const [resepItems, setResepItems] = useState<ResepItem[]>([])
   const [totalObat, setTotalObat] = useState(0)
@@ -127,7 +131,7 @@ export function PeriksaClient({
                   <TabRekamMedis
                     kunjungan={kunjungan}
                     pasien={pasien}
-                    initialData={rekamMedis}
+                    initialData={rekamMedisData}
                     readOnly={isSelesai}
                     resepItems={resepItems}
                     onDataChange={handleRekamMedisChange}

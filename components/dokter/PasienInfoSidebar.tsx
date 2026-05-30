@@ -1,12 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { getRiwayatKunjungan, type RiwayatItem } from '@/app/actions/dokter'
+import { updateAlergiObat } from '@/app/actions/staf'
 import type { PasienRow, KunjunganRow } from '@/types/database'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Accordion,
   AccordionContent,
@@ -23,7 +36,10 @@ import {
   Calendar,
   FileText,
   History,
+  Pencil,
+  Loader2,
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface PasienInfoSidebarProps {
   pasien: PasienRow
@@ -34,8 +50,39 @@ export function PasienInfoSidebar({
   pasien,
   kunjungan,
 }: PasienInfoSidebarProps) {
+  const router = useRouter()
   const [riwayat, setRiwayat] = useState<RiwayatItem[]>([])
   const [loadingRiwayat, setLoadingRiwayat] = useState(true)
+
+  // Alergi Obat states
+  const [alergiState, setAlergiState] = useState(pasien.alergi_obat ?? '')
+  const [isAlergiOpen, setIsAlergiOpen] = useState(false)
+  const [tempAlergi, setTempAlergi] = useState(pasien.alergi_obat ?? '')
+  const [savingAlergi, setSavingAlergi] = useState(false)
+
+  // Sync state if pasien prop updates
+  useEffect(() => {
+    setAlergiState(pasien.alergi_obat ?? '')
+  }, [pasien.alergi_obat])
+
+  async function handleSaveAlergi() {
+    setSavingAlergi(true)
+    try {
+      const result = await updateAlergiObat(pasien.id, tempAlergi)
+      if (result.success) {
+        setAlergiState(tempAlergi.trim())
+        setIsAlergiOpen(false)
+        toast.success('Data alergi obat pasien berhasil diperbarui')
+        router.refresh() // Sync kop rekam medis & other components
+      } else {
+        toast.error(result.error ?? 'Gagal memperbarui alergi obat')
+      }
+    } catch {
+      toast.error('Terjadi kesalahan')
+    } finally {
+      setSavingAlergi(false)
+    }
+  }
 
   useEffect(() => {
     async function fetchRiwayat() {
@@ -87,7 +134,7 @@ export function PasienInfoSidebar({
       {/* Patient Info Card */}
       <Card
         className={`${
-          hasAlergi
+          alergiState
             ? 'border-l-4 border-l-red-500'
             : 'border-l-4 border-l-sky-500'
         }`}
@@ -123,20 +170,42 @@ export function PasienInfoSidebar({
             </div>
           </div>
 
-          {/* Alergi Warning */}
-          {hasAlergi && (
-            <div className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2">
-              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-red-800">
-                  ALERGI OBAT
+          {/* Allergy Info Bar */}
+          <div className={`flex items-center justify-between gap-3 border rounded-lg px-3 py-2 ${
+            alergiState 
+              ? 'bg-red-50 border-red-200 text-red-900' 
+              : 'bg-gray-50 border-gray-150 text-gray-800'
+          }`}>
+            <div className="flex items-start gap-2 min-w-0">
+              <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${
+                alergiState ? 'text-red-600' : 'text-gray-400'
+              }`} />
+              <div className="min-w-0">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                  alergiState ? 'text-red-800' : 'text-gray-400'
+                }`}>
+                  Alergi Obat
                 </p>
-                <p className="text-xs text-red-700 mt-0.5">
-                  {pasien.alergi_obat}
+                <p className={`text-xs font-semibold mt-0.5 ${
+                  alergiState ? 'text-red-700' : 'text-gray-600'
+                } truncate`}>
+                  {alergiState || 'Tidak ada alergi obat terdaftar'}
                 </p>
               </div>
             </div>
-          )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs font-semibold shrink-0 gap-1 border-gray-200 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 transition-colors"
+              onClick={() => {
+                setTempAlergi(alergiState)
+                setIsAlergiOpen(true)
+              }}
+            >
+              <Pencil className="h-3 w-3" />
+              Ubah
+            </Button>
+          </div>
 
           {/* Vital Signs - Current Visit */}
           <div>
@@ -273,6 +342,52 @@ export function PasienInfoSidebar({
           )}
         </CardContent>
       </Card>
+      {/* Modal Kelola Alergi Obat */}
+      <Dialog open={isAlergiOpen} onOpenChange={setIsAlergiOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Kelola Alergi Obat</DialogTitle>
+            <DialogDescription>
+              Masukkan keterangan alergi obat pasien {pasien.nama}. Kosongkan jika tidak ada alergi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="input-alergi">Daftar Alergi Obat</Label>
+              <Input
+                id="input-alergi"
+                placeholder="Contoh: Penisilin, Sulfa, dll."
+                value={tempAlergi}
+                onChange={(e) => setTempAlergi(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAlergiOpen(false)}
+              disabled={savingAlergi}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleSaveAlergi}
+              disabled={savingAlergi}
+              className="bg-sky-500 hover:bg-sky-600 text-white"
+            >
+              {savingAlergi ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

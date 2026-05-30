@@ -255,3 +255,92 @@ export async function getAntrianHariIni(
     status: row.status,
   }))
 }
+
+// ---------------------------------------------------------------------------
+// Get daily pendaftaran statistics (Baru vs Lama)
+// ---------------------------------------------------------------------------
+export interface PendaftaranStats {
+  total: number
+  baru: number
+  lama: number
+}
+
+export async function getPendaftaranStats(): Promise<PendaftaranStats> {
+  const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
+
+  // Get all visits for today
+  const { data: visits, error } = await supabase
+    .from('kunjungan')
+    .select(`
+      pasien:pasien_id (created_at)
+    `)
+    .eq('tanggal', today)
+
+  if (error || !visits) {
+    return { total: 0, baru: 0, lama: 0 }
+  }
+
+  let baru = 0
+  let lama = 0
+
+  visits.forEach((v: any) => {
+    if (v.pasien?.created_at) {
+      const createdDate = new Date(v.pasien.created_at).toISOString().split('T')[0]
+      if (createdDate === today) {
+        baru++
+      } else {
+        lama++
+      }
+    } else {
+      lama++
+    }
+  })
+
+  return {
+    total: visits.length,
+    baru,
+    lama
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Update patient drug allergy
+// ---------------------------------------------------------------------------
+export async function updateAlergiObat(
+  pasienId: string,
+  alergiObat: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Sesi habis. Silakan login ulang.' }
+  }
+
+  const cleanAlergi = alergiObat.trim()
+
+  const { error } = await (supabase.from('pasien') as any)
+    .update({ 
+      alergi_obat: cleanAlergi || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', pasienId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'EDIT_PASIEN_ALERGI',
+    targetTabel: 'pasien',
+    targetId: pasienId,
+    detail: { alergi_obat: cleanAlergi },
+  })
+
+  return { success: true }
+}

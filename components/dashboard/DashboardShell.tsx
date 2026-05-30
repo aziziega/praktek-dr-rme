@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { UserRole } from '@/types/database'
@@ -11,6 +11,14 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import {
   Stethoscope,
   ClipboardPlus,
@@ -105,6 +113,52 @@ export function DashboardShell({
     const minutes = String(date.getMinutes()).padStart(2, '0')
     const seconds = String(date.getSeconds()).padStart(2, '0')
     return `${hours}:${minutes}:${seconds} WIB`
+  }
+
+  function renderBreadcrumbs() {
+    const paths = pathname.split('/').filter(Boolean)
+    if (paths.length <= 1) return null
+
+    const pathLabels: Record<string, string> = {
+      dashboard: 'Beranda',
+      staf: 'Staf Pendaftaran',
+      dokter: 'Dokter',
+      admin: 'Administrator',
+      pendaftaran: 'Pendaftaran Pasien',
+      antrian: 'Antrean Pasien',
+      users: 'Manajemen User',
+      pasien: 'Manajemen Pasien',
+      obat: 'Stok Obat',
+      attendance: 'Log Kehadiran',
+      activity: 'Log Aktivitas',
+    }
+
+    return (
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          {paths.map((path, idx) => {
+            const isLast = idx === paths.length - 1
+            const href = '/' + paths.slice(0, idx + 1).join('/')
+            const label = pathLabels[path] || path.charAt(0).toUpperCase() + path.slice(1)
+
+            return (
+              <React.Fragment key={href}>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage className="font-semibold text-gray-900">{label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink href={href} className="text-gray-500 hover:text-sky-600 transition-colors font-medium">
+                      {label}
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator className="text-gray-400" />}
+              </React.Fragment>
+            )
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    )
   }
 
   function SidebarContent() {
@@ -243,6 +297,7 @@ export function DashboardShell({
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+          {renderBreadcrumbs()}
           {children}
         </div>
       </main>

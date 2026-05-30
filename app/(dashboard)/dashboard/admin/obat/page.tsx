@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { createObat, updateObat, addObatStock, toggleObatStatus } from '@/app/actions/admin'
+import { getAdminObat, createObat, updateObat, addObatStock, toggleObatStatus } from '@/app/actions/admin'
 import { formatRupiah } from '@/lib/utils'
+import { obatSchema } from '@/lib/validations'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,7 +67,7 @@ export default function AdminObatPage() {
   const [isStockOpen, setIsStockOpen] = useState(false)
   const [stockForm, setStockForm] = useState({ id: '', nama: '', stokSaatIni: 0, tambah: 0 })
 
-  const supabase = createClient()
+  const [debugError, setDebugError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchObat()
@@ -75,21 +75,31 @@ export default function AdminObatPage() {
 
   async function fetchObat() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('obat')
-      .select('*')
-      .order('nama', { ascending: true })
-
-    if (error) {
-      toast.error('Gagal memuat data obat')
-    } else {
+    setDebugError(null)
+    try {
+      const data = await getAdminObat()
       setObat(data as ObatData[])
+    } catch (err: any) {
+      console.error('[AdminObat] fetch error:', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      const stack = err instanceof Error ? err.stack : 'No stack trace'
+      setDebugError(`Server Action Exception (Obat): ${msg}\nStack: ${stack}`)
+      toast.error('Terjadi kesalahan memuat data obat: ' + msg)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Zod validation
+    const validation = obatSchema.safeParse(addForm)
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await createObat(addForm)
@@ -106,6 +116,19 @@ export default function AdminObatPage() {
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Zod validation (Pick only fields edited)
+    const editSchema = obatSchema.pick({ nama: true, satuan: true, harga_jual: true })
+    const validation = editSchema.safeParse({
+      nama: editForm.nama,
+      satuan: editForm.satuan,
+      harga_jual: editForm.harga_jual
+    })
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await updateObat(editForm.id, { 
@@ -244,6 +267,16 @@ export default function AdminObatPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {debugError && (
+        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+            <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
+            Diagnostik Kesalahan (Gagal Load Data):
+          </p>
+          {debugError}
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex-1 max-w-sm">

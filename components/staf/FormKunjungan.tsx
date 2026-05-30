@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getActiveDokters, createKunjungan } from '@/app/actions/staf'
+import { getActiveDokters, createKunjungan, updateAlergiObat } from '@/app/actions/staf'
 import type { PasienRow } from '@/types/database'
 
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   ArrowLeft,
   Send,
   Loader2,
@@ -29,6 +37,7 @@ import {
   Stethoscope,
   Hash,
   User,
+  Pencil,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -54,6 +63,30 @@ export function FormKunjungan({
   const [suhu, setSuhu] = useState('')
   const [keluhanUtama, setKeluhanUtama] = useState('')
   const [dokterId, setDokterId] = useState('')
+
+  // Alergi Obat states
+  const [alergiObatState, setAlergiObatState] = useState(pasien.alergi_obat ?? '')
+  const [isAlergiOpen, setIsAlergiOpen] = useState(false)
+  const [tempAlergi, setTempAlergi] = useState(pasien.alergi_obat ?? '')
+  const [savingAlergi, setSavingAlergi] = useState(false)
+
+  async function handleSaveAlergi() {
+    setSavingAlergi(true)
+    try {
+      const result = await updateAlergiObat(pasien.id, tempAlergi)
+      if (result.success) {
+        setAlergiObatState(tempAlergi.trim())
+        setIsAlergiOpen(false)
+        toast.success('Data alergi obat pasien berhasil diperbarui')
+      } else {
+        toast.error(result.error ?? 'Gagal memperbarui alergi obat')
+      }
+    } catch {
+      toast.error('Terjadi kesalahan')
+    } finally {
+      setSavingAlergi(false)
+    }
+  }
 
   // Fetch active dokters on mount
   useEffect(() => {
@@ -127,7 +160,7 @@ export function FormKunjungan({
       {/* Patient Info Header */}
       <Card
         className={`border-l-4 ${
-          pasien.alergi_obat
+          alergiObatState
             ? 'border-l-red-500 bg-red-50/30'
             : 'border-l-sky-500 bg-sky-50/30'
         }`}
@@ -164,20 +197,42 @@ export function FormKunjungan({
             </Button>
           </div>
 
-          {/* Allergy Warning */}
-          {pasien.alergi_obat && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-100/80 border border-red-200 px-3 py-2">
-              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-semibold text-red-800">
-                  ALERGI OBAT
+          {/* Allergy Info Bar */}
+          <div className={`mt-3 flex items-center justify-between gap-3 border rounded-lg px-3 py-2 ${
+            alergiObatState 
+              ? 'bg-red-50/80 border-red-200 text-red-900' 
+              : 'bg-gray-50 border-gray-150 text-gray-800'
+          }`}>
+            <div className="flex items-start gap-2 min-w-0">
+              <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${
+                alergiObatState ? 'text-red-600' : 'text-gray-400'
+              }`} />
+              <div className="min-w-0">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                  alergiObatState ? 'text-red-800' : 'text-gray-400'
+                }`}>
+                  Alergi Obat
                 </p>
-                <p className="text-xs text-red-700 mt-0.5">
-                  {pasien.alergi_obat}
+                <p className={`text-xs font-semibold mt-0.5 ${
+                  alergiObatState ? 'text-red-700' : 'text-gray-600'
+                } truncate`}>
+                  {alergiObatState || 'Tidak ada alergi obat terdaftar'}
                 </p>
               </div>
             </div>
-          )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs font-semibold shrink-0 gap-1 border-gray-200 hover:bg-sky-50 hover:text-sky-600 hover:border-sky-200 transition-colors"
+              onClick={() => {
+                setTempAlergi(alergiObatState)
+                setIsAlergiOpen(true)
+              }}
+            >
+              <Pencil className="h-3 w-3" />
+              Ubah
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -355,6 +410,53 @@ export function FormKunjungan({
           </form>
         </CardContent>
       </Card>
+
+      {/* Modal Kelola Alergi Obat */}
+      <Dialog open={isAlergiOpen} onOpenChange={setIsAlergiOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Kelola Alergi Obat</DialogTitle>
+            <DialogDescription>
+              Masukkan keterangan alergi obat pasien {pasien.nama}. Kosongkan jika tidak ada alergi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="input-alergi">Daftar Alergi Obat</Label>
+              <Input
+                id="input-alergi"
+                placeholder="Contoh: Penisilin, Sulfa, dll."
+                value={tempAlergi}
+                onChange={(e) => setTempAlergi(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAlergiOpen(false)}
+              disabled={savingAlergi}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleSaveAlergi}
+              disabled={savingAlergi}
+              className="bg-sky-500 hover:bg-sky-600 text-white"
+            >
+              {savingAlergi ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

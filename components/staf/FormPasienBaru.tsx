@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getNextNRM, createPasien } from '@/app/actions/staf'
 import type { PasienRow } from '@/types/database'
+import { pasienSchema } from '@/lib/validations'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -58,32 +59,52 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    // Client-side validation
+    // Explicit empty checks for required fields to trigger red toast instead of browser tooltip
     if (!nrm.trim()) {
       toast.error('Nomor Rekam Medis (NRM) wajib diisi')
       return
     }
-    const nrmNumber = parseInt(nrm, 10)
-    if (isNaN(nrmNumber) || !/^\d+$/.test(nrm.trim())) {
-      toast.error('Nomor Rekam Medis (NRM) harus berupa angka murni')
-      return
-    }
     if (!nama.trim()) {
-      toast.error('Nama pasien wajib diisi')
-      return
-    }
-    if (!tanggalLahir) {
-      toast.error('Tanggal lahir wajib diisi')
+      toast.error('Nama Lengkap pasien wajib diisi')
       return
     }
     if (!jenisKelamin) {
-      toast.error('Jenis kelamin wajib dipilih')
+      toast.error('Jenis Kelamin wajib dipilih')
+      return
+    }
+    if (!tanggalLahir) {
+      toast.error('Tanggal Lahir wajib diisi')
+      return
+    }
+    if (!tempatLahir.trim()) {
+      toast.error('Tempat Lahir wajib diisi')
       return
     }
     if (!alamat.trim()) {
-      toast.error('Alamat wajib diisi')
+      toast.error('Alamat lengkap pasien wajib diisi')
       return
     }
+
+    // Client-side validation dengan Zod
+    const validation = pasienSchema.safeParse({
+      nrm,
+      nama,
+      tanggal_lahir: tanggalLahir || undefined,
+      tempat_lahir: tempatLahir.trim(),
+      jenis_kelamin: jenisKelamin || undefined,
+      alamat,
+      no_hp: noHp || undefined,
+      alergi_obat: alergiObat || undefined
+    })
+
+    if (!validation.success) {
+      const firstError = validation.error.issues[0].message
+      toast.error(firstError)
+      return
+    }
+
+    const validatedData = validation.data
+    const nrmNumber = validatedData.nrm
 
     setSaving(true)
 
@@ -92,7 +113,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
         nrm: nrmNumber,
         nama: nama.trim(),
         tanggal_lahir: tanggalLahir,
-        tempat_lahir: tempatLahir.trim() || undefined,
+        tempat_lahir: tempatLahir.trim(),
         jenis_kelamin: jenisKelamin as 'L' | 'P',
         alamat: alamat.trim(),
         no_hp: noHp.trim() || undefined,
@@ -141,7 +162,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
       </CardHeader>
 
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {/* NRM — Auto Generated (Editable) */}
           <div className="space-y-2">
             <Label htmlFor="nrm">
@@ -226,13 +247,16 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tempat-lahir">Tempat Lahir</Label>
+              <Label htmlFor="tempat-lahir">
+                Tempat Lahir <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="tempat-lahir"
                 placeholder="Tempat lahir"
                 value={tempatLahir}
                 onChange={(e) => setTempatLahir(e.target.value)}
                 disabled={saving}
+                required
               />
             </div>
           </div>

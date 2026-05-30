@@ -24,6 +24,10 @@ import {
   Users,
   Loader2,
   Eye,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  CalendarDays,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -58,29 +62,36 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
+  // Get local timezone-safe date string YYYY-MM-DD
+  const todayStr = (() => {
+    const tzoffset = new Date().getTimezoneOffset() * 60000
+    return new Date(Date.now() - tzoffset).toISOString().split('T')[0]
+  })()
+
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr)
+
   const fetchAntrian = useCallback(async () => {
     try {
-      const data = await getAntrianDokter()
+      const data = await getAntrianDokter(selectedDate)
       setAntrian(data)
     } catch {
       console.error('[AntrianDokter] Failed to fetch')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedDate])
 
   // Initial fetch
   useEffect(() => {
     fetchAntrian()
   }, [fetchAntrian])
 
-  // Supabase Realtime: listen for new patients assigned to this doctor
+  // Supabase Realtime: listen for new patients assigned to this doctor for selectedDate
   useEffect(() => {
     const supabase = createClient()
-    const today = new Date().toISOString().split('T')[0]
 
     const channel = supabase
-      .channel('antrian-dokter-realtime')
+      .channel(`antrian-dokter-realtime-${selectedDate}`)
       .on(
         'postgres_changes',
         {
@@ -102,7 +113,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
           event: 'UPDATE',
           schema: 'public',
           table: 'kunjungan',
-          filter: `tanggal=eq.${today}`,
+          filter: `tanggal=eq.${selectedDate}`,
         },
         () => {
           fetchAntrian()
@@ -113,7 +124,47 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [dokterId, fetchAntrian])
+  }, [dokterId, selectedDate, fetchAntrian])
+
+  const handlePrevDay = () => {
+    const [year, month, day] = selectedDate.split('-').map(Number)
+    const d = new Date(year, month - 1, day)
+    d.setDate(d.getDate() - 1)
+    
+    const yStr = d.getFullYear()
+    const mStr = String(d.getMonth() + 1).padStart(2, '0')
+    const dStr = String(d.getDate()).padStart(2, '0')
+    setSelectedDate(`${yStr}-${mStr}-${dStr}`)
+  }
+
+  const handleNextDay = () => {
+    const [year, month, day] = selectedDate.split('-').map(Number)
+    const d = new Date(year, month - 1, day)
+    d.setDate(d.getDate() + 1)
+    
+    const yStr = d.getFullYear()
+    const mStr = String(d.getMonth() + 1).padStart(2, '0')
+    const dStr = String(d.getDate()).padStart(2, '0')
+    setSelectedDate(`${yStr}-${mStr}-${dStr}`)
+  }
+
+  const handleToday = () => {
+    setSelectedDate(todayStr)
+  }
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      setSelectedDate(e.target.value)
+    }
+  }
+
+  const formatDateDisplay = (dateStr: string): string => {
+    const parts = dateStr.split('-')
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`
+    }
+    return dateStr
+  }
 
   async function handlePeriksa(kunjunganId: string) {
     setProcessingId(kunjunganId)
@@ -185,6 +236,79 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
   return (
     <div className="space-y-5">
+      {/* Date Navigation Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm mb-1">
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Antrian Dokter
+          </p>
+          <h2 className="text-lg font-bold text-gray-800 mt-0.5">
+            {selectedDate === todayStr
+              ? 'Hari Ini'
+              : new Date(selectedDate).toLocaleDateString('id-ID', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+          </h2>
+        </div>
+
+        {/* Navigation Controls in Soft Light Theme */}
+        <div className="flex items-center gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-150">
+          {/* Prev Button */}
+          <button
+            type="button"
+            onClick={handlePrevDay}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm active:scale-95"
+            title="Hari Sebelumnya"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          {/* Hari Ini Button */}
+          <button
+            type="button"
+            onClick={handleToday}
+            className="px-3 h-9 flex items-center justify-center font-semibold text-gray-600 hover:text-gray-900 transition-colors text-xs active:scale-95"
+          >
+            Hari Ini
+          </button>
+
+          {/* Next Button */}
+          <button
+            type="button"
+            onClick={handleNextDay}
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm active:scale-95"
+            title="Hari Berikutnya"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* Date Pill Capsule (Soft light palette) */}
+          <div className="h-9 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-2 select-none relative hover:bg-gray-50 transition-colors ml-1">
+            {/* Left Soft Red Calendar Icon */}
+            <Calendar className="h-4 w-4 text-rose-500 shrink-0" />
+            
+            {/* Date Display (Monospace Slate Font) */}
+            <span className="font-mono font-semibold text-slate-700 text-sm tracking-wide">
+              {formatDateDisplay(selectedDate)}
+            </span>
+
+            {/* Right Soft Calendar Icon */}
+            <CalendarDays className="h-4 w-4 text-slate-400 shrink-0" />
+
+            {/* Invisible Date Input to open browser picker */}
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={handleDateChange}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer rounded-lg"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Counter Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
@@ -246,10 +370,14 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
               <Users className="h-7 w-7 text-gray-300" />
             </div>
             <h3 className="text-sm font-semibold text-gray-700">
-              Belum ada antrian hari ini
+              {selectedDate === todayStr
+                ? 'Belum ada antrian hari ini'
+                : `Belum ada antrian untuk tanggal ${formatDateDisplay(selectedDate)}`}
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              Pasien yang di-assign ke Anda akan muncul di sini secara realtime.
+              {selectedDate === todayStr
+                ? 'Pasien yang di-assign ke Anda akan muncul di sini secara realtime.'
+                : 'Tidak ada riwayat kunjungan pasien yang di-assign ke Anda pada tanggal ini.'}
             </p>
           </CardContent>
         </Card>

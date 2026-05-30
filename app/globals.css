@@ -135,3 +135,35 @@
     @apply font-sans;
   }
 }
+
+@keyframes infinite-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-infinite-slide {
+  animation: infinite-slide 1.5s infinite linear;
+}
+
+/* ---------------------------------------------------------------------------
+ * GLOBAL CURSOR POINTER INJECTION FOR ALL CLICKABLE/INTERACTIVE ELEMENTS
+ * --------------------------------------------------------------------------- */
+button,
+a,
+select,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+[role="button"],
+.cursor-pointer,
+[data-state] button,
+[data-radix-collection-item],
+button[role="switch"],
+span[role="switch"],
+[data-radix-primitive-accordion-trigger],
+[role="option"],
+[role="menuitem"] {
+  cursor: pointer !important;
+}

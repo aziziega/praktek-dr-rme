@@ -1,11 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { createUser, updateUser, toggleUserStatus } from '@/app/actions/admin'
+import { getAdminUsers, createUser, updateUser, toggleUserStatus } from '@/app/actions/admin'
 import type { UserRole } from '@/types/database'
+import { userSchema } from '@/lib/validations'
 
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -61,29 +71,43 @@ export default function AdminUsersPage() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editForm, setEditForm] = useState({ id: '', nama: '', role: 'staf' })
 
-  const supabase = createClient()
+  // Confirm Status Toggle State
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; currentStatus: boolean } | null>(null)
 
   useEffect(() => {
     fetchUsers()
   }, [])
 
+  const [debugError, setDebugError] = useState<string | null>(null)
+
   async function fetchUsers() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, nama, role, aktif, created_at')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      toast.error('Gagal memuat data user')
-    } else {
+    setDebugError(null)
+    try {
+      const data = await getAdminUsers()
       setUsers(data as UserData[])
+    } catch (err: any) {
+      console.error('[AdminUsers] fetch error:', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      const stack = err instanceof Error ? err.stack : 'No stack trace'
+      setDebugError(`Server Action Exception: ${msg}\nStack: ${stack}`)
+      toast.error('Terjadi kesalahan memuat data dari server: ' + msg)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Zod validation
+    const validation = userSchema.safeParse(addForm)
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await createUser(addForm)
@@ -100,6 +124,15 @@ export default function AdminUsersPage() {
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Zod validation (Pick only nama and role for edit)
+    const editSchema = userSchema.pick({ nama: true, role: true })
+    const validation = editSchema.safeParse({ nama: editForm.nama, role: editForm.role })
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message)
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await updateUser(editForm.id, { nama: editForm.nama, role: editForm.role })
@@ -113,13 +146,12 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
-    const confirmMessage = currentStatus
-      ? 'Yakin ingin menonaktifkan user ini?'
-      : 'Yakin ingin mengaktifkan user ini?'
-    
-    if (!confirm(confirmMessage)) return
+  const handleToggleStatus = (id: string, currentStatus: boolean) => {
+    setConfirmTarget({ id, currentStatus })
+    setConfirmOpen(true)
+  }
 
+  const executeToggleStatus = async (id: string, currentStatus: boolean) => {
     try {
       await toggleUserStatus(id, !currentStatus)
       toast.success(`User berhasil di${currentStatus ? 'nonaktifkan' : 'aktifkan'}`)
@@ -218,6 +250,16 @@ export default function AdminUsersPage() {
         </Dialog>
       </div>
 
+      {debugError && (
+        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+            <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
+            Diagnostik Kesalahan (Gagal Load Data):
+          </p>
+          {debugError}
+        </div>
+      )}
+
       <div className="flex items-center gap-4">
         <div className="flex-1 max-w-sm">
           <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -276,9 +318,9 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Switch 
-                        checked={user.aktif} 
-                        onCheckedChange={() => handleToggleStatus(user.id, user.aktif)} 
+                      <Switch
+                        checked={user.aktif}
+                        onCheckedChange={() => handleToggleStatus(user.id, user.aktif)}
                       />
                       <span className="text-sm text-muted-foreground">
                         {user.aktif ? 'Aktif' : 'Nonaktif'}
@@ -353,6 +395,37 @@ export default function AdminUsersPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmTarget?.currentStatus ? 'Nonaktifkan Pengguna?' : 'Aktifkan Pengguna?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmTarget?.currentStatus
+                ? 'Apakah Anda yakin ingin menonaktifkan pengguna ini? Pengguna tidak akan dapat login atau mengakses sistem hingga diaktifkan kembali.'
+                : 'Apakah Anda yakin ingin mengaktifkan kembali pengguna ini? Pengguna akan dapat login dan mengakses dashboard sesuai role mereka.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmTarget(null)}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (confirmTarget) {
+                  await executeToggleStatus(confirmTarget.id, confirmTarget.currentStatus)
+                }
+                setConfirmTarget(null)
+              }}
+              className={confirmTarget?.currentStatus 
+                ? 'bg-red-600 hover:bg-red-700 text-white border-none' 
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white border-none'}
+            >
+              Ya, {confirmTarget?.currentStatus ? 'Nonaktifkan' : 'Aktifkan'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

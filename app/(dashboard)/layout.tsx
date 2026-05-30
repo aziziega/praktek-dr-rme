@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { AttendanceProvider } from '@/components/providers/AttendanceProvider'
@@ -37,6 +38,35 @@ export default async function DashboardLayout({
   if (!userData || !userData.aktif) {
     await supabase.auth.signOut()
     redirect('/login')
+  }
+
+  // Ambil headers untuk mengecek URL path dari middleware
+  const headerList = await headers()
+  const pathname = headerList.get('x-pathname') || ''
+
+  // Mencegah akses silang peran (staf tidak bisa masuk URL admin, dokter tidak bisa ke staf, dsb)
+  if (pathname.startsWith('/dashboard/admin') && userData.role !== 'admin') {
+    const defaultHomes: Record<string, string> = {
+      staf: '/dashboard/staf/pendaftaran',
+      dokter: '/dashboard/dokter/antrian'
+    }
+    redirect(defaultHomes[userData.role] || '/login')
+  }
+
+  if (pathname.startsWith('/dashboard/staf') && userData.role !== 'staf') {
+    const defaultHomes: Record<string, string> = {
+      admin: '/dashboard/admin/users',
+      dokter: '/dashboard/dokter/antrian'
+    }
+    redirect(defaultHomes[userData.role] || '/login')
+  }
+
+  if (pathname.startsWith('/dashboard/dokter') && userData.role !== 'dokter') {
+    const defaultHomes: Record<string, string> = {
+      admin: '/dashboard/admin/users',
+      staf: '/dashboard/staf/pendaftaran'
+    }
+    redirect(defaultHomes[userData.role] || '/login')
   }
 
   return (

@@ -68,7 +68,7 @@ export interface ResepItem {
 // ---------------------------------------------------------------------------
 // 1. Get today's queue for logged-in doctor
 // ---------------------------------------------------------------------------
-export async function getAntrianDokter(): Promise<AntrianDokterItem[]> {
+export async function getAntrianDokter(tanggal?: string): Promise<AntrianDokterItem[]> {
   const supabase = await createClient()
 
   const {
@@ -76,7 +76,7 @@ export async function getAntrianDokter(): Promise<AntrianDokterItem[]> {
   } = await supabase.auth.getUser()
   if (!user) return []
 
-  const today = new Date().toISOString().split('T')[0]
+  const targetDate = tanggal || new Date().toISOString().split('T')[0]
 
   const { data } = await supabase
     .from('kunjungan')
@@ -93,7 +93,7 @@ export async function getAntrianDokter(): Promise<AntrianDokterItem[]> {
       pasien:pasien_id (nama, nrm, tanggal_lahir, jenis_kelamin, alergi_obat)
     `)
     .eq('dokter_id', user.id)
-    .eq('tanggal', today)
+    .eq('tanggal', targetDate)
     .order('jam_daftar', { ascending: true })
 
   if (!data) return []
@@ -418,6 +418,11 @@ export async function selesaikanKunjungan(input: {
   diagnosis_nama?: string
   terapi?: string
   catatan_medis?: string
+  // Vital signs
+  tensi_sistolik?: number
+  tensi_diastolik?: number
+  nadi?: number
+  suhu?: number
   // Resep
   resepItems: ResepItem[]
   // Pembayaran
@@ -447,6 +452,27 @@ export async function selesaikanKunjungan(input: {
   }
 
   try {
+    // 0. Verifikasi ketersediaan stok obat terlebih dahulu
+    for (const item of input.resepItems) {
+      if (item.obat_id) {
+        const { data: obatData } = await supabase
+          .from('obat')
+          .select('stok, nama')
+          .eq('id', item.obat_id)
+          .single()
+
+        if (obatData) {
+          const o = obatData as any
+          if (o.stok < item.jumlah) {
+            return { 
+              success: false, 
+              error: `Stok obat "${o.nama}" tidak mencukupi. Tersedia: ${o.stok}, Diminta: ${item.jumlah}.` 
+            }
+          }
+        }
+      }
+    }
+
     // 1. Save/update rekam medis
     await saveRekamMedis({
       kunjunganId: input.kunjunganId,
@@ -456,6 +482,10 @@ export async function selesaikanKunjungan(input: {
       diagnosis_nama: input.diagnosis_nama,
       terapi: input.terapi,
       catatan: input.catatan_medis,
+      tensi_sistolik: input.tensi_sistolik,
+      tensi_diastolik: input.tensi_diastolik,
+      nadi: input.nadi,
+      suhu: input.suhu,
     })
 
     // 2. Delete old resep & insert new

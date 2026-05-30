@@ -25,7 +25,18 @@ import { toast } from 'sonner'
 interface TabRekamMedisProps {
   kunjungan: KunjunganRow
   pasien: PasienRow
-  initialData: RekamMedisRow | null
+  initialData: {
+    anamnesis: string
+    pemeriksaan_fisik: string
+    diagnosis_kode: string
+    diagnosis_nama: string
+    terapi: string
+    catatan: string
+    tensi_sistolik?: string
+    tensi_diastolik?: string
+    nadi?: string
+    suhu?: string
+  } | null
   readOnly: boolean
   resepItems?: ResepItem[]
   onDataChange?: (data: {
@@ -35,6 +46,10 @@ interface TabRekamMedisProps {
     diagnosis_nama: string
     terapi: string
     catatan: string
+    tensi_sistolik: string
+    tensi_diastolik: string
+    nadi: string
+    suhu: string
   }) => void
 }
 
@@ -55,10 +70,10 @@ export function TabRekamMedis({
   const [catatan, setCatatan] = useState(initialData?.catatan ?? '')
 
   // Inline Vital Sign fields
-  const [tensiSistolik, setTensiSistolik] = useState<string>(kunjungan.tensi_sistolik ? String(kunjungan.tensi_sistolik) : '')
-  const [tensiDiastolik, setTensiDiastolik] = useState<string>(kunjungan.tensi_diastolik ? String(kunjungan.tensi_diastolik) : '')
-  const [nadi, setNadi] = useState<string>(kunjungan.nadi ? String(kunjungan.nadi) : '')
-  const [suhu, setSuhu] = useState<string>(kunjungan.suhu ? String(kunjungan.suhu) : '')
+  const [tensiSistolik, setTensiSistolik] = useState<string>(initialData?.tensi_sistolik ?? '')
+  const [tensiDiastolik, setTensiDiastolik] = useState<string>(initialData?.tensi_diastolik ?? '')
+  const [nadi, setNadi] = useState<string>(initialData?.nadi ?? '')
+  const [suhu, setSuhu] = useState<string>(initialData?.suhu ?? '')
 
   // Loading & Saving States
   const [saving, setSaving] = useState(false)
@@ -132,8 +147,24 @@ export function TabRekamMedis({
       diagnosis_nama: diagnosisNama,
       terapi,
       catatan,
+      tensi_sistolik: tensiSistolik,
+      tensi_diastolik: tensiDiastolik,
+      nadi,
+      suhu,
     })
-  }, [anamnesis, pemeriksaanFisik, diagnosisKode, diagnosisNama, terapi, catatan, onDataChange])
+  }, [
+    anamnesis,
+    pemeriksaanFisik,
+    diagnosisKode,
+    diagnosisNama,
+    terapi,
+    catatan,
+    tensiSistolik,
+    tensiDiastolik,
+    nadi,
+    suhu,
+    onDataChange
+  ])
 
   useEffect(() => {
     notifyParent()
@@ -142,7 +173,7 @@ export function TabRekamMedis({
   // Change handler to track dirty state
   function handleChange(setter: (v: string) => void, value: string) {
     setter(value)
-    isDirty.current = true
+    triggerDebouncedSave()
   }
 
   // Manual save function
@@ -177,44 +208,36 @@ export function TabRekamMedis({
     }
   }
 
-  // Auto-save draft every 30 seconds
+  const [isTyping, setIsTyping] = useState(false)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const latestDataRef = useRef({
+    anamnesis,
+    pemeriksaanFisik,
+    diagnosisKode,
+    diagnosisNama,
+    terapi,
+    catatan,
+    tensiSistolik,
+    tensiDiastolik,
+    nadi,
+    suhu,
+  })
+
+  // Sync latest data ref on changes
   useEffect(() => {
-    if (readOnly) return
-
-    const interval = setInterval(async () => {
-      if (!isDirty.current) return
-
-      setSaving(true)
-      try {
-        const result = await saveRekamMedis({
-          kunjunganId: kunjungan.id,
-          anamnesis: anamnesis || undefined,
-          pemeriksaan_fisik: pemeriksaanFisik || undefined,
-          diagnosis_kode: diagnosisKode || undefined,
-          diagnosis_nama: diagnosisNama || undefined,
-          terapi: terapi || undefined,
-          catatan: catatan || undefined,
-          tensi_sistolik: tensiSistolik ? Number(tensiSistolik) : null,
-          tensi_diastolik: tensiDiastolik ? Number(tensiDiastolik) : null,
-          nadi: nadi ? Number(nadi) : null,
-          suhu: suhu ? Number(suhu) : null,
-        })
-
-        if (result.success) {
-          isDirty.current = false
-          setLastSaved(new Date())
-        }
-      } catch {
-        // Silent fail for auto-save
-      } finally {
-        setSaving(false)
-      }
-    }, 30000)
-
-    return () => clearInterval(interval)
+    latestDataRef.current = {
+      anamnesis,
+      pemeriksaanFisik: pemeriksaanFisik,
+      diagnosisKode: diagnosisKode,
+      diagnosisNama: diagnosisNama,
+      terapi: terapi,
+      catatan: catatan,
+      tensiSistolik: tensiSistolik,
+      tensiDiastolik: tensiDiastolik,
+      nadi: nadi,
+      suhu: suhu,
+    }
   }, [
-    readOnly,
-    kunjungan.id,
     anamnesis,
     pemeriksaanFisik,
     diagnosisKode,
@@ -227,12 +250,83 @@ export function TabRekamMedis({
     suhu,
   ])
 
+  // Core background server-save function
+  const saveDataToServer = useCallback(async (currentData: typeof latestDataRef.current) => {
+    setSaving(true)
+    setIsTyping(false)
+    try {
+      const result = await saveRekamMedis({
+        kunjunganId: kunjungan.id,
+        anamnesis: currentData.anamnesis || undefined,
+        pemeriksaan_fisik: currentData.pemeriksaanFisik || undefined,
+        diagnosis_kode: currentData.diagnosisKode || undefined,
+        diagnosis_nama: currentData.diagnosisNama || undefined,
+        terapi: currentData.terapi || undefined,
+        catatan: currentData.catatan || undefined,
+        tensi_sistolik: currentData.tensiSistolik ? Number(currentData.tensiSistolik) : null,
+        tensi_diastolik: currentData.tensiDiastolik ? Number(currentData.tensiDiastolik) : null,
+        nadi: currentData.nadi ? Number(currentData.nadi) : null,
+        suhu: currentData.suhu ? Number(currentData.suhu) : null,
+      })
+
+      if (result.success) {
+        isDirty.current = false
+        setLastSaved(new Date())
+      }
+    } catch (err) {
+      console.error('Auto-save failed:', err)
+    } finally {
+      setSaving(false)
+    }
+  }, [kunjungan.id])
+
+  // Trigger 2-second debounced save on type
+  const triggerDebouncedSave = useCallback(() => {
+    if (readOnly) return
+
+    isDirty.current = true
+    setIsTyping(true)
+
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      saveDataToServer(latestDataRef.current)
+    }, 2000)
+  }, [readOnly, saveDataToServer])
+
+  // Save instantly on unmount if component has unsaved dirty changes
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+
+      if (isDirty.current && !readOnly) {
+        const d = latestDataRef.current
+        saveRekamMedis({
+          kunjunganId: kunjungan.id,
+          anamnesis: d.anamnesis || undefined,
+          pemeriksaan_fisik: d.pemeriksaanFisik || undefined,
+          diagnosis_kode: d.diagnosisKode || undefined,
+          diagnosis_nama: d.diagnosisNama || undefined,
+          terapi: d.terapi || undefined,
+          catatan: d.catatan || undefined,
+          tensi_sistolik: d.tensiSistolik ? Number(d.tensiSistolik) : null,
+          tensi_diastolik: d.tensiDiastolik ? Number(d.tensiDiastolik) : null,
+          nadi: d.nadi ? Number(d.nadi) : null,
+          suhu: d.suhu ? Number(d.suhu) : null,
+        }).catch((err) => console.error('Save on unmount failed:', err))
+      }
+    }
+  }, [kunjungan.id, readOnly])
+
   function formatLastSaved(): string {
     if (!lastSaved) return ''
     return lastSaved.toLocaleTimeString('id-ID', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
     })
   }
 
@@ -242,19 +336,24 @@ export function TabRekamMedis({
       {!readOnly && (
         <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-2.5 px-4 text-xs">
           <div className="flex items-center gap-2">
-            {saving ? (
-              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border border-blue-200">
+            {isTyping ? (
+              <Badge className="bg-sky-50 text-sky-700 hover:bg-sky-50 border border-sky-200">
+                <Loader2 className="h-3 w-3 mr-1 animate-pulse" />
+                Sedang mengetik...
+              </Badge>
+            ) : saving ? (
+              <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-50 border border-blue-200">
                 <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                 Menyimpan draf...
               </Badge>
             ) : lastSaved ? (
-              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border border-emerald-200">
+              <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
-                Draft tersimpan {formatLastSaved()}
+                Draf tersimpan otomatis pukul {formatLastSaved()} WIB
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-gray-500 border-gray-200">
-                Auto-save aktif (Tiap 30 detik)
+              <Badge variant="outline" className="text-gray-400 border-gray-200">
+                Auto-save aktif (2 detik jeda ketik)
               </Badge>
             )}
           </div>

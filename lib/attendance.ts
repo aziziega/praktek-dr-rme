@@ -13,8 +13,8 @@ export function initAttendanceTracking(): () => void {
 
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
+  } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
       try {
         const today = new Date().toISOString().split('T')[0]
 

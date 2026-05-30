@@ -278,3 +278,209 @@ export async function importPasien(data: { nrm: number; nama: string; tanggal_la
     detail: { nrm: data.nrm, nama: data.nama },
   })
 }
+
+// ---------------------------------------------------------------------------
+// 4. ADMIN MONITORING (ATTENDANCE & ACTIVITY LOGS)
+// ---------------------------------------------------------------------------
+
+export async function getAllUsers() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data, error } = await (supabase.from('users') as any)
+    .select('id, nama, role, email, aktif')
+    .order('nama', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function getAttendanceLogs(filters: {
+  startDate?: string
+  endDate?: string
+  userId?: string
+  role?: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  let query = supabase
+    .from('attendance_logs')
+    .select(`
+      *,
+      users:user_id (
+        nama,
+        role
+      )
+    `)
+
+  if (filters.startDate) {
+    query = query.gte('tanggal', filters.startDate)
+  }
+  if (filters.endDate) {
+    query = query.lte('tanggal', filters.endDate)
+  }
+  if (filters.userId) {
+    query = query.eq('user_id', filters.userId)
+  }
+
+  const { data, error } = await query
+    .order('tanggal', { ascending: false })
+    .order('jam_masuk', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  let filteredData = data || []
+  if (filters.role) {
+    filteredData = filteredData.filter((log: any) => log.users?.role === filters.role)
+  }
+
+  return filteredData
+}
+
+export async function getActivityLogs(filters: {
+  startDate?: string
+  endDate?: string
+  userId?: string
+  aksi?: string[]
+}, page = 1, limit = 50) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  let query = supabase
+    .from('activity_logs')
+    .select(`
+      *,
+      users:user_id (
+        nama,
+        role
+      )
+    `, { count: 'exact' })
+
+  if (filters.startDate) {
+    query = query.gte('created_at', `${filters.startDate}T00:00:00.000Z`)
+  }
+  if (filters.endDate) {
+    query = query.lte('created_at', `${filters.endDate}T23:59:59.999Z`)
+  }
+  if (filters.userId) {
+    query = query.eq('user_id', filters.userId)
+  }
+  if (filters.aksi && filters.aksi.length > 0) {
+    query = query.in('aksi', filters.aksi)
+  }
+
+  const from = (page - 1) * limit
+  const to = from + limit - 1
+
+  query = query
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  const { data, error, count } = await query
+
+  if (error) throw new Error(error.message)
+
+  return {
+    data: data || [],
+    count: count || 0,
+    page,
+    totalPages: Math.ceil((count || 0) / limit),
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 5. SERVER-SIDE READ ACTIONS FOR STUCK SKELETON RESOLUTION
+// ---------------------------------------------------------------------------
+
+export async function getAdminUsers() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const { data, error } = await (supabase.from('users') as any)
+    .select('id, email, nama, role, aktif, created_at')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function getAdminPasien(search?: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  let query = supabase.from('pasien').select('*').order('nrm', { ascending: true }).limit(50)
+
+  if (search) {
+    const isNumeric = /^\d+$/.test(search)
+    if (isNumeric) {
+      query = query.or(`nrm.eq.${parseInt(search, 10)},nama.ilike.%${search}%`)
+    } else {
+      query = query.ilike('nama', `%${search}%`)
+    }
+  }
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function getRiwayatKunjunganPasien(pasienId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const { data, error } = await supabase
+    .from('kunjungan')
+    .select(`
+      *,
+      rekam_medis (*),
+      dokter:users!kunjungan_dokter_id_fkey(nama)
+    `)
+    .eq('pasien_id', pasienId)
+    .order('jam_daftar', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function getAdminObat() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const { data, error } = await (supabase.from('obat') as any)
+    .select('*')
+    .order('nama', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+

@@ -11,6 +11,8 @@ const ROLE_REDIRECTS: Record<UserRole, string> = {
 }
 
 export async function proxy(request: NextRequest) {
+  request.headers.set('x-pathname', request.nextUrl.pathname)
+
   let supabaseResponse = NextResponse.next({
     request,
   })

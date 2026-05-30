@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { updatePasien, importPasien } from '@/app/actions/admin'
+import { getAdminPasien, getRiwayatKunjunganPasien, updatePasien, importPasien } from '@/app/actions/admin'
 import type { PasienRow, KunjunganRow, RekamMedisRow } from '@/types/database'
 
 import { Button } from '@/components/ui/button'
@@ -89,7 +88,7 @@ export default function AdminPasienPage() {
     alergi_obat: ''
   })
 
-  const supabase = createClient()
+  const [debugError, setDebugError] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -104,43 +103,33 @@ export default function AdminPasienPage() {
 
   async function fetchPasien() {
     setLoading(true)
-    let query = supabase.from('pasien').select('*').order('nrm', { ascending: true }).limit(50)
-
-    if (debouncedSearch) {
-      const isNumeric = /^\d+$/.test(debouncedSearch)
-      if (isNumeric) {
-        query = query.or(`nrm.eq.${parseInt(debouncedSearch, 10)},nama.ilike.%${debouncedSearch}%`)
-      } else {
-        query = query.ilike('nama', `%${debouncedSearch}%`)
-      }
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      toast.error('Gagal memuat data pasien')
-    } else {
+    setDebugError(null)
+    try {
+      const data = await getAdminPasien(debouncedSearch)
       setPasien(data as PasienRow[])
+    } catch (err: any) {
+      console.error('[AdminPasien] fetch error:', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      const stack = err instanceof Error ? err.stack : 'No stack trace'
+      setDebugError(`Server Action Exception (Pasien): ${msg}\nStack: ${stack}`)
+      toast.error('Terjadi kesalahan memuat data pasien: ' + msg)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   async function fetchRiwayatKunjungan(pasienId: string) {
     setLoadingRiwayat(true)
-    const { data, error } = await supabase
-      .from('kunjungan')
-      .select(`
-        *,
-        rekam_medis (*),
-        dokter:users!kunjungan_dokter_id_fkey(nama)
-      `)
-      .eq('pasien_id', pasienId)
-      .order('jam_daftar', { ascending: false })
-
-    if (!error) {
+    try {
+      const data = await getRiwayatKunjunganPasien(pasienId)
       setRiwayat(data as any)
+    } catch (err: any) {
+      console.error('[AdminPasien] fetchRiwayat error:', err)
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error('Gagal mengambil riwayat kunjungan: ' + msg)
+    } finally {
+      setLoadingRiwayat(false)
     }
-    setLoadingRiwayat(false)
   }
 
   const handleRowClick = (p: PasienRow) => {
@@ -315,6 +304,16 @@ export default function AdminPasienPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {debugError && (
+        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+            <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
+            Diagnostik Kesalahan (Gagal Load Data):
+          </p>
+          {debugError}
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
