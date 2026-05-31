@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { searchObat, getResepKunjungan, type ResepItem } from '@/app/actions/dokter'
+import { searchObat, getResepKunjungan, getAllActiveObat, type ResepItem } from '@/app/actions/dokter'
 import type { ObatRow } from '@/types/database'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,12 +18,21 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import {
   Search,
   Plus,
   Trash2,
   AlertTriangle,
   Pill,
   Package,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react'
 
 interface TabResepObatProps {
@@ -41,13 +51,14 @@ export function TabResepObat({
   onItemsChange,
 }: TabResepObatProps) {
   const [items, setItems] = useState<LocalResepItem[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<ObatRow[]>([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [showResults, setShowResults] = useState(false)
+  
+  // Modal states
+  const [modalOpen, setModalOpen] = useState(false)
+  const [allObat, setAllObat] = useState<ObatRow[]>([])
+  const [loadingAllObat, setLoadingAllObat] = useState(false)
+  const [modalSearchQuery, setModalSearchQuery] = useState('')
+
   const [loaded, setLoaded] = useState(false)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const searchRef = useRef<HTMLDivElement>(null)
   const keyCounter = useRef(0)
 
   function newKey() {
@@ -81,6 +92,26 @@ export function TabResepObat({
     load()
   }, [kunjunganId, readOnly])
 
+  // Fetch all active drugs for the picker modal
+  const fetchAllObat = useCallback(async () => {
+    setLoadingAllObat(true)
+    try {
+      const data = await getAllActiveObat()
+      setAllObat(data)
+    } catch {
+      toast.error('Gagal mengambil katalog obat master.')
+    } finally {
+      setLoadingAllObat(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (modalOpen) {
+      fetchAllObat()
+      setModalSearchQuery('')
+    }
+  }, [modalOpen, fetchAllObat])
+
   // Notify parent on items change & save to sessionStorage
   const notifyParent = useCallback(() => {
     const total = items.reduce(
@@ -100,54 +131,40 @@ export function TabResepObat({
     if (loaded) notifyParent()
   }, [loaded, notifyParent])
 
-  // Search obat with debounce
-  function handleSearchChange(value: string) {
-    setSearchQuery(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-
-    if (value.trim().length < 2) {
-      setSearchResults([])
-      setShowResults(false)
+  function addObatFromMaster(obat: ObatRow) {
+    if (obat.stok <= 0) {
+      toast.error(`Stok obat "${obat.nama}" habis! Tidak dapat ditambahkan ke resep.`)
       return
     }
 
-    debounceRef.current = setTimeout(async () => {
-      setSearchLoading(true)
-      try {
-        const data = await searchObat(value)
-        setSearchResults(data)
-        setShowResults(true)
-      } catch {
-        setSearchResults([])
-      } finally {
-        setSearchLoading(false)
-      }
-    }, 300)
-  }
+    const existingIndex = items.findIndex((item) => item.obat_id === obat.id)
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowResults(false)
+    if (existingIndex > -1) {
+      const currentQty = items[existingIndex].jumlah
+      if (currentQty >= obat.stok) {
+        toast.error(`Jumlah resep melebihi stok yang tersedia (${obat.stok} ${obat.satuan})`)
+        return
       }
+      setItems((prev) =>
+        prev.map((item, idx) =>
+          idx === existingIndex ? { ...item, jumlah: item.jumlah + 1 } : item
+        )
+      )
+      toast.success(`Jumlah resep untuk "${obat.nama}" ditingkatkan menjadi ${currentQty + 1}`)
+    } else {
+      const newItem: LocalResepItem = {
+        _key: newKey(),
+        obat_id: obat.id,
+        nama_obat: obat.nama,
+        dosis: '3x1', // standard default dosage suggestion
+        jumlah: 1,
+        harga_satuan: Number(obat.harga_jual),
+      }
+      setItems((prev) => [...prev, newItem])
+      toast.success(`Obat "${obat.nama}" ditambahkan ke resep.`)
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
 
-  function addObatFromMaster(obat: ObatRow) {
-    const newItem: LocalResepItem = {
-      _key: newKey(),
-      obat_id: obat.id,
-      nama_obat: obat.nama,
-      dosis: '',
-      jumlah: 1,
-      harga_satuan: Number(obat.harga_jual),
-    }
-    setItems((prev) => [...prev, newItem])
-    setSearchQuery('')
-    setShowResults(false)
+    setModalOpen(false)
   }
 
   function addObatManual() {
@@ -155,11 +172,12 @@ export function TabResepObat({
       _key: newKey(),
       obat_id: null,
       nama_obat: '',
-      dosis: '',
+      dosis: '3x1',
       jumlah: 1,
       harga_satuan: 0,
     }
     setItems((prev) => [...prev, newItem])
+    toast.success('Kolom obat manual baru ditambahkan.')
   }
 
   function updateItem(key: string, field: keyof ResepItem, value: string | number | null) {
@@ -188,91 +206,136 @@ export function TabResepObat({
     }).format(value)
   }
 
+  // Local filtering inside the modal
+  const filteredObat = allObat.filter((obat) =>
+    obat.nama.toLowerCase().includes(modalSearchQuery.toLowerCase())
+  )
+
   return (
+
     <div className="space-y-5">
-      {/* Search Obat */}
+      {/* Action Buttons */}
       {!readOnly && (
-        <div className="space-y-3">
-          <div ref={searchRef} className="relative">
-            <Label className="text-sm font-semibold flex items-center gap-2 mb-2">
-              <Pill className="h-4 w-4 text-sky-500" />
-              Cari Obat dari Master
-            </Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Ketik nama obat (min 2 karakter)..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {/* Search Results Dropdown */}
-            {showResults && searchResults.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {searchResults.map((obat) => (
-                  <button
-                    key={obat.id}
-                    type="button"
-                    className="w-full text-left px-3 py-2.5 hover:bg-sky-50 transition-colors border-b border-gray-50 last:border-b-0"
-                    onClick={() => addObatFromMaster(obat)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {obat.nama}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {obat.satuan} · {formatCurrency(Number(obat.harga_jual))}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {obat.stok < 5 && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] bg-amber-50 text-amber-700 border-amber-200"
-                          >
-                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                            Stok {obat.stok}
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className="text-[10px]">
-                          <Package className="h-2.5 w-2.5 mr-0.5" />
-                          {obat.stok}
-                        </Badge>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {showResults && searchResults.length === 0 && !searchLoading && (
-              <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 text-center text-xs text-gray-500">
-                Obat tidak ditemukan di master.
-              </div>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex items-center gap-2 border-[#EADFC9] hover:bg-[#FAF9F6] text-amber-900 border font-medium h-9 text-xs transition-colors shadow-sm bg-[#FAF9F6]/50"
+            onClick={() => setModalOpen(true)}
+          >
+            <Pill className="h-4 w-4 text-sky-500" />
+            Pilih Obat dari Master Catalog
+          </Button>
 
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onClick={addObatManual}
-            className="text-xs"
+            className="flex items-center gap-1.5 h-9 text-xs font-medium transition-colors shadow-sm"
           >
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Tambah Obat Manual
+            <Plus className="h-3.5 w-3.5 mr-0.5 text-gray-500" />
+            Tambah Obat Manual (Racikan)
           </Button>
         </div>
       )}
 
+      {/* Catalog Dialog Picker Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col p-6 rounded-2xl border-[#EADFC9] bg-[#FAF9F6]">
+          <DialogHeader className="pb-3 border-b border-[#EADFC9]">
+            <DialogTitle className="flex items-center gap-2 text-amber-900 font-bold text-lg">
+              <Pill className="h-5 w-5 text-sky-600" />
+              Katalog Master Obat
+            </DialogTitle>
+            <DialogDescription className="text-gray-500 text-xs mt-1">
+              Pilih obat dari master catalog untuk langsung dimasukkan ke resep pasien.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Search Inside Modal */}
+          <div className="relative mt-4">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Cari berdasarkan nama atau kode obat..."
+              value={modalSearchQuery}
+              onChange={(e) => setModalSearchQuery(e.target.value)}
+              className="pl-10 h-10 text-sm bg-white border-gray-200 focus-visible:ring-sky-500 rounded-xl"
+            />
+          </div>
+
+          {/* List Wrapper */}
+          <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2 max-h-[45vh]">
+            {loadingAllObat ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                <Loader2 className="h-8 w-8 animate-spin text-sky-500 mb-2" />
+                <p className="text-xs">Memuat katalog obat...</p>
+              </div>
+            ) : filteredObat.length > 0 ? (
+              filteredObat.map((obat) => {
+                const isOutOfStock = obat.stok <= 0
+                const isLowStock = obat.stok > 0 && obat.stok < 5
+                
+                return (
+                  <button
+                    key={obat.id}
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={() => addObatFromMaster(obat)}
+                    className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
+                      isOutOfStock
+                        ? 'bg-gray-50 border-gray-100 opacity-60 cursor-not-allowed'
+                        : 'bg-white border-gray-200 hover:border-sky-300 hover:shadow-xs active:scale-[0.99]'
+                    }`}
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-gray-900 truncate">
+                          {obat.nama}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Harga Jual: <span className="font-semibold text-gray-700">{formatCurrency(Number(obat.harga_jual))}</span> per {obat.satuan}
+                      </p>
+
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {isOutOfStock ? (
+                        <Badge className="bg-red-50 text-red-700 border-red-200 border text-[10px] py-0.5 px-2">
+                          Habis
+                        </Badge>
+                      ) : isLowStock ? (
+                        <Badge className="bg-amber-50 text-amber-700 border-amber-200 border text-[10px] py-0.5 px-2 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3 text-amber-500" />
+                          Stok {obat.stok}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 border text-[10px] py-0.5 px-2 flex items-center gap-1">
+                          <Package className="h-3 w-3 text-emerald-500" />
+                          Stok {obat.stok}
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+                )
+              })
+            ) : (
+              <div className="text-center py-12 text-gray-400 border border-dashed border-gray-200 rounded-2xl bg-white/50">
+                <Pill className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">Tidak ada obat yang cocok.</p>
+                <p className="text-xs mt-1">Gunakan kata kunci pencarian yang lain.</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Resep Table */}
       {items.length > 0 ? (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-xs bg-white">
           <Table>
             <TableHeader>
+
               <TableRow className="bg-gray-50/80">
                 <TableHead className="w-[30%]">Nama Obat</TableHead>
                 <TableHead className="w-[15%]">

@@ -4,12 +4,21 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { saveRekamMedis, getRiwayatKunjungan, type RiwayatItem } from '@/app/actions/dokter'
 import type { KunjunganRow, PasienRow, RekamMedisRow } from '@/types/database'
 import type { ResepItem } from '@/app/actions/dokter'
+import { updateAlergiObat } from '@/app/actions/staf'
 
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Save,
   Loader2,
@@ -18,7 +27,8 @@ import {
   Thermometer,
   Heart,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Pencil
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -74,6 +84,30 @@ export function TabRekamMedis({
   const [tensiDiastolik, setTensiDiastolik] = useState<string>(initialData?.tensi_diastolik ?? '')
   const [nadi, setNadi] = useState<string>(initialData?.nadi ?? '')
   const [suhu, setSuhu] = useState<string>(initialData?.suhu ?? '')
+
+  // Alergi Obat states
+  const [alergiObatState, setAlergiObatState] = useState(pasien.alergi_obat ?? '')
+  const [isAlergiOpen, setIsAlergiOpen] = useState(false)
+  const [tempAlergi, setTempAlergi] = useState(pasien.alergi_obat ?? '')
+  const [savingAlergi, setSavingAlergi] = useState(false)
+
+  async function handleSaveAlergi() {
+    setSavingAlergi(true)
+    try {
+      const result = await updateAlergiObat(pasien.id, tempAlergi)
+      if (result.success) {
+        setAlergiObatState(tempAlergi.trim())
+        setIsAlergiOpen(false)
+        toast.success('Data alergi obat pasien berhasil diperbarui')
+      } else {
+        toast.error(result.error ?? 'Gagal memperbarui alergi obat')
+      }
+    } catch {
+      toast.error('Terjadi kesalahan')
+    } finally {
+      setSavingAlergi(false)
+    }
+  }
 
   // Loading & Saving States
   const [saving, setSaving] = useState(false)
@@ -434,13 +468,24 @@ export function TabRekamMedis({
             <div className="flex items-end gap-2">
               <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Alergi Obat</span>
               <span className="text-gray-400">:</span>
-              <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all ${pasien.alergi_obat ? 'text-red-600 border-red-300' : 'text-blue-900'}`}>
-                {pasien.alergi_obat ? (
-                  <span className="flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3 inline" />
-                    {pasien.alergi_obat}
-                  </span>
-                ) : '-'}
+              <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all flex items-center justify-between ${alergiObatState ? 'text-red-600 border-red-300' : 'text-blue-900'}`}>
+                <span className="flex items-center gap-1">
+                  {alergiObatState ? <AlertTriangle className="h-3.5 w-3.5 text-red-500 inline shrink-0" /> : null}
+                  {alergiObatState || '-'}
+                </span>
+                {!readOnly && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 p-0 hover:bg-gray-250 text-sky-600 rounded ml-1"
+                    onClick={() => {
+                      setTempAlergi(alergiObatState)
+                      setIsAlergiOpen(true)
+                    }}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
               </span>
             </div>
 
@@ -721,6 +766,53 @@ export function TabRekamMedis({
         )}
 
       </div>
+
+      {/* Modal Kelola Alergi Obat */}
+      <Dialog open={isAlergiOpen} onOpenChange={setIsAlergiOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Kelola Alergi Obat</DialogTitle>
+            <DialogDescription>
+              Masukkan keterangan alergi obat pasien {pasien.nama}. Kosongkan jika tidak ada alergi.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="input-alergi-dokter">Daftar Alergi Obat</Label>
+              <Input
+                id="input-alergi-dokter"
+                placeholder="Contoh: Penisilin, Sulfa, dll."
+                value={tempAlergi}
+                onChange={(e) => setTempAlergi(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAlergiOpen(false)}
+              disabled={savingAlergi}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleSaveAlergi}
+              disabled={savingAlergi}
+              className="bg-sky-500 hover:bg-sky-600 text-white"
+            >
+              {savingAlergi ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                'Simpan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

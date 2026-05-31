@@ -16,7 +16,7 @@ export function initAttendanceTracking(): () => void {
   } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
     if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
       try {
-        const today = new Date().toISOString().split('T')[0]
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
         // Check if attendance record already exists for today
         const { data: existing } = await supabase
@@ -46,7 +46,7 @@ export function initAttendanceTracking(): () => void {
         // On SIGNED_OUT, session may be null in newer Supabase versions,
         // so we need to handle this gracefully.
         if (session?.user?.id) {
-          const today = new Date().toISOString().split('T')[0]
+          const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
           await (supabase.from('attendance_logs') as any)
             .update({ jam_keluar: new Date().toISOString() })

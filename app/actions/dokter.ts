@@ -77,7 +77,7 @@ export async function getAntrianDokter(tanggal?: string): Promise<AntrianDokterI
   } = await supabase.auth.getUser()
   if (!user) return []
 
-  const targetDate = tanggal || new Date().toISOString().split('T')[0]
+  const targetDate = tanggal || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   const { data } = await supabase
     .from('kunjungan')
@@ -382,6 +382,21 @@ export async function searchObat(query: string): Promise<ObatRow[]> {
   return (data as ObatRow[]) ?? []
 }
 
+export async function getAllActiveObat(): Promise<ObatRow[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data } = await supabase
+    .from('obat')
+    .select('*')
+    .eq('aktif', true)
+    .order('nama', { ascending: true })
+
+  return (data as ObatRow[]) ?? []
+}
+
+
 // ---------------------------------------------------------------------------
 // 7. Get existing resep for a kunjungan
 // ---------------------------------------------------------------------------
@@ -554,7 +569,7 @@ export async function selesaikanKunjungan(input: {
       .eq('id', input.kunjunganId)
 
     // 7. Update attendance: jumlah_pasien_ditangani + 1
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
     const { data: attendanceData } = await supabase
       .from('attendance_logs')
       .select('id, jumlah_pasien_ditangani')

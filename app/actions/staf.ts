@@ -167,7 +167,7 @@ export async function createKunjungan(input: {
     pasien_id: input.pasien_id,
     dokter_id: input.dokter_id,
     staf_id: user.id,
-    tanggal: new Date().toISOString().split('T')[0],
+    tanggal: new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }),
     tensi_sistolik: input.tensi_sistolik ?? null,
     tensi_diastolik: input.tensi_diastolik ?? null,
     nadi: input.nadi ?? null,
@@ -219,11 +219,12 @@ export interface AntrianItem {
 }
 
 export async function getAntrianHariIni(
-  dokterId?: string
+  dokterId?: string,
+  tanggal?: string
 ): Promise<AntrianItem[]> {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
-
+  const targetDate = tanggal || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+ 
   let query = supabase
     .from('kunjungan')
     .select(`
@@ -234,7 +235,7 @@ export async function getAntrianHariIni(
       pasien:pasien_id (nama, nrm),
       dokter:dokter_id (nama)
     `)
-    .eq('tanggal', today)
+    .eq('tanggal', targetDate)
     .order('jam_daftar', { ascending: true })
 
   if (dokterId) {
@@ -268,7 +269,7 @@ export interface PendaftaranStats {
 
 export async function getPendaftaranStats(): Promise<PendaftaranStats> {
   const supabase = await createClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   // Get all visits for today
   const { data: visits, error } = await supabase
@@ -287,7 +288,7 @@ export async function getPendaftaranStats(): Promise<PendaftaranStats> {
 
   visits.forEach((v: any) => {
     if (v.pasien?.created_at) {
-      const createdDate = new Date(v.pasien.created_at).toISOString().split('T')[0]
+      const createdDate = new Date(v.pasien.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
       if (createdDate === today) {
         baru++
       } else {

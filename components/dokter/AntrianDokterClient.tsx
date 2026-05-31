@@ -62,11 +62,8 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
 
-  // Get local timezone-safe date string YYYY-MM-DD
-  const todayStr = (() => {
-    const tzoffset = new Date().getTimezoneOffset() * 60000
-    return new Date(Date.now() - tzoffset).toISOString().split('T')[0]
-  })()
+  // Get local timezone-safe date string YYYY-MM-DD (Asia/Jakarta)
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
 

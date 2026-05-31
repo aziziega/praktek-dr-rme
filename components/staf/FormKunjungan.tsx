@@ -207,6 +207,102 @@ export function FormKunjungan({
   const [tempAlergi, setTempAlergi] = useState(pasien.alergi_obat ?? '')
   const [savingAlergi, setSavingAlergi] = useState(false)
 
+  // Vital signs validation modal states
+  const [isVitalsWarningOpen, setIsVitalsWarningOpen] = useState(false)
+  const [vitalsAnomalies, setVitalsAnomalies] = useState<{ field: string; val: string; msg: string; isExtreme: boolean }[]>([])
+
+  function checkVitalsAnomalies() {
+    const anomalies: { field: string; val: string; msg: string; isExtreme: boolean }[] = []
+    
+    const sys = tensiSistolik ? parseInt(tensiSistolik, 10) : null
+    const dias = tensiDiastolik ? parseInt(tensiDiastolik, 10) : null
+    const hr = nadi ? parseInt(nadi, 10) : null
+    
+    // Normalize Indonesian comma decimals to dots
+    const normalizedSuhu = suhu ? suhu.replace(',', '.') : ''
+    const temp = normalizedSuhu ? parseFloat(normalizedSuhu) : null
+
+    // 1. Blood Pressure Sistolik
+    if (sys !== null) {
+      if (sys < 50 || sys > 250) {
+        anomalies.push({
+          field: 'Tekanan Darah Sistolik',
+          val: `${sys} mmHg`,
+          msg: 'Nilai sangat ekstrem di luar batas fisiologis wajar (Kemungkinan besar salah ketik/typo).',
+          isExtreme: true
+        })
+      } else if (sys < 90 || sys >= 140) {
+        anomalies.push({
+          field: 'Tekanan Darah Sistolik',
+          val: `${sys} mmHg`,
+          msg: sys < 90 ? 'Mendekati kondisi Hipotensi (Rendah).' : 'Mendekati kondisi Hipertensi (Tinggi).',
+          isExtreme: false
+        })
+      }
+    }
+
+    // 2. Blood Pressure Diastolik
+    if (dias !== null) {
+      if (dias < 30 || dias > 150) {
+        anomalies.push({
+          field: 'Tekanan Darah Diastolik',
+          val: `${dias} mmHg`,
+          msg: 'Nilai sangat ekstrem di luar batas fisiologis wajar (Kemungkinan besar salah ketik/typo).',
+          isExtreme: true
+        })
+      } else if (dias < 60 || dias >= 90) {
+        anomalies.push({
+          field: 'Tekanan Darah Diastolik',
+          val: `${dias} mmHg`,
+          msg: dias < 60 ? 'Mendekati kondisi Diastolik Rendah.' : 'Mendekati kondisi Diastolik Tinggi.',
+          isExtreme: false
+        })
+      }
+    }
+
+    // 3. Heart Rate (Nadi)
+    if (hr !== null) {
+      if (hr < 30 || hr > 220) {
+        anomalies.push({
+          field: 'Denyut Nadi',
+          val: `${hr} bpm`,
+          msg: 'Nilai denyut nadi sangat ekstrem (Kemungkinan besar salah ketik/typo).',
+          isExtreme: true
+        })
+      } else if (hr < 50 || hr > 110) {
+        anomalies.push({
+          field: 'Denyut Nadi',
+          val: `${hr} bpm`,
+          msg: hr < 50 ? 'Denyut nadi lambat (Kecenderungan Bradikardia).' : 'Denyut nadi cepat (Kecenderungan Takikardia).',
+          isExtreme: false
+        })
+      }
+    }
+
+    // 4. Temperature (Suhu)
+    if (temp !== null) {
+      if (temp < 30.0 || temp > 43.0) {
+        anomalies.push({
+          field: 'Suhu Tubuh',
+          val: `${temp} °C`,
+          msg: temp >= 100 
+            ? 'Nilai suhu terlampau tinggi. Apakah Anda lupa menuliskan koma desimal? (contoh: ketik 36.5 atau 36,5)' 
+            : 'Nilai suhu tubuh sangat ekstrem (Kemungkinan besar salah ketik/typo).',
+          isExtreme: true
+        })
+      } else if (temp < 35.0 || temp >= 38.0) {
+        anomalies.push({
+          field: 'Suhu Tubuh',
+          val: `${temp} °C`,
+          msg: temp < 35.0 ? 'Kondisi Hipotermia (Suhu Tubuh Terlalu Rendah).' : 'Kondisi Demam / Febris (Suhu Tinggi).',
+          isExtreme: false
+        })
+      }
+    }
+
+    return anomalies
+  }
+
   async function handleSaveAlergi() {
     setSavingAlergi(true)
     try {
@@ -248,7 +344,19 @@ export function FormKunjungan({
       return
     }
 
+    const anomalies = checkVitalsAnomalies()
+    if (anomalies.length > 0) {
+      setVitalsAnomalies(anomalies)
+      setIsVitalsWarningOpen(true)
+      return
+    }
+
+    await executeSubmit()
+  }
+
+  async function executeSubmit() {
     setSaving(true)
+    setIsVitalsWarningOpen(false)
 
     try {
       const result = await createKunjungan({
@@ -259,7 +367,8 @@ export function FormKunjungan({
           ? parseInt(tensiDiastolik, 10)
           : undefined,
         nadi: nadi ? parseInt(nadi, 10) : undefined,
-        suhu: suhu ? parseFloat(suhu) : undefined,
+        // Support Indonesian comma separators as dots
+        suhu: suhu ? parseFloat(suhu.replace(',', '.')) : undefined,
         keluhan_utama: keluhanUtama.trim() || undefined,
       })
 
@@ -804,6 +913,73 @@ export function FormKunjungan({
                 </>
               ) : (
                 'Simpan'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Peringatan Vital Signs Ekstrem / Tidak Normal */}
+      <Dialog open={isVitalsWarningOpen} onOpenChange={setIsVitalsWarningOpen}>
+        <DialogContent className="sm:max-w-[480px] p-6 rounded-2xl border-amber-200">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="flex items-center gap-2 text-amber-700 font-bold text-lg">
+              <AlertTriangle className="h-5.5 w-5.5 text-amber-500 animate-bounce" />
+              Peringatan Nilai Tanda Vital
+            </DialogTitle>
+            <DialogDescription className="text-gray-500 text-xs leading-relaxed">
+              Sistem mendeteksi beberapa nilai tanda vital berada di luar batas normal atau sangat ekstrem. Silakan tinjau kembali untuk menghindari kesalahan ketik (*typo*).
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* List of Anomalies */}
+          <div className="space-y-3 my-4 bg-amber-55/30 border border-amber-100/70 rounded-xl p-4 max-h-[250px] overflow-y-auto">
+            {vitalsAnomalies.map((anom, idx) => (
+              <div key={idx} className="flex gap-2.5 items-start text-xs border-b border-amber-100/50 pb-2.5 last:border-0 last:pb-0">
+                {anom.isExtreme ? (
+                  <span className="w-5 h-5 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-[10px] shrink-0">
+                    ❌
+                  </span>
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-[10px] shrink-0">
+                    ⚠️
+                  </span>
+                )}
+                <div className="space-y-0.5">
+                  <div className="font-bold text-gray-800">
+                    {anom.field}: <span className={anom.isExtreme ? 'text-red-600 font-extrabold select-all' : 'text-amber-700 font-extrabold select-all'}>{anom.val}</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+                    {anom.msg}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsVitalsWarningOpen(false)}
+              className="w-full sm:w-auto border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 bg-white"
+            >
+              Perbaiki Inputan
+            </Button>
+            <Button
+              onClick={executeSubmit}
+              disabled={saving}
+              className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold shadow-md shadow-amber-500/10 gap-1.5"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Mengirim...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Ya, Data Benar & Kirim
+                </>
               )}
             </Button>
           </DialogFooter>

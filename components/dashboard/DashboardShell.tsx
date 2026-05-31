@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { UserRole } from '@/types/database'
-import { logout } from '@/app/actions/auth'
+import { logout, resolveBreadcrumbLabel } from '@/app/actions/auth'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -95,6 +95,42 @@ export function DashboardShell({
     return () => clearInterval(timer)
   }, [])
 
+  // UUID dynamic breadcrumb label resolver state
+  const [resolvedLabels, setResolvedLabels] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const paths = pathname.split('/').filter(Boolean)
+    const uuids = paths.filter(path => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path))
+    
+    const missingUuids = uuids.filter(uuid => !resolvedLabels[uuid])
+    if (missingUuids.length === 0) return
+
+    async function resolveUuids() {
+      const updates: Record<string, string> = {}
+      
+      for (const uuid of missingUuids) {
+        try {
+          const resolvedName = await resolveBreadcrumbLabel(uuid)
+          if (resolvedName) {
+            updates[uuid] = resolvedName
+          } else {
+            // Truncate fallback
+            updates[uuid] = uuid.substring(0, 8) + '...'
+          }
+        } catch (err) {
+          console.error('[Breadcrumbs] Error resolving UUID:', err)
+          updates[uuid] = uuid.substring(0, 8) + '...'
+        }
+      }
+
+      if (Object.keys(updates).length > 0) {
+        setResolvedLabels(prev => ({ ...prev, ...updates }))
+      }
+    }
+
+    resolveUuids()
+  }, [pathname, resolvedLabels])
+
   function formatIndonesianLiveDate(date: Date): string {
     const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
     const months = [
@@ -131,6 +167,11 @@ export function DashboardShell({
       obat: 'Stok Obat',
       attendance: 'Log Kehadiran',
       activity: 'Log Aktivitas',
+      periksa: 'Periksa',
+    }
+
+    const isUUID = (str: string) => {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
     }
 
     return (
@@ -139,7 +180,7 @@ export function DashboardShell({
           {paths.map((path, idx) => {
             const isLast = idx === paths.length - 1
             const href = '/' + paths.slice(0, idx + 1).join('/')
-            const label = pathLabels[path] || path.charAt(0).toUpperCase() + path.slice(1)
+            const label = pathLabels[path] || resolvedLabels[path] || (isUUID(path) ? '...' : path.charAt(0).toUpperCase() + path.slice(1))
 
             return (
               <React.Fragment key={href}>
