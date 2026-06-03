@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   getAntrianDokter,
@@ -56,11 +56,45 @@ const STATUS_CONFIG: Record<
   },
 }
 
+// Simple beep sound using Web Audio API (no external file needed)
+function playNotificationBeep() {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime) // A5 note
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.5)
+    // Play a second beep after a short pause
+    const osc2 = ctx.createOscillator()
+    const gain2 = ctx.createGain()
+    osc2.connect(gain2)
+    gain2.connect(ctx.destination)
+    osc2.type = 'sine'
+    osc2.frequency.setValueAtTime(1100, ctx.currentTime + 0.15) // C#6 note
+    gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15)
+    gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.65)
+    osc2.start(ctx.currentTime + 0.15)
+    osc2.stop(ctx.currentTime + 0.65)
+  } catch {
+    // Audio not available, silently ignore
+  }
+}
+
 export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   const router = useRouter()
   const [antrian, setAntrian] = useState<AntrianDokterItem[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set())
+  const prevAntrianIdsRef = useRef<Set<string>>(new Set())
 
   // Get local timezone-safe date string YYYY-MM-DD (Asia/Jakarta)
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
@@ -83,6 +117,26 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
     fetchAntrian()
   }, [fetchAntrian])
 
+  // Track previous antrian IDs to detect newly inserted items
+  useEffect(() => {
+    if (!loading) {
+      const currentIds = new Set(antrian.map((a) => a.id))
+      const freshIds = new Set<string>()
+      currentIds.forEach((id) => {
+        if (!prevAntrianIdsRef.current.has(id) && prevAntrianIdsRef.current.size > 0) {
+          freshIds.add(id)
+        }
+      })
+      if (freshIds.size > 0) {
+        setNewItemIds(freshIds)
+        // Clear the flash after 3 seconds
+        const timer = setTimeout(() => setNewItemIds(new Set()), 3000)
+        return () => clearTimeout(timer)
+      }
+      prevAntrianIdsRef.current = currentIds
+    }
+  }, [antrian, loading])
+
   // Supabase Realtime: listen for new patients assigned to this doctor for selectedDate
   useEffect(() => {
     const supabase = createClient()
@@ -104,8 +158,10 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
           if (payload.eventType === 'INSERT') {
             if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
               console.log('[Realtime Dokter] New patient assigned to me today!')
-              toast.info('Pasien baru masuk antrian Anda!', {
-                description: 'Daftar antrian telah diperbarui.',
+              playNotificationBeep()
+              toast.info('🔔 Pasien baru masuk antrian Anda!', {
+                description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
+                duration: 8000,
               })
               fetchAntrian()
             }
@@ -397,6 +453,8 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
             const statusCfg = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.menunggu
             const StatusIcon = statusCfg.icon
 
+            const isNewItem = newItemIds.has(item.id)
+
             return (
               <Card
                 key={item.id}
@@ -404,7 +462,9 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
                   hasAlergi
                     ? 'border-l-4 border-l-red-500'
                     : 'border-l-4 border-l-sky-400'
-                } ${isSelesai ? 'opacity-50' : 'hover:shadow-md'}`}
+                } ${isSelesai ? 'opacity-50' : 'hover:shadow-md'} ${
+                  isNewItem ? 'animate-pulse ring-2 ring-emerald-400 ring-offset-2 shadow-lg shadow-emerald-100' : ''
+                }`}
               >
                 <CardContent className="p-4">
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">

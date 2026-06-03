@@ -283,3 +283,12 @@ CREATE POLICY "Semua user terautentikasi bisa menginput log aktivitas dirinya" O
   FOR INSERT TO authenticated WITH CHECK (
     user_id = auth.uid()
   );
+
+-- ==========================================
+-- 📡 SUPABASE REALTIME PUBLICATION
+-- ==========================================
+-- Tabel yang perlu di-broadcast via Realtime agar client menerima
+-- event INSERT/UPDATE/DELETE secara live (tanpa polling/refresh).
+-- Jalankan di Supabase Dashboard → SQL Editor.
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.kunjungan;
