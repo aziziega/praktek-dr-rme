@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { logActivity } from '@/lib/activity-logger'
+import { revalidatePath } from 'next/cache'
 import type {
   KunjunganRow,
   PasienRow,
@@ -277,6 +278,11 @@ export async function updateStatusKunjungan(
     .eq('id', kunjunganId)
 
   if (error) return { success: false, error: error.message }
+
+  // Bust Next.js cache so the periksa page loads fresh data
+  revalidatePath(`/(dashboard)/dashboard/dokter/periksa/[kunjunganId]`, 'page')
+  revalidatePath('/(dashboard)/dashboard/dokter/antrian')
+
   return { success: true }
 }
 

@@ -25,6 +25,7 @@ export default async function PeriksaPage({ params }: PeriksaPageProps) {
     if (result.error === 'Sesi habis.') {
       redirect('/login')
     }
+    console.error('[PeriksaPage] Failed to load kunjungan detail:', result.error)
     // Jika tidak ditemukan atau bukan milik dokter ini
     redirect('/dashboard/dokter/antrian')
   }
