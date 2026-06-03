@@ -152,18 +152,32 @@ export function AntrianTable() {
           event: '*',
           schema: 'public',
           table: 'kunjungan',
-          filter: `tanggal=eq.${selectedDate}`,
         },
-        () => {
-          fetchAntrian()
+        (payload: any) => {
+          console.log('[Realtime Staf] Received change:', payload)
+          const newRow = payload.new as any
+          const oldRow = payload.old as any
+
+          // Update if the row matches the selected date
+          if (
+            (newRow && newRow.tanggal === selectedDate) ||
+            (oldRow && oldRow.tanggal === selectedDate)
+          ) {
+            console.log('[Realtime Staf] Refreshing queue list for date:', selectedDate)
+            fetchAntrian()
+          }
         }
       )
-      .subscribe()
+      .subscribe((status: string) => {
+        console.log(`[Realtime Staf] Channel status:`, status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [selectedDate, fetchAntrian])
+
+
 
   function formatTime(dateStr: string): string {
     try {

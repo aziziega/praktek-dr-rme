@@ -92,36 +92,46 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'kunjungan',
-          filter: `dokter_id=eq.${dokterId}`,
         },
-        () => {
-          toast.info('Pasien baru masuk antrian Anda!', {
-            description: 'Daftar antrian telah diperbarui.',
-          })
-          fetchAntrian()
+        (payload: any) => {
+          console.log('[Realtime Dokter] Received change:', payload)
+          const newRow = payload.new as any
+          const oldRow = payload.old as any
+
+          if (payload.eventType === 'INSERT') {
+            if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
+              console.log('[Realtime Dokter] New patient assigned to me today!')
+              toast.info('Pasien baru masuk antrian Anda!', {
+                description: 'Daftar antrian telah diperbarui.',
+              })
+              fetchAntrian()
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            if (
+              (newRow && (newRow.dokter_id === dokterId || newRow.tanggal === selectedDate)) ||
+              (oldRow && (oldRow.dokter_id === dokterId || oldRow.tanggal === selectedDate))
+            ) {
+              console.log('[Realtime Dokter] Visit updated for date:', selectedDate)
+              fetchAntrian()
+            }
+          } else if (payload.eventType === 'DELETE') {
+            fetchAntrian()
+          }
         }
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'kunjungan',
-          filter: `tanggal=eq.${selectedDate}`,
-        },
-        () => {
-          fetchAntrian()
-        }
-      )
-      .subscribe()
+      .subscribe((status: string) => {
+        console.log(`[Realtime Dokter] Channel status:`, status)
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [dokterId, selectedDate, fetchAntrian])
+
+
 
   const handlePrevDay = () => {
     const [year, month, day] = selectedDate.split('-').map(Number)
