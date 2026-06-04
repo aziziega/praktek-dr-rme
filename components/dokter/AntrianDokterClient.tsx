@@ -238,7 +238,9 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
         setProcessingId(null)
         return
       }
+      // Revert ke router.push dengan refresh untuk menjaga UX SPA yang mulus
       router.push(`/dashboard/dokter/periksa/${kunjunganId}`)
+      router.refresh()
     } catch {
       toast.error('Terjadi kesalahan')
       setProcessingId(null)
@@ -247,6 +249,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
   function handleLihat(kunjunganId: string) {
     router.push(`/dashboard/dokter/periksa/${kunjunganId}`)
+    router.refresh()
   }
 
   function formatTime(dateStr: string): string {

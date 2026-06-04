@@ -280,8 +280,8 @@ export async function updateStatusKunjungan(
   if (error) return { success: false, error: error.message }
 
   // Bust Next.js cache so the periksa page loads fresh data
-  revalidatePath(`/(dashboard)/dashboard/dokter/periksa/[kunjunganId]`, 'page')
-  revalidatePath('/(dashboard)/dashboard/dokter/antrian')
+  revalidatePath('/dashboard/dokter/periksa/[kunjunganId]', 'page')
+  revalidatePath('/dashboard/dokter/antrian')
 
   return { success: true }
 }
