@@ -6,8 +6,44 @@ import { createServiceRoleClient } from '@/lib/supabase/service-role'
 
 export async function logout() {
   const supabase = await createClient()
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+
+      // Get today's attendance log that hasn't checked out yet
+      const { data: existing } = await (supabase.from('attendance_logs') as any)
+        .select('id, jam_masuk')
+        .eq('user_id', user.id)
+        .eq('tanggal', today)
+        .is('jam_keluar', null)
+        .single()
+
+      if (existing) {
+        const ext = existing as any
+        const jamMasuk = new Date(ext.jam_masuk)
+        const jamKeluar = new Date()
+        const diffMs = jamKeluar.getTime() - jamMasuk.getTime()
+        const durasiMenit = Math.max(0, Math.round(diffMs / (1000 * 60)))
+
+        await (supabase.from('attendance_logs') as any)
+          .update({
+            jam_keluar: jamKeluar.toISOString(),
+            durasi_menit: durasiMenit,
+          })
+          .eq('id', ext.id)
+      }
+    }
+  } catch (err) {
+    console.error('[Attendance] Error recording sign-out on logout:', err)
+  }
+
   await supabase.auth.signOut()
-  redirect('/login')
+  redirect('/login?logout=true')
 }
 
 export async function loginWithEmail(email: string, password: string) {

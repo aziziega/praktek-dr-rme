@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { UserRole } from '@/types/database'
 import { logout, resolveBreadcrumbLabel } from '@/app/actions/auth'
+import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -94,6 +95,21 @@ export function DashboardShell({
     }, 1000)
     return () => clearInterval(timer)
   }, [])
+
+  // Show welcome toast when landing on the dashboard
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const key = `welcome_toast_shown_${userName}`
+      const isShown = sessionStorage.getItem(key)
+      if (!isShown) {
+        toast.success(`Selamat datang kembali, ${userName}!`, {
+          description: `Anda masuk sebagai ${ROLE_LABELS[userRole] || userRole}.`,
+          duration: 5000,
+        })
+        sessionStorage.setItem(key, 'true')
+      }
+    }
+  }, [userName, userRole])
 
   // UUID dynamic breadcrumb label resolver state
   const [resolvedLabels, setResolvedLabels] = useState<Record<string, string>>({})

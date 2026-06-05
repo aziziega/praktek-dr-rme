@@ -40,24 +40,7 @@ export function initAttendanceTracking(): () => void {
       }
     }
 
-    if (event === 'SIGNED_OUT') {
-      try {
-        // We need the user ID from the session that just ended.
-        // On SIGNED_OUT, session may be null in newer Supabase versions,
-        // so we need to handle this gracefully.
-        if (session?.user?.id) {
-          const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-
-          await (supabase.from('attendance_logs') as any)
-            .update({ jam_keluar: new Date().toISOString() })
-            .eq('user_id', session.user.id)
-            .eq('tanggal', today)
-            .is('jam_keluar', null)
-        }
-      } catch (err) {
-        console.error('[Attendance] Error recording sign-out:', err)
-      }
-    }
+    // Note: SIGNED_OUT event check-out is handled server-side in the logout action (app/actions/auth.ts) to avoid session null issues.
   })
 
   // Return unsubscribe function

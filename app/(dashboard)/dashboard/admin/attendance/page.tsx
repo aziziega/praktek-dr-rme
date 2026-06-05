@@ -44,15 +44,20 @@ export default function AttendancePage() {
   const [logs, setLogs] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Default filter dates (bulan ini)
+  // Default filter dates (bulan ini - aman dari pergeseran zona waktu)
   const [startDate, setStartDate] = useState(() => {
     const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    return firstDay.toISOString().split('T')[0]
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    return `${year}-${month}-01`
   })
   
   const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   })
 
   const [selectedUser, setSelectedUser] = useState<string>('ALL')

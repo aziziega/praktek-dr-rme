@@ -82,16 +82,20 @@ export default function ActivityLogPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
 
-  // Default filter: 7 hari terakhir
+  // Default filter: tanggal 1 bulan ini (aman dari pergeseran zona waktu)
   const [startDate, setStartDate] = useState(() => {
     const now = new Date()
-    const past = new Date()
-    past.setDate(now.getDate() - 7)
-    return past.toISOString().split('T')[0]
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    return `${year}-${month}-01`
   })
   
   const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   })
 
   const [selectedUser, setSelectedUser] = useState<string>('ALL')

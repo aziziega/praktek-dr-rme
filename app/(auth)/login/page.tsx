@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { UserRole } from '@/types/database'
 
@@ -15,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Stethoscope, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { loginWithEmail } from '@/app/actions/auth'
 
@@ -31,6 +32,25 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  // Show logout toast if page is accessed with ?logout=true
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('logout') === 'true') {
+        toast.success('Anda telah berhasil keluar dari sistem.', {
+          description: 'Sesi kerja Anda telah diakhiri dengan aman.',
+          duration: 5000,
+        })
+        // Clean up URL parameters without reloading
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+        
+        // Reset sessionStorage key to trigger new welcome toast on next login
+        sessionStorage.clear()
+      }
+    }
+  }, [])
+
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
@@ -41,16 +61,19 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError(result.error)
+        toast.error(result.error)
         setLoading(false)
         return
       }
 
       if (result?.success && result.redirectUrl) {
+        toast.success('Login berhasil! Mengalihkan ke dashboard...')
         router.push(result.redirectUrl)
         router.refresh()
       }
     } catch {
       setError('Terjadi kesalahan. Coba lagi.')
+      toast.error('Terjadi kesalahan saat masuk. Silakan coba lagi.')
       setLoading(false)
     }
   }
