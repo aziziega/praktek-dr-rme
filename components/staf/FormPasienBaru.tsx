@@ -33,9 +33,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
 
   // Form fields
   const [nama, setNama] = useState('')
-  const [dobDay, setDobDay] = useState('')
-  const [dobMonth, setDobMonth] = useState('')
-  const [dobYear, setDobYear] = useState('')
+  const [displayDob, setDisplayDob] = useState('')
   const [tanggalLahir, setTanggalLahir] = useState('')
   const [tempatLahir, setTempatLahir] = useState('')
   const [jenisKelamin, setJenisKelamin] = useState<'L' | 'P' | ''>('')
@@ -43,29 +41,36 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
   const [noHp, setNoHp] = useState('')
   const [alergiObat, setAlergiObat] = useState('')
 
-  const MONTHS = [
-    { value: '01', label: 'Januari' },
-    { value: '02', label: 'Februari' },
-    { value: '03', label: 'Maret' },
-    { value: '04', label: 'April' },
-    { value: '05', label: 'Mei' },
-    { value: '06', label: 'Juni' },
-    { value: '07', label: 'Juli' },
-    { value: '08', label: 'Agustus' },
-    { value: '09', label: 'September' },
-    { value: '10', label: 'Oktober' },
-    { value: '11', label: 'November' },
-    { value: '12', label: 'Desember' }
-  ]
+  // Format input ke DD/MM/YYYY secara otomatis saat diketik
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '') // Hanya angka
 
-  // Synchronize dobDay, dobMonth, dobYear to YYYY-MM-DD tanggalLahir state
-  useEffect(() => {
-    if (dobDay && dobMonth && dobYear) {
-      setTanggalLahir(`${dobYear}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`)
-    } else {
-      setTanggalLahir('')
+    if (val.length > 2 && val.length <= 4) {
+      val = `${val.slice(0, 2)}/${val.slice(2)}`
+    } else if (val.length > 4) {
+      val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4, 8)}`
     }
-  }, [dobDay, dobMonth, dobYear])
+
+    setDisplayDob(val)
+
+    // Validasi & konversi ke YYYY-MM-DD
+    if (val.length === 10) {
+      const parts = val.split('/')
+      const d = parseInt(parts[0], 10)
+      const m = parseInt(parts[1], 10)
+      const y = parseInt(parts[2], 10)
+      const currentYear = new Date().getFullYear()
+
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1900 && y <= currentYear) {
+        const daysInMonth = new Date(y, m, 0).getDate()
+        if (d <= daysInMonth) {
+          setTanggalLahir(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
+          return
+        }
+      }
+    }
+    setTanggalLahir('') // Set kosong agar ditolak validasi submit jika tidak valid
+  }
 
   // Fetch next NRM on mount
   useEffect(() => {
@@ -264,64 +269,16 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
               <Label htmlFor="tanggal-lahir">
                 Tanggal Lahir <span className="text-red-500">*</span>
               </Label>
-              <div className="grid grid-cols-3 gap-2">
-                <Select
-                  value={dobDay}
-                  onValueChange={setDobDay}
-                  disabled={saving}
-                >
-                  <SelectTrigger id="dob-day" className="bg-white border-gray-300 focus:ring-sky-500">
-                    <SelectValue placeholder="Tgl" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[200px]">
-                    {Array.from({ length: 31 }, (_, i) => {
-                      const d = String(i + 1)
-                      return (
-                        <SelectItem key={d} value={d}>
-                          {d}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={dobMonth}
-                  onValueChange={setDobMonth}
-                  disabled={saving}
-                >
-                  <SelectTrigger id="dob-month" className="bg-white border-gray-300 focus:ring-sky-500">
-                    <SelectValue placeholder="Bulan" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[200px]">
-                    {MONTHS.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={dobYear}
-                  onValueChange={setDobYear}
-                  disabled={saving}
-                >
-                  <SelectTrigger id="dob-year" className="bg-white border-gray-300 focus:ring-sky-500">
-                    <SelectValue placeholder="Tahun" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[200px]">
-                    {Array.from({ length: 130 }, (_, i) => {
-                      const y = String(new Date().getFullYear() - i)
-                      return (
-                        <SelectItem key={y} value={y}>
-                          {y}
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Input
+                id="tanggal-lahir"
+                placeholder="Hari/Bulan/Tahun (contoh: 17/08/1945)"
+                value={displayDob}
+                onChange={handleDobChange}
+                maxLength={10}
+                className="bg-white border-gray-300 focus-visible:ring-sky-500 font-mono tracking-wide"
+                disabled={saving}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="tempat-lahir">
