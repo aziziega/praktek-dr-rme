@@ -32,6 +32,7 @@ import {
   LogOut,
   Menu,
   ChevronRight,
+  Coins,
 } from 'lucide-react'
 
 // Navigation items per role
@@ -53,8 +54,9 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { title: 'Manajemen User', href: '/dashboard/admin/users', icon: UserCog },
     { title: 'Manajemen Pasien', href: '/dashboard/admin/pasien', icon: Users },
     { title: 'Stok Obat', href: '/dashboard/admin/obat', icon: Pill },
-    { title: 'Attendance', href: '/dashboard/admin/attendance', icon: Clock },
+    { title: 'Keuangan', href: '/dashboard/admin/keuangan', icon: Coins },
     { title: 'Activity Log', href: '/dashboard/admin/activity', icon: Activity },
+    { title: 'Attendance', href: '/dashboard/admin/attendance', icon: Clock },
   ],
 }
 
@@ -117,13 +119,13 @@ export function DashboardShell({
   useEffect(() => {
     const paths = pathname.split('/').filter(Boolean)
     const uuids = paths.filter(path => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path))
-    
+
     const missingUuids = uuids.filter(uuid => !resolvedLabels[uuid])
     if (missingUuids.length === 0) return
 
     async function resolveUuids() {
       const updates: Record<string, string> = {}
-      
+
       for (const uuid of missingUuids) {
         try {
           const resolvedName = await resolveBreadcrumbLabel(uuid)
@@ -183,6 +185,7 @@ export function DashboardShell({
       obat: 'Stok Obat',
       attendance: 'Log Kehadiran',
       activity: 'Log Aktivitas',
+      keuangan: 'Laporan Pendapatan',
       periksa: 'Periksa',
     }
 
@@ -261,16 +264,14 @@ export function DashboardShell({
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                    isActive
+                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
                       ? 'bg-gradient-to-r from-sky-50 to-emerald-50 text-sky-700 shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
+                    }`}
                 >
                   <Icon
-                    className={`h-4.5 w-4.5 shrink-0 ${
-                      isActive ? 'text-sky-600' : 'text-gray-400 group-hover:text-gray-600'
-                    }`}
+                    className={`h-4.5 w-4.5 shrink-0 ${isActive ? 'text-sky-600' : 'text-gray-400 group-hover:text-gray-600'
+                      }`}
                   />
                   <span className="truncate">{item.title}</span>
                   {isActive && (

@@ -462,264 +462,207 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Monitoring Attendance</h1>
-          <p className="text-sm text-gray-500 mt-1">Lacak kehadiran, durasi kerja, dan produktivitas staf serta dokter secara real-time.</p>
+    <div className="relative min-h-[calc(100vh-8rem)] flex flex-col justify-center">
+      {/* CSS Keyframes for shimmer animation */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}} />
+
+      {/* Blurred Dashboard Content Preview */}
+      <div className="space-y-6 filter blur-[5px] select-none pointer-events-none opacity-45 flex-1">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Monitoring Attendance</h1>
+            <p className="text-sm text-gray-500 mt-1">Lacak kehadiran, durasi kerja, dan produktivitas staf serta dokter secara real-time.</p>
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            <Button variant="outline" size="sm" onClick={fetchLogs} disabled={isLoading} className="h-9 gap-1.5">
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-sky-700 border-sky-200 hover:bg-sky-50">
+              <FileSpreadsheet className="h-4 w-4" />
+              CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-center">
-          <Button variant="outline" size="sm" onClick={fetchLogs} disabled={isLoading} className="h-9 gap-1.5">
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-sky-700 border-sky-200 hover:bg-sky-50">
-            <FileSpreadsheet className="h-4 w-4" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
-            <FileText className="h-4 w-4" />
-            PDF
-          </Button>
-        </div>
-      </div>
 
-      {/* Filter Card */}
-      <Card className="shadow-xs border-gray-200 bg-white">
-        <CardContent className="p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                Tanggal Mulai
-              </label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
-              />
-            </div>
-            
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                Tanggal Selesai
-              </label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
-              />
-            </div>
+        {/* Filter Card */}
+        <Card className="shadow-xs border-gray-200 bg-white">
+          <CardContent className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                  Tanggal Mulai
+                </label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
+                />
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                  Tanggal Selesai
+                </label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5 text-gray-400" />
-                Filter Karyawan
-              </label>
-              <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
-                  <SelectValue placeholder="Pilih Karyawan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Semua Karyawan</SelectItem>
-                  {users.map(u => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.nama} ({u.role})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-gray-400" />
+                  Filter Karyawan
+                </label>
+                <Select value={selectedUser} onValueChange={setSelectedUser}>
+                  <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
+                    <SelectValue placeholder="Pilih Karyawan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Semua Karyawan</SelectItem>
+                    {users.map(u => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.nama} ({u.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 text-gray-400" />
-                Filter Peran
-              </label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
-                  <SelectValue placeholder="Pilih Peran" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Semua Peran</SelectItem>
-                  <SelectItem value="staf">Staf Pendaftaran</SelectItem>
-                  <SelectItem value="dokter">Dokter</SelectItem>
-                  <SelectItem value="admin">Administrator</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-gray-400" />
+                  Filter Peran
+                </label>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
+                    <SelectValue placeholder="Pilih Peran" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Semua Peran</SelectItem>
+                    <SelectItem value="staf">Staf Pendaftaran</SelectItem>
+                    <SelectItem value="dokter">Dokter</SelectItem>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Section B: Rekap Bulanan Grid Card */}
-      <div className="space-y-3">
-        <h2 className="text-base font-bold tracking-tight text-gray-900 flex items-center gap-2">
-          <Users className="h-4.5 w-4.5 text-sky-500" />
-          Rekapitulasi Kinerja Karyawan
-        </h2>
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map(n => (
-              <Card key={n} className="animate-pulse bg-gray-50/50 border-gray-200 h-36" />
-            ))}
-          </div>
-        ) : rekapList.length === 0 ? (
-          <div className="text-center py-6 border border-gray-150 rounded-xl bg-white text-gray-400 text-sm">
-            Tidak ada ringkasan kinerja untuk periode ini.
-          </div>
-        ) : (
+        {/* Section B: Rekap Bulanan Grid Card */}
+        <div className="space-y-3">
+          <h2 className="text-base font-bold tracking-tight text-gray-900 flex items-center gap-2">
+            <Users className="h-4.5 w-4.5 text-sky-500" />
+            Rekapitulasi Kinerja Karyawan
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {rekapList.map((rekap, i) => (
-              <Card key={i} className="shadow-xs border-gray-200 bg-white hover:border-gray-300 transition-all duration-150">
+              <Card key={i} className="shadow-xs border-gray-200 bg-white">
                 <CardHeader className="p-4 pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <CardTitle className="text-sm font-bold text-gray-900 leading-tight truncate max-w-[180px]">
+                      <CardTitle className="text-sm font-bold text-gray-900 truncate max-w-[180px]">
                         {rekap.name}
                       </CardTitle>
-                      <Badge className={`mt-1.5 text-[10px] font-semibold tracking-wider uppercase border-none px-2 py-0.5 rounded-full ${roleColors[rekap.role] || 'bg-gray-100 text-gray-600'}`}>
+                      <Badge className={`mt-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${roleColors[rekap.role] || 'bg-gray-100 text-gray-600'}`}>
                         {rekap.role}
                       </Badge>
                     </div>
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 font-bold text-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600 font-bold text-sm">
                       {rekap.totalHadir}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-2 border-t border-gray-50 bg-gray-50/30 text-xs text-gray-600 space-y-1.5">
-                  <div className="flex justify-between">
-                    <span>Total Hari Hadir</span>
-                    <strong className="text-gray-900">{rekap.totalHadir} Hari</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Rata-rata Kerja</span>
-                    <strong className="text-gray-900">{rekap.avgDuration}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Pasien Ditangani</span>
-                    <strong className="text-gray-900">{rekap.totalPasien} Pasien</strong>
-                  </div>
-                </CardContent>
               </Card>
             ))}
           </div>
-        )}
-      </div>
+        </div>
 
-      {/* Section A: Tabel Detail Kehadiran Harian */}
-      <Card className="shadow-xs border-gray-200 bg-white">
-        <CardHeader className="p-4 sm:p-6 pb-2">
-          <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-            <Clock className="h-4.5 w-4.5 text-emerald-500" />
-            Detail Log Kehadiran Harian
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Menunjukkan rincian jam masuk, jam keluar, durasi kerja, dan pasien yang ditangani setiap hari.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader className="bg-gray-50/50">
-                <TableRow>
-                  <TableHead className="w-[120px] font-bold text-gray-700 pl-4 sm:pl-6">Tanggal</TableHead>
-                  <TableHead className="font-bold text-gray-700">Nama Lengkap</TableHead>
-                  <TableHead className="font-bold text-gray-700 w-[100px]">Peran</TableHead>
-                  <TableHead className="font-bold text-gray-700">Jam Masuk</TableHead>
-                  <TableHead className="font-bold text-gray-700">Jam Keluar</TableHead>
-                  <TableHead className="font-bold text-gray-700">Durasi Kerja</TableHead>
-                  <TableHead className="font-bold text-gray-700 pr-4 sm:pr-6 text-right">Pasien Ditangani</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  [1, 2, 3].map(n => (
-                    <TableRow key={n}>
-                      <TableCell className="pl-4 sm:pl-6"><div className="h-4 w-20 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-32 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-16 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-12 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-12 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-16 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell className="pr-4 sm:pr-6 text-right"><div className="h-4 w-8 bg-gray-100 rounded-sm animate-pulse ml-auto" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : logs.length === 0 ? (
+        {/* Section A: Tabel Detail Kehadiran Harian */}
+        <Card className="shadow-xs border-gray-200 bg-white">
+          <CardHeader className="p-4 sm:p-6 pb-2">
+            <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Clock className="h-4.5 w-4.5 text-emerald-500" />
+              Detail Log Kehadiran Harian
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-gray-50/50">
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-gray-400 text-sm">
-                      Tidak ada rekaman kehadiran yang sesuai dengan filter.
-                    </TableCell>
+                    <TableHead className="w-[120px] font-bold text-gray-700 pl-4 sm:pl-6">Tanggal</TableHead>
+                    <TableHead className="font-bold text-gray-700">Nama Lengkap</TableHead>
+                    <TableHead className="font-bold text-gray-700 w-[100px]">Peran</TableHead>
+                    <TableHead className="font-bold text-gray-700">Jam Masuk</TableHead>
+                    <TableHead className="font-bold text-gray-700">Jam Keluar</TableHead>
+                    <TableHead className="font-bold text-gray-700">Durasi Kerja</TableHead>
+                    <TableHead className="font-bold text-gray-700 pr-4 sm:pr-6 text-right">Pasien Ditangani</TableHead>
                   </TableRow>
-                ) : (
-                  logs.map((log) => {
+                </TableHeader>
+                <TableBody>
+                  {logs.slice(0, 3).map((log) => {
                     const isNotLoggedOut = !log.jam_keluar
                     return (
-                      <TableRow 
-                        key={log.id} 
-                        className={`transition-colors duration-700 ${
-                          isNotLoggedOut 
-                            ? 'bg-rose-50/50 hover:bg-rose-100/40 text-rose-900 border-l-4 border-l-rose-500' 
-                            : 'hover:bg-gray-50/50'
-                        }`}
-                      >
-                        <TableCell className="font-medium text-gray-900 pl-4 sm:pl-6">
-                          {formatDateIndo(log.tanggal)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-gray-900 leading-tight">
-                              {log.users?.nama || 'Unknown User'}
-                            </span>
-                            <span className="text-[10px] text-gray-400 truncate max-w-[150px]">
-                              ID: {log.user_id.substring(0, 8)}...
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`text-[9px] font-semibold tracking-wider uppercase border-none px-2 py-0.5 rounded-full ${roleColors[log.users?.role || 'staf'] || 'bg-gray-100 text-gray-600'}`}>
-                            {log.users?.role || 'staf'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {log.jam_masuk 
-                            ? new Date(log.jam_masuk).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB'
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {log.jam_keluar ? (
-                            new Date(log.jam_keluar).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB'
-                          ) : (
-                            <Badge variant="outline" className="text-[9px] border-rose-200 text-rose-700 bg-rose-50 font-bold px-1.5 py-0">
-                              <ShieldAlert className="h-3 w-3 mr-1 text-rose-500 animate-bounce" />
-                              Belum Keluar
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {isNotLoggedOut ? (
-                            <span className="text-xs text-rose-600 italic">Sedang berjalan</span>
-                          ) : (
-                            formatMinutes(log.durasi_menit)
-                          )}
-                        </TableCell>
-                        <TableCell className="pr-4 sm:pr-6 text-right font-bold text-gray-900">
-                          {log.jumlah_pasien_ditangani ?? 0} Pasien
-                        </TableCell>
+                      <TableRow key={log.id} className="hover:bg-gray-50/50">
+                        <TableCell className="font-medium text-gray-900 pl-4 sm:pl-6">{formatDateIndo(log.tanggal)}</TableCell>
+                        <TableCell><span className="font-semibold text-gray-900">{log.users?.nama || 'User'}</span></TableCell>
+                        <TableCell><Badge className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full">{log.users?.role || 'staf'}</Badge></TableCell>
+                        <TableCell className="font-mono text-xs">-</TableCell>
+                        <TableCell className="font-mono text-xs">-</TableCell>
+                        <TableCell className="font-medium">-</TableCell>
+                        <TableCell className="pr-4 sm:pr-6 text-right font-bold text-gray-900">0 Pasien</TableCell>
                       </TableRow>
                     )
-                  })
-                )}
-              </TableBody>
-            </Table>
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Premium Coming Soon Overlay */}
+      <div className="absolute inset-0 flex items-center justify-center z-10 p-4">
+        <div className="bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-2xl rounded-3xl p-8 sm:p-10 text-center max-w-md space-y-6 transform hover:scale-[1.01] transition-all duration-300">
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-white shadow-xl shadow-amber-500/20 animate-pulse">
+            <Clock className="h-10 w-10" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="space-y-3">
+            <Badge className="bg-amber-100 text-amber-800 border-none px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
+              Under Construction
+            </Badge>
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
+              Coming Soon!
+            </h2>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Fitur **Monitoring Attendance** sedang dalam tahap pengembangan akhir. Modul ini segera hadir dengan pencatatan jam kerja realtime, kalkulasi otomatis durasi kerja, dan rekapitulasi data absensi klinis bulanan.
+            </p>
+          </div>
+          <div className="pt-2">
+            <div className="h-2 w-32 bg-gray-100 rounded-full mx-auto overflow-hidden relative">
+              <div className="absolute top-0 bottom-0 left-0 w-1/2 bg-gradient-to-r from-amber-500 to-rose-500 rounded-full animate-[shimmer_1.5s_infinite_ease-in-out]" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
