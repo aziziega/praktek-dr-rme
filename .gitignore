@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# utility and maintenance scripts
+check-db.js
+restore-dokter1.js
+scratch/
+
