@@ -33,12 +33,39 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
 
   // Form fields
   const [nama, setNama] = useState('')
+  const [dobDay, setDobDay] = useState('')
+  const [dobMonth, setDobMonth] = useState('')
+  const [dobYear, setDobYear] = useState('')
   const [tanggalLahir, setTanggalLahir] = useState('')
   const [tempatLahir, setTempatLahir] = useState('')
   const [jenisKelamin, setJenisKelamin] = useState<'L' | 'P' | ''>('')
   const [alamat, setAlamat] = useState('')
   const [noHp, setNoHp] = useState('')
   const [alergiObat, setAlergiObat] = useState('')
+
+  const MONTHS = [
+    { value: '01', label: 'Januari' },
+    { value: '02', label: 'Februari' },
+    { value: '03', label: 'Maret' },
+    { value: '04', label: 'April' },
+    { value: '05', label: 'Mei' },
+    { value: '06', label: 'Juni' },
+    { value: '07', label: 'Juli' },
+    { value: '08', label: 'Agustus' },
+    { value: '09', label: 'September' },
+    { value: '10', label: 'Oktober' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'Desember' }
+  ]
+
+  // Synchronize dobDay, dobMonth, dobYear to YYYY-MM-DD tanggalLahir state
+  useEffect(() => {
+    if (dobDay && dobMonth && dobYear) {
+      setTanggalLahir(`${dobYear}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`)
+    } else {
+      setTanggalLahir('')
+    }
+  }, [dobDay, dobMonth, dobYear])
 
   // Fetch next NRM on mount
   useEffect(() => {
@@ -237,14 +264,64 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
               <Label htmlFor="tanggal-lahir">
                 Tanggal Lahir <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="tanggal-lahir"
-                type="date"
-                value={tanggalLahir}
-                onChange={(e) => setTanggalLahir(e.target.value)}
-                disabled={saving}
-                required
-              />
+              <div className="grid grid-cols-3 gap-2">
+                <Select
+                  value={dobDay}
+                  onValueChange={setDobDay}
+                  disabled={saving}
+                >
+                  <SelectTrigger id="dob-day" className="bg-white border-gray-300 focus:ring-sky-500">
+                    <SelectValue placeholder="Tgl" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {Array.from({ length: 31 }, (_, i) => {
+                      const d = String(i + 1)
+                      return (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={dobMonth}
+                  onValueChange={setDobMonth}
+                  disabled={saving}
+                >
+                  <SelectTrigger id="dob-month" className="bg-white border-gray-300 focus:ring-sky-500">
+                    <SelectValue placeholder="Bulan" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {MONTHS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={dobYear}
+                  onValueChange={setDobYear}
+                  disabled={saving}
+                >
+                  <SelectTrigger id="dob-year" className="bg-white border-gray-300 focus:ring-sky-500">
+                    <SelectValue placeholder="Tahun" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {Array.from({ length: 130 }, (_, i) => {
+                      const y = String(new Date().getFullYear() - i)
+                      return (
+                        <SelectItem key={y} value={y}>
+                          {y}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="tempat-lahir">

@@ -93,6 +93,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   const [antrian, setAntrian] = useState<AntrianDokterItem[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
+  const [isNavigating, setIsNavigating] = useState(false)
   const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set())
   const prevAntrianIdsRef = useRef<Set<string>>(new Set())
 
@@ -231,11 +232,13 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
   async function handlePeriksa(kunjunganId: string) {
     setProcessingId(kunjunganId)
+    setIsNavigating(true)
     try {
       const result = await updateStatusKunjungan(kunjunganId, 'diperiksa')
       if (!result.success) {
         toast.error(result.error ?? 'Gagal memperbarui status')
         setProcessingId(null)
+        setIsNavigating(false)
         return
       }
       // Revert ke router.push dengan refresh untuk menjaga UX SPA yang mulus
@@ -244,10 +247,12 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
     } catch {
       toast.error('Terjadi kesalahan')
       setProcessingId(null)
+      setIsNavigating(false)
     }
   }
 
   function handleLihat(kunjunganId: string) {
+    setIsNavigating(true)
     router.push(`/dashboard/dokter/periksa/${kunjunganId}`)
     router.refresh()
   }
@@ -302,6 +307,24 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
   return (
     <div className="space-y-5">
+      {isNavigating && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/85 backdrop-blur-md transition-all duration-300">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative w-16 h-16">
+              <div className="absolute inset-0 rounded-full border-4 border-sky-100 animate-pulse"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-t-emerald-500 border-r-sky-500 animate-spin"></div>
+            </div>
+            <div className="space-y-1 text-center">
+              <h3 className="text-base font-bold text-slate-800 animate-pulse">
+                Menyiapkan Lembar Pemeriksaan
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Mohon tunggu, memuat rekam medis pasien...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Date Navigation Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm mb-1">
         <div>
