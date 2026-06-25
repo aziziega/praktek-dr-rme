@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -91,13 +92,14 @@ export function DashboardShell({
   // Live Ticking Clock State
   const [time, setTime] = useState<Date | null>(null)
 
-  useEffect(() => {
-    setTime(new Date())
-    const timer = setInterval(() => {
-      setTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
+  // TEMPORARILY DISABLED - Testing if this causes modal loop
+  // useEffect(() => {
+  //   setTime(new Date())
+  //   const timer = setInterval(() => {
+  //     setTime(new Date())
+  //   }, 1000)
+  //   return () => clearInterval(timer)
+  // }, [])
 
   // Show welcome toast when landing on the dashboard
   useEffect(() => {
@@ -116,6 +118,10 @@ export function DashboardShell({
 
   // UUID dynamic breadcrumb label resolver state
   const [resolvedLabels, setResolvedLabels] = useState<Record<string, string>>({})
+
+  // Logout confirmation state
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
     const paths = pathname.split('/').filter(Boolean)
@@ -266,8 +272,8 @@ export function DashboardShell({
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
-                      ? 'bg-gradient-to-r from-sky-50 to-emerald-50 text-sky-700 shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-sky-50 to-emerald-50 text-sky-700 shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                 >
                   <Icon
@@ -305,17 +311,53 @@ export function DashboardShell({
             </div>
           </div>
 
-          <form action={logout}>
-            <Button
-              type="submit"
-              variant="ghost"
-              className="w-full justify-start gap-2 text-gray-500 hover:text-red-600 hover:bg-red-50"
-            >
-              <LogOut className="h-4 w-4" />
-              Keluar
-            </Button>
-          </form>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-gray-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => setIsLogoutDialogOpen(true)}
+          >
+            <LogOut className="h-4 w-4" />
+            Keluar
+          </Button>
         </div>
+
+        {/* Logout Confirmation Dialog - Memoized to prevent re-renders from clock */}
+        {React.useMemo(() => (
+          <Dialog open={isLogoutDialogOpen} onOpenChange={(open) => !isLoggingOut && setIsLogoutDialogOpen(open)}>
+            <DialogContent className="sm:max-w-[400px]" onPointerDownOutside={(e) => isLoggingOut && e.preventDefault()} onEscapeKeyDown={(e) => isLoggingOut && e.preventDefault()}>
+              <DialogHeader>
+                <DialogTitle>Konfirmasi Keluar</DialogTitle>
+                <DialogDescription>
+                  Apakah Anda yakin ingin keluar dari sistem?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-gray-600">
+                  Anda akan dikembalikan ke halaman login dan perlu masuk kembali untuk mengakses dashboard.
+                </p>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLogoutDialogOpen(false)}
+                  disabled={isLoggingOut}
+                >
+                  Batal
+                </Button>
+                <form action={logout} onSubmit={() => setIsLoggingOut(true)}>
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? 'Keluar...' : 'Ya, Keluar'}
+                  </Button>
+                </form>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        ), [isLogoutDialogOpen, isLoggingOut])}
       </div>
     )
   }
