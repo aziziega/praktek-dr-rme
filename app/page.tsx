@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Clock, MapPin, Phone, FileText } from 'lucide-react'
+import { CheckCircle, Clock, MapPin, Phone, FileText, Stethoscope } from 'lucide-react'
 
 export default function HomePage() {
   return (
@@ -28,7 +28,7 @@ export default function HomePage() {
             {/* Logo */}
             <div className="flex justify-center">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center shadow-lg">
-                <FileText className="h-12 w-12 text-white" />
+                <Stethoscope className="h-12 w-12 text-white" />
               </div>
             </div>
 
