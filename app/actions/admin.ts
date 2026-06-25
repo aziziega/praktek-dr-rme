@@ -552,3 +552,107 @@ export async function getAdminObat() {
   return data || []
 }
 
+// ---------------------------------------------------------------------------
+// 6. DELETE PASIEN (HARD DELETE - ADMIN ONLY)
+// ---------------------------------------------------------------------------
+
+export async function deletePasien(id: string, nama: string, nrm: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  // Hard delete - CASCADE will automatically delete all related data:
+  // - kunjungan, rekam_medis, resep_obat, pembayaran
+  const { error } = await (supabase.from('pasien') as any)
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'HAPUS_PASIEN',
+    targetTabel: 'pasien',
+    targetId: id,
+    detail: { nama, nrm },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// 7. GET PATIENT DELETE PREVIEW (DETAILED DATA FOR CONFIRMATION)
+// ---------------------------------------------------------------------------
+
+export async function getPatientDeletePreview(patientId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is an admin
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  // Fetch all related data for preview using service role for complete access
+  const serviceRoleClient = createServiceRoleClient()
+  
+  const { data: kunjungan, error } = await serviceRoleClient
+    .from('kunjungan')
+    .select(`
+      id,
+      tanggal,
+      resep_obat (
+        nama_obat,
+        dosis,
+        jumlah,
+        harga_satuan,
+        subtotal,
+        obat_id
+      ),
+      pembayaran (
+        total_bayar,
+        tarif_periksa,
+        total_obat
+      )
+    `)
+    .eq('pasien_id', patientId)
+    .order('tanggal', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  // Calculate totals
+  const totalVisits = kunjungan?.length || 0
+  const totalRevenue = (kunjungan as any[])?.reduce((sum: number, k: any) => {
+    const payments = Array.isArray(k.pembayaran) ? k.pembayaran : (k.pembayaran ? [k.pembayaran] : [])
+    return sum + (payments[0]?.total_bayar || 0)
+  }, 0) || 0
+
+  // Group medicines and track which ones will have stock restored
+  const medicineMap = new Map<string, { jumlah: number; willRestore: boolean }>()
+  ;(kunjungan as any[])?.forEach((k: any) => {
+    const resepArray = Array.isArray(k.resep_obat) ? k.resep_obat : (k.resep_obat ? [k.resep_obat] : [])
+    resepArray.forEach((r: any) => {
+      const key = r.nama_obat
+      const existing = medicineMap.get(key) || { jumlah: 0, willRestore: false }
+      medicineMap.set(key, {
+        jumlah: existing.jumlah + (r.jumlah || 0),
+        willRestore: existing.willRestore || (r.obat_id != null)
+      })
+    })
+  })
+
+  const medicines = Array.from(medicineMap.entries()).map(([nama, data]) => ({
+    nama_obat: nama,
+    total_jumlah: data.jumlah,
+    will_restore_stock: data.willRestore
+  }))
+
+  return {
+    totalVisits,
+    totalRevenue,
+    medicines,
+    hasData: totalVisits > 0
+  }
+}

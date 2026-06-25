@@ -370,3 +370,87 @@ export async function getRiwayatPendaftaranPasien(pasienId: string) {
   if (error) throw new Error(error.message)
   return data || []
 }
+
+// ---------------------------------------------------------------------------
+// MANAJEMEN PASIEN (UNTUK STAFF)
+// ---------------------------------------------------------------------------
+
+export async function getStafPasien(search?: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is staff or admin
+  const { data: dbUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (!dbUser || (dbUser.role !== 'staf' && dbUser.role !== 'admin')) {
+    throw new Error('Unauthorized - Staff or Admin Only')
+  }
+
+  let query = supabase.from('pasien').select('*').order('nrm', { ascending: true }).limit(50)
+
+  if (search) {
+    const isNumeric = /^\d+$/.test(search)
+    if (isNumeric) {
+      query = query.or(`nrm.eq.${parseInt(search, 10)},nama.ilike.%${search}%`)
+    } else {
+      query = query.ilike('nama', `%${search}%`)
+    }
+  }
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function getRiwayatKunjunganPasienStaf(pasienId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is staff or admin
+  const { data: dbUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (!dbUser || (dbUser.role !== 'staf' && dbUser.role !== 'admin')) {
+    throw new Error('Unauthorized - Staff or Admin Only')
+  }
+
+  const serviceRoleClient = createServiceRoleClient()
+  const { data, error } = await serviceRoleClient
+    .from('kunjungan')
+    .select(`
+      *,
+      rekam_medis (*),
+      dokter:users!kunjungan_dokter_id_fkey(nama),
+      resep_obat (nama_obat, dosis, jumlah)
+    `)
+    .eq('pasien_id', pasienId)
+    .order('jam_daftar', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function updatePasienStaf(id: string, data: { nama: string; tanggal_lahir?: string; tempat_lahir?: string; jenis_kelamin?: string; alamat?: string; no_hp?: string; alergi_obat?: string }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Verify that the user is staff or admin
+  const { data: dbUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (!dbUser || (dbUser.role !== 'staf' && dbUser.role !== 'admin')) {
+    throw new Error('Unauthorized - Staff or Admin Only')
+  }
+
+  const { error } = await (supabase.from('pasien') as any)
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'EDIT_PASIEN_STAF',
+    targetTabel: 'pasien',
+    targetId: id,
+    detail: { nama: data.nama },
+  })
+}

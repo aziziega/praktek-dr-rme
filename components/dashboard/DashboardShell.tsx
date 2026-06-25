@@ -46,6 +46,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
   staf: [
     { title: 'Pendaftaran', href: '/dashboard/staf/pendaftaran', icon: ClipboardPlus },
     { title: 'Antrian Hari Ini', href: '/dashboard/staf/antrian', icon: ListOrdered },
+    { title: 'Manajemen Pasien', href: '/dashboard/staf/pasien', icon: Users },
   ],
   dokter: [
     { title: 'Antrian Saya', href: '/dashboard/dokter/antrian', icon: ListOrdered },

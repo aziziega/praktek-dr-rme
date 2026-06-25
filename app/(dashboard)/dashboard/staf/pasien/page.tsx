@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getAdminPasien, getRiwayatKunjunganPasien, updatePasien, importPasien, deletePasien, getPatientDeletePreview } from '@/app/actions/admin'
+import { getStafPasien, getRiwayatKunjunganPasienStaf, updatePasienStaf } from '@/app/actions/staf'
 import type { PasienRow, KunjunganRow, RekamMedisRow } from '@/types/database'
 
 import { Button } from '@/components/ui/button'
@@ -25,16 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
 import {
   Select,
   SelectContent,
@@ -42,15 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Users, Pencil, FilePlus, Search, AlertTriangle, Loader2, Heart, Activity, Thermometer, Trash2, Pill, CheckCircle } from 'lucide-react'
+import { Pencil, Search, AlertTriangle, Loader2, Activity, Thermometer } from 'lucide-react'
 
 // Extended interface for visit history
 interface KunjunganHistory extends KunjunganRow {
@@ -59,7 +43,7 @@ interface KunjunganHistory extends KunjunganRow {
   resep_obat?: { nama_obat: string; dosis: string; jumlah: number }[]
 }
 
-export default function AdminPasienPage() {
+export default function StafPasienPage() {
   const [pasien, setPasien] = useState<PasienRow[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -112,27 +96,7 @@ export default function AdminPasienPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editForm, setEditForm] = useState<Partial<PasienRow>>({})
 
-  // Dialog Import State
-  const [isImportOpen, setIsImportOpen] = useState(false)
-  const [importForm, setImportForm] = useState({
-    nrm: '',
-    nama: '',
-    tanggal_lahir: '',
-    tempat_lahir: '',
-    jenis_kelamin: '',
-    alamat: '',
-    no_hp: '',
-    alergi_obat: ''
-  })
-
   const [debugError, setDebugError] = useState<string | null>(null)
-
-  // Dialog Delete State
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [patientToDelete, setPatientToDelete] = useState<PasienRow | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deletePreview, setDeletePreview] = useState<any>(null)
-  const [loadingPreview, setLoadingPreview] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -150,13 +114,13 @@ export default function AdminPasienPage() {
     setLoading(true)
     setDebugError(null)
     try {
-      const data = await getAdminPasien(debouncedSearch)
+      const data = await getStafPasien(debouncedSearch)
       setPasien(data as PasienRow[])
     } catch (err: any) {
-      console.error('[AdminPasien] fetch error:', err)
+      console.error('[StafPasien] fetch error:', err)
       const msg = err instanceof Error ? err.message : String(err)
       const stack = err instanceof Error ? err.stack : 'No stack trace'
-      setDebugError(`Server Action Exception (Pasien): ${msg}\nStack: ${stack}`)
+      setDebugError(`Server Action Exception (Pasien): ${msg}\\nStack: ${stack}`)
       toast.error('Terjadi kesalahan memuat data pasien: ' + msg)
     } finally {
       setLoading(false)
@@ -166,10 +130,10 @@ export default function AdminPasienPage() {
   async function fetchRiwayatKunjungan(pasienId: string) {
     setLoadingRiwayat(true)
     try {
-      const data = await getRiwayatKunjunganPasien(pasienId)
+      const data = await getRiwayatKunjunganPasienStaf(pasienId)
       setRiwayat(data as any)
     } catch (err: any) {
-      console.error('[AdminPasien] fetchRiwayat error:', err)
+      console.error('[StafPasien] fetchRiwayat error:', err)
       const msg = err instanceof Error ? err.message : String(err)
       toast.error('Gagal mengambil riwayat kunjungan: ' + msg)
     } finally {
@@ -196,7 +160,7 @@ export default function AdminPasienPage() {
 
     setIsSubmitting(true)
     try {
-      await updatePasien(editForm.id, {
+      await updatePasienStaf(editForm.id, {
         nama: editForm.nama,
         tanggal_lahir: editForm.tanggal_lahir || undefined,
         tempat_lahir: editForm.tempat_lahir || undefined,
@@ -220,174 +184,15 @@ export default function AdminPasienPage() {
     }
   }
 
-  const handleImportSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const parsedNrm = parseInt(importForm.nrm, 10)
-    if (isNaN(parsedNrm)) {
-      toast.error('NRM harus berupa angka')
-      return
-    }
-
-    setIsSubmitting(true)
-    try {
-      await importPasien({
-        ...importForm,
-        nrm: parsedNrm,
-        tanggal_lahir: importForm.tanggal_lahir || undefined,
-        tempat_lahir: importForm.tempat_lahir || undefined,
-        jenis_kelamin: importForm.jenis_kelamin || undefined,
-        alamat: importForm.alamat || undefined,
-        no_hp: importForm.no_hp || undefined,
-        alergi_obat: importForm.alergi_obat || undefined
-      })
-      toast.success('Pasien lama berhasil di-import')
-      setIsImportOpen(false)
-      setImportForm({
-        nrm: '',
-        nama: '',
-        tanggal_lahir: '',
-        tempat_lahir: '',
-        jenis_kelamin: '',
-        alamat: '',
-        no_hp: '',
-        alergi_obat: ''
-      })
-      fetchPasien()
-    } catch (err: any) {
-      toast.error(err.message || 'Terjadi kesalahan')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleDeleteClick = async (e: React.MouseEvent, p: PasienRow) => {
-    e.stopPropagation()
-    setPatientToDelete(p)
-    setIsDeleteOpen(true)
-    setDeletePreview(null)
-    
-    // Fetch detailed preview data
-    setLoadingPreview(true)
-    try {
-      const preview = await getPatientDeletePreview(p.id)
-      setDeletePreview(preview)
-    } catch (err: any) {
-      console.error('Failed to load delete preview:', err)
-      toast.error('Gagal memuat detail pasien')
-    } finally {
-      setLoadingPreview(false)
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!patientToDelete) return
-    setIsDeleting(true)
-    try {
-      await deletePasien(patientToDelete.id, patientToDelete.nama, patientToDelete.nrm)
-      toast.success('Pasien berhasil dihapus permanen')
-      setIsDeleteOpen(false)
-      setPatientToDelete(null)
-      fetchPasien()
-      if (selectedPasien?.id === patientToDelete.id) {
-        setIsSheetOpen(false)
-        setSelectedPasien(null)
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Gagal menghapus pasien')
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Manajemen Pasien</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Cari, edit, dan lihat riwayat seluruh pasien.
+            Cari, edit, dan lihat riwayat pasien yang terdaftar.
           </p>
         </div>
-
-        <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
-          <DialogTrigger asChild>
-            <Button className="shrink-0 gap-2">
-              <FilePlus className="h-4 w-4" />
-              Input Pasien Lama
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Input Pasien Lama (Import)</DialogTitle>
-              <DialogDescription>
-                Masukkan data pasien dari sistem rekam medis sebelumnya secara manual beserta NRM lamanya. NRM harus berupa angka.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleImportSubmit} className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="import-nrm">NRM Lama (Angka)</Label>
-                  <Input
-                    id="import-nrm"
-                    required
-                    type="number"
-                    value={importForm.nrm}
-                    onChange={(e) => setImportForm({ ...importForm, nrm: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="import-nama">Nama Lengkap</Label>
-                  <Input
-                    id="import-nama"
-                    required
-                    value={importForm.nama}
-                    onChange={(e) => setImportForm({ ...importForm, nama: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="import-tanggal-lahir">Tanggal Lahir</Label>
-                  <Input
-                    id="import-tanggal-lahir"
-                    type="date"
-                    value={importForm.tanggal_lahir}
-                    onChange={(e) => setImportForm({ ...importForm, tanggal_lahir: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="import-jenis-kelamin">Jenis Kelamin</Label>
-                  <Select
-                    value={importForm.jenis_kelamin}
-                    onValueChange={(val) => setImportForm({ ...importForm, jenis_kelamin: val as any })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="L">Laki-laki</SelectItem>
-                      <SelectItem value="P">Perempuan</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="import-alergi">Alergi Obat</Label>
-                <Input
-                  id="import-alergi"
-                  placeholder="Kosongkan jika tidak ada"
-                  value={importForm.alergi_obat}
-                  onChange={(e) => setImportForm({ ...importForm, alergi_obat: e.target.value })}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Pasien'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {debugError && (
@@ -467,23 +272,13 @@ export default function AdminPasienPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleEditClick(e, p)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => handleDeleteClick(e, p)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleEditClick(e, p)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -492,7 +287,7 @@ export default function AdminPasienPage() {
         </Table>
       </div>
 
-      {/* Kontrol Navigasi Halaman Pasien (Gaya Kustom Gambar: < Sebelumnya [ 1 ] 2 Selanjutnya >) */}
+      {/* Kontrol Navigasi Halaman Pasien */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-1.5 py-6 mt-4">
           <Button
@@ -536,7 +331,7 @@ export default function AdminPasienPage() {
         </div>
       )}
 
-      {/* Dialog Detail & Riwayat Pasien (Centered Modal) */}
+      {/* Dialog Detail & Riwayat Pasien */}
       <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <DialogContent className="w-full sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl">
           <DialogHeader className="pb-4 border-b">
@@ -549,7 +344,7 @@ export default function AdminPasienPage() {
           <div className="flex-1 overflow-y-auto -mx-6 px-6 py-4">
             {selectedPasien && (
               <div className="space-y-6">
-                {/* 📄 LEBARAN KERTAS IVORY REKAM MEDIS PASIEN */}
+                {/* Lebaran Kertas Ivory Rekam Medis Pasien */}
                 <div className="bg-[#FAF9F6] border-2 border-[#EADFC9] shadow-xl rounded-xl p-6 md:p-8 space-y-6 relative overflow-hidden">
                   
                   {/* Kop Lembar Rekam Medis */}
@@ -633,7 +428,7 @@ export default function AdminPasienPage() {
                     </div>
                   </div>
 
-                  {/* 📚 TABEL REKAM MEDIS GRID 4 KOLOM UTAMA */}
+                  {/* Tabel Rekam Medis Grid 4 Kolom Utama */}
                   <div className="border border-gray-400 bg-white rounded-lg overflow-x-auto mt-6">
                     <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
                       <thead>
@@ -693,7 +488,7 @@ export default function AdminPasienPage() {
                                   )}
                                 </td>
 
-                                {/* Kolom Anamnesa / Pemeriksaan Riwayat (Gaya Tulisan Tangan Pena Biru) */}
+                                {/* Kolom Anamnesa / Pemeriksaan Riwayat */}
                                 <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
                                   {rm?.anamnesis || '-'}
                                   {rm?.pemeriksaan_fisik && (
@@ -850,111 +645,6 @@ export default function AdminPasienPage() {
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Delete Confirmation */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Hapus Pasien - Tindakan Permanen
-            </DialogTitle>
-            <DialogDescription>
-              Konfirmasi penghapusan data pasien dari sistem.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {patientToDelete && (
-              <>
-                {/* Patient Info */}
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                  <div className="text-sm">
-                    <span className="font-semibold text-gray-700">NRM:</span> {patientToDelete.nrm}
-                  </div>
-                  <div className="text-sm">
-                    <span className="font-semibold text-gray-700">Nama:</span> {patientToDelete.nama}
-                  </div>
-                </div>
-
-                {/* Summary Stats */}
-                {loadingPreview ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                    <span className="text-sm text-blue-700">Memuat detail data...</span>
-                  </div>
-                ) : deletePreview?.hasData ? (
-                  <>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm font-semibold text-blue-900 mb-2">Ringkasan Data</p>
-                      <div className="text-sm text-blue-800 space-y-1">
-                        <div>Total Kunjungan: <strong>{deletePreview.totalVisits}x</strong></div>
-                        <div>Total Pendapatan: <strong>Rp {deletePreview.totalRevenue.toLocaleString('id-ID')}</strong></div>
-                      </div>
-                    </div>
-
-                    {/* Medicines List with Stock Restoration */}
-                    {deletePreview.medicines && deletePreview.medicines.length > 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-2">
-                          <Pill className="h-4 w-4" />
-                          Obat yang Akan Dikembalikan ke Stok
-                        </p>
-                        <ul className="text-sm text-amber-800 space-y-1">
-                          {deletePreview.medicines.map((med: any, idx: number) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              {med.will_restore_stock && <CheckCircle className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />}
-                              <span>
-                                <strong>{med.nama_obat}</strong>: +{med.total_jumlah}
-                                {med.will_restore_stock && <span className="text-green-700 ml-1">(stok dikembalikan)</span>}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                ) : null}
-
-                {/* RED WARNINGS */}
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 space-y-3">
-                  <p className="text-sm font-bold text-red-700 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    PERINGATAN: Data yang akan dihapus PERMANEN
-                  </p>
-                  <ul className="text-sm text-red-600 space-y-1 ml-6 list-disc">
-                    <li className="font-semibold">Semua riwayat kunjungan</li>
-                    <li className="font-semibold">Semua rekam medis</li>
-                    <li className="font-semibold">Semua resep obat</li>
-                    <li className="font-semibold">Semua data pembayaran</li>
-                  </ul>
-                  <p className="text-sm font-bold text-red-700 mt-3">
-                    ⚠️ Tindakan ini TIDAK DAPAT dibatalkan!
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteOpen(false)}
-              disabled={isDeleting}
-            >
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isDeleting ? 'Menghapus...' : 'Ya, Hapus Permanen'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
