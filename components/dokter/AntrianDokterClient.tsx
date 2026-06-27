@@ -154,50 +154,64 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   // Supabase Realtime: listen for new patients assigned to this doctor for selectedDate
   useEffect(() => {
     const supabase = createClient()
+    let channel: any = null
+    let active = true
 
-    const channel = supabase
-      .channel(`antrian-dokter-realtime-${selectedDate}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'kunjungan',
-        },
-        (payload: any) => {
-          console.log('[Realtime Dokter] Received change:', payload)
-          const newRow = payload.new as any
-          const oldRow = payload.old as any
+    async function setupSubscription() {
+      // Wait for session to ensure connection uses 'authenticated' token rather than 'anon'
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!active) return
 
-          if (payload.eventType === 'INSERT') {
-            if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
-              console.log('[Realtime Dokter] New patient assigned to me today!')
-              playNotificationBeep()
-              toast.info('🔔 Pasien baru masuk antrian Anda!', {
-                description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
-                duration: 8000,
-              })
+      channel = supabase
+        .channel(`antrian-dokter-realtime-${selectedDate}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'kunjungan',
+          },
+          (payload: any) => {
+            console.log('[Realtime Dokter] Received change:', payload)
+            const newRow = payload.new as any
+            const oldRow = payload.old as any
+
+            if (payload.eventType === 'INSERT') {
+              if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
+                console.log('[Realtime Dokter] New patient assigned to me today!')
+                playNotificationBeep()
+                toast.info('🔔 Pasien baru masuk antrian Anda!', {
+                  description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
+                  duration: 8000,
+                })
+                fetchAntrian()
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              if (
+                (newRow && (newRow.dokter_id === dokterId || newRow.tanggal === selectedDate)) ||
+                (oldRow && (oldRow.dokter_id === dokterId || oldRow.tanggal === selectedDate))
+              ) {
+                console.log('[Realtime Dokter] Visit updated for date:', selectedDate)
+                fetchAntrian()
+              }
+            } else if (payload.eventType === 'DELETE') {
               fetchAntrian()
             }
-          } else if (payload.eventType === 'UPDATE') {
-            if (
-              (newRow && (newRow.dokter_id === dokterId || newRow.tanggal === selectedDate)) ||
-              (oldRow && (oldRow.dokter_id === dokterId || oldRow.tanggal === selectedDate))
-            ) {
-              console.log('[Realtime Dokter] Visit updated for date:', selectedDate)
-              fetchAntrian()
-            }
-          } else if (payload.eventType === 'DELETE') {
-            fetchAntrian()
           }
-        }
-      )
-      .subscribe((status: string) => {
-        console.log(`[Realtime Dokter] Channel status:`, status)
+        )
+
+      channel.subscribe((status: string) => {
+        console.log(`[Realtime Dokter] Channel status for date ${selectedDate}:`, status)
       })
+    }
+
+    setupSubscription()
 
     return () => {
-      supabase.removeChannel(channel)
+      active = false
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [dokterId, selectedDate, fetchAntrian])
 

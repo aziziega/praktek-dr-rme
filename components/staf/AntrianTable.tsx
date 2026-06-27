@@ -143,37 +143,51 @@ export function AntrianTable() {
   // Supabase Realtime subscription
   useEffect(() => {
     const supabase = createClient()
+    let channel: any = null
+    let active = true
 
-    const channel = supabase
-      .channel(`antrian-staf-realtime-${selectedDate}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'kunjungan',
-        },
-        (payload: any) => {
-          console.log('[Realtime Staf] Received change:', payload)
-          const newRow = payload.new as any
-          const oldRow = payload.old as any
+    async function setupSubscription() {
+      // Wait for session to ensure connection uses 'authenticated' token rather than 'anon'
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!active) return
 
-          // Update if the row matches the selected date
-          if (
-            (newRow && newRow.tanggal === selectedDate) ||
-            (oldRow && oldRow.tanggal === selectedDate)
-          ) {
-            console.log('[Realtime Staf] Refreshing queue list for date:', selectedDate)
-            fetchAntrian()
+      channel = supabase
+        .channel(`antrian-staf-realtime-${selectedDate}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'kunjungan',
+          },
+          (payload: any) => {
+            console.log('[Realtime Staf] Received change:', payload)
+            const newRow = payload.new as any
+            const oldRow = payload.old as any
+
+            // Update if the row matches the selected date
+            if (
+              (newRow && newRow.tanggal === selectedDate) ||
+              (oldRow && oldRow.tanggal === selectedDate)
+            ) {
+              console.log('[Realtime Staf] Refreshing queue list for date:', selectedDate)
+              fetchAntrian()
+            }
           }
-        }
-      )
-      .subscribe((status: string) => {
-        console.log(`[Realtime Staf] Channel status:`, status)
+        )
+
+      channel.subscribe((status: string) => {
+        console.log(`[Realtime Staf] Channel status for date ${selectedDate}:`, status)
       })
+    }
+
+    setupSubscription()
 
     return () => {
-      supabase.removeChannel(channel)
+      active = false
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
     }
   }, [selectedDate, fetchAntrian])
 
