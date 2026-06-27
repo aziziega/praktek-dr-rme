@@ -30,6 +30,14 @@ export function PendaftaranClient() {
     }
   }, [view, fetchStats])
 
+  // Reset scroll position to top when switching views (fixes white/blank screen issue at bottom)
+  useEffect(() => {
+    const scrollContainer = document.getElementById('main-scroll-container')
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'instant' })
+    }
+  }, [view])
+
   function handleSelectPasien(pasien: PasienRow) {
     setSelectedPasien(pasien)
     setView('kunjungan')

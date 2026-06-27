@@ -74,6 +74,49 @@ const ROLE_COLORS: Record<UserRole, string> = {
   admin: 'bg-amber-100 text-amber-700 border-amber-200',
 }
 
+function LiveClock() {
+  const [time, setTime] = useState<Date | null>(null)
+
+  useEffect(() => {
+    setTime(new Date())
+    const timer = setInterval(() => {
+      setTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  function formatIndonesianLiveDate(date: Date): string {
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ]
+    const dayName = days[date.getDay()]
+    const day = date.getDate()
+    const monthName = months[date.getMonth()]
+    const year = date.getFullYear()
+    return `${dayName}, ${day} ${monthName} ${year}`
+  }
+
+  function formatLiveTime(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${hours}:${minutes}:${seconds} WIB`
+  }
+
+  return (
+    <div className="flex flex-col text-gray-500">
+      <div className="text-base font-bold tracking-tight font-mono text-gray-800">
+        {time ? formatLiveTime(time) : '--:--:-- WIB'}
+      </div>
+      <div className="text-xs font-medium text-gray-400 truncate">
+        {time ? formatIndonesianLiveDate(time) : 'Memuat...'}
+      </div>
+    </div>
+  )
+}
+
 interface DashboardShellProps {
   children: React.ReactNode
   userName: string
@@ -89,17 +132,7 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false)
   const navItems = NAV_ITEMS[userRole]
 
-  // Live Ticking Clock State
-  const [time, setTime] = useState<Date | null>(null)
 
-  // TEMPORARILY DISABLED - Testing if this causes modal loop
-  // useEffect(() => {
-  //   setTime(new Date())
-  //   const timer = setInterval(() => {
-  //     setTime(new Date())
-  //   }, 1000)
-  //   return () => clearInterval(timer)
-  // }, [])
 
   // Show welcome toast when landing on the dashboard
   useEffect(() => {
@@ -156,25 +189,7 @@ export function DashboardShell({
     resolveUuids()
   }, [pathname, resolvedLabels])
 
-  function formatIndonesianLiveDate(date: Date): string {
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-    const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ]
-    const dayName = days[date.getDay()]
-    const day = date.getDate()
-    const monthName = months[date.getMonth()]
-    const year = date.getFullYear()
-    return `${dayName}, ${day} ${monthName} ${year}`
-  }
 
-  function formatLiveTime(date: Date): string {
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const seconds = String(date.getSeconds()).padStart(2, '0')
-    return `${hours}:${minutes}:${seconds} WIB`
-  }
 
   function renderBreadcrumbs() {
     const paths = pathname.split('/').filter(Boolean)
@@ -248,14 +263,7 @@ export function DashboardShell({
 
         {/* Live Clock Widget */}
         <div className="px-4 pb-4">
-          <div className="flex flex-col text-gray-500">
-            <div className="text-base font-bold tracking-tight font-mono text-gray-800">
-              {time ? formatLiveTime(time) : '--:--:-- WIB'}
-            </div>
-            <div className="text-xs font-medium text-gray-400 truncate">
-              {time ? formatIndonesianLiveDate(time) : 'Memuat...'}
-            </div>
-          </div>
+          <LiveClock />
         </div>
 
         <Separator />
@@ -397,7 +405,7 @@ export function DashboardShell({
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <div id="main-scroll-container" className="flex-1 overflow-y-auto p-4 lg:p-6">
           {renderBreadcrumbs()}
           {children}
         </div>

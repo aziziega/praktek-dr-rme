@@ -10,7 +10,7 @@ const ROLE_REDIRECTS: Record<UserRole, string> = {
   admin: '/dashboard/admin/users',
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   request.headers.set('x-pathname', request.nextUrl.pathname)
 
   let supabaseResponse = NextResponse.next({

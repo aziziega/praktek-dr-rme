@@ -213,11 +213,11 @@ export function FormKunjungan({
 
   function checkVitalsAnomalies() {
     const anomalies: { field: string; val: string; msg: string; isExtreme: boolean }[] = []
-    
+
     const sys = tensiSistolik ? parseInt(tensiSistolik, 10) : null
     const dias = tensiDiastolik ? parseInt(tensiDiastolik, 10) : null
     const hr = nadi ? parseInt(nadi, 10) : null
-    
+
     // Normalize Indonesian comma decimals to dots
     const normalizedSuhu = suhu ? suhu.replace(',', '.') : ''
     const temp = normalizedSuhu ? parseFloat(normalizedSuhu) : null
@@ -285,8 +285,8 @@ export function FormKunjungan({
         anomalies.push({
           field: 'Suhu Tubuh',
           val: `${temp} °C`,
-          msg: temp >= 100 
-            ? 'Nilai suhu terlampau tinggi. Apakah Anda lupa menuliskan koma desimal? (contoh: ketik 36.5 atau 36,5)' 
+          msg: temp >= 100
+            ? 'Nilai suhu terlampau tinggi. Apakah Anda lupa menuliskan koma desimal? (contoh: ketik 36.5 atau 36,5)'
             : 'Nilai suhu tubuh sangat ekstrem (Kemungkinan besar salah ketik/typo).',
           isExtreme: true
         })
@@ -470,7 +470,7 @@ export function FormKunjungan({
 
       {/* 📄 LEBARAN KERTAS IVORY REKAM MEDIS PASIEN (Hanya berisi Formulir & Riwayat Klinis) */}
       <div className="bg-[#FAF9F6] border-2 border-[#EADFC9] shadow-xl rounded-xl p-6 md:p-8 space-y-6 relative overflow-hidden select-none">
-        
+
         {/* Kop Lembar Rekam Medis (Sesuai Foto Asli) */}
         <div className="text-center space-y-1">
           <h2 className="text-2xl font-extrabold tracking-widest text-gray-800 border-b border-gray-400 pb-1 inline-block">
@@ -577,7 +577,7 @@ export function FormKunjungan({
               {/* 🛑 BARIS UTAMA EDITABLE STAF (HARI INI) */}
               {historyPage === 1 && (
                 <tr className="border-b border-gray-300 align-top bg-amber-50/20 hover:bg-amber-50/30 transition-colors">
-                  
+
                   {/* 1. Tanggal + Form Vital Signs */}
                   <td className="p-3 border-r border-gray-300 space-y-3">
                     <div className="font-bold text-gray-900 leading-snug">
@@ -697,7 +697,7 @@ export function FormKunjungan({
                   const rm = Array.isArray(row.rekam_medis) ? row.rekam_medis[0] : row.rekam_medis;
                   return (
                     <tr key={row.id} className="border-b border-gray-200 align-top opacity-85 hover:opacity-100 transition-opacity">
-                      
+
                       {/* Kolom Tanggal Riwayat + Vital Signs */}
                       <td className="p-3 border-r border-gray-200 text-gray-600 font-semibold leading-normal">
                         <div>{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>

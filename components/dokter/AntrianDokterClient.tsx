@@ -96,11 +96,18 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   const [isNavigating, setIsNavigating] = useState(false)
   const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set())
   const prevAntrianIdsRef = useRef<Set<string>>(new Set())
+  const hasInitialLoadRef = useRef(false)
 
   // Get local timezone-safe date string YYYY-MM-DD (Asia/Jakarta)
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
+
+  // Reset loading and initial load ref when selectedDate changes to prevent false positive notifications
+  useEffect(() => {
+    setLoading(true)
+    hasInitialLoadRef.current = false
+  }, [selectedDate])
 
   const fetchAntrian = useCallback(async () => {
     try {
@@ -123,11 +130,17 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
     if (!loading) {
       const currentIds = new Set(antrian.map((a) => a.id))
       const freshIds = new Set<string>()
-      currentIds.forEach((id) => {
-        if (!prevAntrianIdsRef.current.has(id) && prevAntrianIdsRef.current.size > 0) {
-          freshIds.add(id)
-        }
-      })
+
+      if (hasInitialLoadRef.current) {
+        currentIds.forEach((id) => {
+          if (!prevAntrianIdsRef.current.has(id)) {
+            freshIds.add(id)
+          }
+        })
+      } else {
+        hasInitialLoadRef.current = true
+      }
+
       if (freshIds.size > 0) {
         setNewItemIds(freshIds)
         // Clear the flash after 3 seconds

@@ -4,7 +4,7 @@ import { CheckCircle, Clock, MapPin, Phone, FileText, Stethoscope } from 'lucide
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen">
+    <div className="relative h-screen w-screen overflow-y-auto">
       {/* Fullscreen Background Image - Fixed */}
       <div
         className="fixed inset-0 z-0"
