@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import {
   getAntrianDokter,
   updateStatusKunjungan,
@@ -89,7 +88,6 @@ function playNotificationBeep() {
 }
 
 export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
-  const router = useRouter()
   const [antrian, setAntrian] = useState<AntrianDokterItem[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<string | null>(null)
@@ -292,9 +290,9 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
         setIsNavigating(false)
         return
       }
-      // Revert ke router.push dengan refresh untuk menjaga UX SPA yang mulus
-      router.push(`/dashboard/dokter/periksa/${kunjunganId}`)
-      router.refresh()
+      // Use hard navigation to avoid App Router race condition with router.refresh()
+      // that was causing the page to briefly flash back to antrian before navigating
+      window.location.href = `/dashboard/dokter/periksa/${kunjunganId}`
     } catch {
       toast.error('Terjadi kesalahan')
       setProcessingId(null)
@@ -304,8 +302,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
   function handleLihat(kunjunganId: string) {
     setIsNavigating(true)
-    router.push(`/dashboard/dokter/periksa/${kunjunganId}`)
-    router.refresh()
+    window.location.href = `/dashboard/dokter/periksa/${kunjunganId}`
   }
 
   function formatTime(dateStr: string): string {
