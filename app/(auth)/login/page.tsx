@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { UserRole } from '@/types/database'
 
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Stethoscope, Loader2 } from 'lucide-react'
+import { Stethoscope, Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { loginWithEmail } from '@/app/actions/auth'
@@ -80,6 +81,17 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md space-y-6">
+      {/* Tombol Kembali ke Landing Page */}
+      <div className="flex justify-start">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          Kembali ke Beranda
+        </Link>
+      </div>
+
       {/* Header / Branding */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 shadow-lg shadow-sky-500/25">

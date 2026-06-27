@@ -155,15 +155,14 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   useEffect(() => {
     const supabase = createClient()
     let channel: any = null
+    let authSubscription: any = null
     let active = true
 
-    async function setupSubscription() {
-      // Wait for session to ensure connection uses 'authenticated' token rather than 'anon'
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!active) return
+    async function subscribeToRealtime() {
+      if (channel) return
 
       channel = supabase
-        .channel(`antrian-dokter-realtime-${selectedDate}`)
+        .channel(`antrian-dokter-realtime-${dokterId}-${selectedDate}`)
         .on(
           'postgres_changes',
           {
@@ -205,10 +204,32 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
       })
     }
 
-    setupSubscription()
+    async function init() {
+      // Check current session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!active) return
+
+      if (session) {
+        subscribeToRealtime()
+      }
+
+      // Listen for auth state changes to subscribe once session is loaded
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, currentSession: any) => {
+        if (!active) return
+        if (currentSession) {
+          subscribeToRealtime()
+        }
+      })
+      authSubscription = subscription
+    }
+
+    init()
 
     return () => {
       active = false
+      if (authSubscription) {
+        authSubscription.unsubscribe()
+      }
       if (channel) {
         supabase.removeChannel(channel)
       }
