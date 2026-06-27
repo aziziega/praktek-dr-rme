@@ -154,15 +154,21 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   // Supabase Realtime: listen for new patients assigned to this doctor for selectedDate
   useEffect(() => {
     const supabase = createClient()
-    let channel: any = null
-    let authSubscription: any = null
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let pollInterval: ReturnType<typeof setInterval> | null = null
     let active = true
 
-    async function subscribeToRealtime() {
-      if (channel) return
+    async function connect() {
+      if (!active) return
+
+      // Remove old channel if exists
+      if (channel) {
+        await supabase.removeChannel(channel)
+        channel = null
+      }
 
       channel = supabase
-        .channel(`antrian-dokter-realtime-${dokterId}-${selectedDate}`)
+        .channel(`antrian-dokter-${dokterId}-${selectedDate}`)
         .on(
           'postgres_changes',
           {
@@ -171,13 +177,15 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
             table: 'kunjungan',
           },
           (payload: any) => {
+            if (!active) return
             console.log('[Realtime Dokter] Received change:', payload)
             const newRow = payload.new as any
             const oldRow = payload.old as any
 
             if (payload.eventType === 'INSERT') {
+              // Filter client-side: only react to rows assigned to this doctor today
               if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
-                console.log('[Realtime Dokter] New patient assigned to me today!')
+                console.log('[Realtime Dokter] ✅ New patient assigned to me!')
                 playNotificationBeep()
                 toast.info('🔔 Pasien baru masuk antrian Anda!', {
                   description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
@@ -187,10 +195,10 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
               }
             } else if (payload.eventType === 'UPDATE') {
               if (
-                (newRow && (newRow.dokter_id === dokterId || newRow.tanggal === selectedDate)) ||
-                (oldRow && (oldRow.dokter_id === dokterId || oldRow.tanggal === selectedDate))
+                (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) ||
+                (oldRow && oldRow.dokter_id === dokterId && oldRow.tanggal === selectedDate)
               ) {
-                console.log('[Realtime Dokter] Visit updated for date:', selectedDate)
+                console.log('[Realtime Dokter] Visit updated')
                 fetchAntrian()
               }
             } else if (payload.eventType === 'DELETE') {
@@ -198,41 +206,36 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
             }
           }
         )
+        .subscribe((status: string, err?: Error) => {
+          console.log(`[Realtime Dokter] Status: ${status}`, err ?? '')
+          if (status === 'SUBSCRIBED') {
+            console.log('[Realtime Dokter] ✅ Connected and listening')
+            // Clear polling fallback once realtime is confirmed working
+            if (pollInterval) {
+              clearInterval(pollInterval)
+              pollInterval = null
+            }
+          }
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.warn('[Realtime Dokter] ⚠️ Channel error, will use polling fallback')
+          }
+        })
 
-      channel.subscribe((status: string) => {
-        console.log(`[Realtime Dokter] Channel status for date ${selectedDate}:`, status)
-      })
-    }
-
-    async function init() {
-      // Check current session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!active) return
-
-      if (session) {
-        subscribeToRealtime()
-      }
-
-      // Listen for auth state changes to subscribe once session is loaded
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, currentSession: any) => {
-        if (!active) return
-        if (currentSession) {
-          subscribeToRealtime()
+      // Polling fallback: refresh every 15s in case realtime is blocked/slow
+      pollInterval = setInterval(() => {
+        if (active) {
+          console.log('[Realtime Dokter] 🔄 Polling fallback refresh')
+          fetchAntrian()
         }
-      })
-      authSubscription = subscription
+      }, 15000)
     }
 
-    init()
+    connect()
 
     return () => {
       active = false
-      if (authSubscription) {
-        authSubscription.unsubscribe()
-      }
-      if (channel) {
-        supabase.removeChannel(channel)
-      }
+      if (pollInterval) clearInterval(pollInterval)
+      if (channel) supabase.removeChannel(channel)
     }
   }, [dokterId, selectedDate, fetchAntrian])
 
