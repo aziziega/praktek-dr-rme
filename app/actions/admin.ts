@@ -656,3 +656,115 @@ export async function getPatientDeletePreview(patientId: string) {
     hasData: totalVisits > 0
   }
 }
+
+// ---------------------------------------------------------------------------
+// 8. KEUANGAN — LAPORAN PENDAPATAN
+// ---------------------------------------------------------------------------
+
+export async function getKeuanganSummary(bulan: number, tahun: number) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00`
+  const lastDay = new Date(tahun, bulan, 0).getDate()
+  const endDate = `${tahun}-${String(bulan).padStart(2, '0')}-${lastDay}T23:59:59`
+
+  const { data, error } = await (supabase.from('pembayaran') as any)
+    .select('tarif_periksa, total_obat, total_bayar')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .eq('status', 'lunas')
+
+  if (error) throw new Error(error.message)
+
+  const rows = (data ?? []) as { tarif_periksa: number; total_obat: number; total_bayar: number }[]
+
+  return {
+    totalPendapatan: rows.reduce((s, r) => s + Number(r.total_bayar), 0),
+    totalPeriksa: rows.reduce((s, r) => s + Number(r.tarif_periksa), 0),
+    totalObat: rows.reduce((s, r) => s + Number(r.total_obat), 0),
+    jumlahTransaksi: rows.length,
+  }
+}
+
+export async function getKeuanganChart(tahun: number) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const startDate = `${tahun}-01-01T00:00:00`
+  const endDate = `${tahun}-12-31T23:59:59`
+
+  const { data, error } = await (supabase.from('pembayaran') as any)
+    .select('tarif_periksa, total_obat, total_bayar, created_at')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .eq('status', 'lunas')
+
+  if (error) throw new Error(error.message)
+
+  const rows = (data ?? []) as { tarif_periksa: number; total_obat: number; total_bayar: number; created_at: string }[]
+
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    bulan: i + 1,
+    label: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][i],
+    pendapatan: 0,
+    periksa: 0,
+    obat: 0,
+    transaksi: 0,
+  }))
+
+  for (const row of rows) {
+    const month = new Date(row.created_at).getMonth()
+    months[month].pendapatan += Number(row.total_bayar)
+    months[month].periksa += Number(row.tarif_periksa)
+    months[month].obat += Number(row.total_obat)
+    months[month].transaksi += 1
+  }
+
+  return months
+}
+
+export async function getKeuanganDetail(bulan: number, tahun: number) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00`
+  const lastDay = new Date(tahun, bulan, 0).getDate()
+  const endDate = `${tahun}-${String(bulan).padStart(2, '0')}-${lastDay}T23:59:59`
+
+  const { data, error } = await (supabase.from('pembayaran') as any)
+    .select(`
+      id,
+      tarif_periksa,
+      total_obat,
+      total_bayar,
+      metode_bayar,
+      status,
+      catatan,
+      created_at,
+      kunjungan:kunjungan_id (
+        id,
+        tanggal,
+        jam_daftar,
+        pasien:pasien_id ( id, nrm, nama ),
+        resep_obat ( nama_obat, dosis, jumlah, harga_satuan, subtotal )
+      ),
+      dokter:dokter_id ( id, nama )
+    `)
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []) as any[]
+}

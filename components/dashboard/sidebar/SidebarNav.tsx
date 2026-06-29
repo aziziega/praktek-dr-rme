@@ -33,7 +33,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { title: 'Antrian Saya', href: '/dashboard/dokter/antrian', icon: ListOrdered },
   ],
   admin: [
-    { title: 'Overview', href: '/dashboard/admin/dashboard', icon: LayoutDashboard },
+    { title: 'Overview', href: '/dashboard/admin/overview', icon: LayoutDashboard },
     { title: 'Manajemen User', href: '/dashboard/admin/users', icon: UserCog },
     { title: 'Manajemen Pasien', href: '/dashboard/admin/pasien', icon: Users },
     { title: 'Stok Obat', href: '/dashboard/admin/obat', icon: Pill },
@@ -67,18 +67,16 @@ export function SidebarNav({ userRole, onNavigate }: SidebarNavProps) {
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
-                isActive
+              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
                   ? 'bg-gradient-to-r from-sky-50 to-emerald-50 text-sky-700 shadow-sm'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
+                }`}
             >
               <Icon
-                className={`h-[18px] w-[18px] shrink-0 transition-colors ${
-                  isActive
+                className={`h-[18px] w-[18px] shrink-0 transition-colors ${isActive
                     ? 'text-sky-600'
                     : 'text-gray-400 group-hover:text-gray-600'
-                }`}
+                  }`}
               />
               <span className="truncate">{item.title}</span>
               {isActive && (
