@@ -91,7 +91,7 @@ export async function loginWithEmail(email: string, password: string) {
   const ROLE_REDIRECTS: Record<string, string> = {
     staf: '/dashboard/staf/pendaftaran',
     dokter: '/dashboard/dokter/antrian',
-    admin: '/dashboard/admin/users',
+    admin: '/dashboard/admin/dashboard',
   }
 
   const targetUrl = ROLE_REDIRECTS[userData.role] || '/dashboard'
