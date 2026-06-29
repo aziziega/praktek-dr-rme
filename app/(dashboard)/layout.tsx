@@ -55,7 +55,7 @@ export default async function DashboardLayout({
 
   if (pathname.startsWith('/dashboard/staf') && userData.role !== 'staf') {
     const defaultHomes: Record<string, string> = {
-      admin: '/dashboard/admin/users',
+      admin: '/dashboard/admin/dashboard',
       dokter: '/dashboard/dokter/antrian'
     }
     redirect(defaultHomes[userData.role] || '/login')
@@ -63,7 +63,7 @@ export default async function DashboardLayout({
 
   if (pathname.startsWith('/dashboard/dokter') && userData.role !== 'dokter') {
     const defaultHomes: Record<string, string> = {
-      admin: '/dashboard/admin/users',
+      admin: '/dashboard/admin/dashboard',
       staf: '/dashboard/staf/pendaftaran'
     }
     redirect(defaultHomes[userData.role] || '/login')

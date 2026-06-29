@@ -51,6 +51,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Users, Pencil, FilePlus, Search, AlertTriangle, Loader2, Heart, Activity, Thermometer, Trash2, Pill, CheckCircle } from 'lucide-react'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 // Extended interface for visit history
 interface KunjunganHistory extends KunjunganRow {
@@ -60,6 +61,7 @@ interface KunjunganHistory extends KunjunganRow {
 }
 
 export default function AdminPasienPage() {
+  const isOnline = useNetworkStatus()
   const [pasien, setPasien] = useState<PasienRow[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -381,7 +383,7 @@ export default function AdminPasienPage() {
                 />
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || !isOnline}>
                   {isSubmitting ? 'Menyimpan...' : 'Simpan Pasien'}
                 </Button>
               </DialogFooter>
@@ -845,7 +847,7 @@ export default function AdminPasienPage() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !isOnline}>
                 {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
               </Button>
             </DialogFooter>

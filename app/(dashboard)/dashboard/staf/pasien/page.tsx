@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pencil, Search, AlertTriangle, Loader2, Activity, Thermometer } from 'lucide-react'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 // Extended interface for visit history
 interface KunjunganHistory extends KunjunganRow {
@@ -44,6 +45,7 @@ interface KunjunganHistory extends KunjunganRow {
 }
 
 export default function StafPasienPage() {
+  const isOnline = useNetworkStatus()
   const [pasien, setPasien] = useState<PasienRow[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -640,7 +642,7 @@ export default function StafPasienPage() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !isOnline}>
                 {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
               </Button>
             </DialogFooter>

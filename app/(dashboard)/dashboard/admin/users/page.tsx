@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { UserPlus, Pencil, KeyRound, Eye, EyeOff } from 'lucide-react'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface UserData {
   id: string
@@ -58,6 +59,7 @@ interface UserData {
 }
 
 export default function AdminUsersPage() {
+  const isOnline = useNetworkStatus()
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState<string>('all')
@@ -265,7 +267,7 @@ export default function AdminUsersPage() {
                 </Select>
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || !isOnline}>
                   {isSubmitting ? 'Menyimpan...' : 'Simpan User'}
                 </Button>
               </DialogFooter>
@@ -426,7 +428,7 @@ export default function AdminUsersPage() {
               </Select>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !isOnline}>
                 {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
               </Button>
             </DialogFooter>

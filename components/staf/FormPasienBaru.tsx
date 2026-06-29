@@ -20,6 +20,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, Save, Loader2, Hash, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface FormPasienBaruProps {
   onSuccess: (pasien: PasienRow) => void
@@ -27,6 +28,7 @@ interface FormPasienBaruProps {
 }
 
 export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
+  const isOnline = useNetworkStatus()
   const [nrm, setNrm] = useState('')
   const [loadingNrm, setLoadingNrm] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -348,7 +350,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
             </Button>
             <Button
               type="submit"
-              disabled={saving || loadingNrm}
+              disabled={saving || loadingNrm || !isOnline}
               className="bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white shadow-md shadow-sky-500/20"
             >
               {saving ? (

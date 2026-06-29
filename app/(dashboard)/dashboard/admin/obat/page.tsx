@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pill, Pencil, PlusCircle, AlertTriangle, Trash2 } from 'lucide-react'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface ObatData {
   id: string
@@ -49,6 +50,7 @@ interface ObatData {
 }
 
 export default function AdminObatPage() {
+  const isOnline = useNetworkStatus()
   const [obat, setObat] = useState<ObatData[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -263,7 +265,7 @@ export default function AdminObatPage() {
                 />
               </div>
               <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || !isOnline}>
                   {isSubmitting ? 'Menyimpan...' : 'Simpan Obat'}
                 </Button>
               </DialogFooter>
@@ -455,7 +457,7 @@ export default function AdminObatPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !isOnline}>
                 {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
               </Button>
             </DialogFooter>
@@ -514,14 +516,14 @@ export default function AdminObatPage() {
               type="button"
               variant="outline"
               onClick={() => setIsDeleteOpen(false)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isOnline}
             >
               Batal
             </Button>
             <Button
               type="button"
               variant="destructive"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isOnline}
               onClick={async () => {
                 if (!deleteTarget) return
                 setIsSubmitting(true)

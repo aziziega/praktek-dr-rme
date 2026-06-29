@@ -42,6 +42,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface FormKunjunganProps {
   pasien: PasienRow
@@ -54,6 +55,7 @@ export function FormKunjungan({
   onSuccess,
   onBack,
 }: FormKunjunganProps) {
+  const isOnline = useNetworkStatus()
   const [dokters, setDokters] = useState<{ id: string; nama: string }[]>([])
   const [loadingDokters, setLoadingDokters] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -853,7 +855,7 @@ export function FormKunjungan({
             </Button>
             <Button
               type="submit"
-              disabled={saving || loadingDokters || dokters.length === 0}
+              disabled={saving || loadingDokters || dokters.length === 0 || !isOnline}
               className="bg-gradient-to-r from-sky-500 to-emerald-500 hover:from-sky-600 hover:to-emerald-600 text-white shadow-md shadow-sky-500/20 gap-2 font-semibold"
             >
               {saving ? (
@@ -903,7 +905,7 @@ export function FormKunjungan({
             </Button>
             <Button
               onClick={handleSaveAlergi}
-              disabled={savingAlergi}
+              disabled={savingAlergi || !isOnline}
               className="bg-sky-500 hover:bg-sky-600 text-white"
             >
               {savingAlergi ? (

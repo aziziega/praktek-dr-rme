@@ -1,18 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type { UserRole } from '@/types/database'
-import { logout, resolveBreadcrumbLabel } from '@/app/actions/auth'
+import { resolveBreadcrumbLabel } from '@/app/actions/auth'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,100 +17,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
-import {
-  Stethoscope,
-  ClipboardPlus,
-  ListOrdered,
-  Users,
-  UserCog,
-  Pill,
-  Clock,
-  Activity,
-  LogOut,
-  Menu,
-  ChevronRight,
-  Coins,
-} from 'lucide-react'
+import { Menu, Stethoscope } from 'lucide-react'
 
-// Navigation items per role
-interface NavItem {
-  title: string
-  href: string
-  icon: React.ElementType
-}
-
-const NAV_ITEMS: Record<UserRole, NavItem[]> = {
-  staf: [
-    { title: 'Pendaftaran', href: '/dashboard/staf/pendaftaran', icon: ClipboardPlus },
-    { title: 'Antrian Hari Ini', href: '/dashboard/staf/antrian', icon: ListOrdered },
-    { title: 'Manajemen Pasien', href: '/dashboard/staf/pasien', icon: Users },
-  ],
-  dokter: [
-    { title: 'Antrian Saya', href: '/dashboard/dokter/antrian', icon: ListOrdered },
-  ],
-  admin: [
-    { title: 'Manajemen User', href: '/dashboard/admin/users', icon: UserCog },
-    { title: 'Manajemen Pasien', href: '/dashboard/admin/pasien', icon: Users },
-    { title: 'Stok Obat', href: '/dashboard/admin/obat', icon: Pill },
-    { title: 'Keuangan', href: '/dashboard/admin/keuangan', icon: Coins },
-    { title: 'Activity Log', href: '/dashboard/admin/activity', icon: Activity },
-    { title: 'Attendance', href: '/dashboard/admin/attendance', icon: Clock },
-  ],
-}
+import { SidebarHeader } from '@/components/dashboard/sidebar/SidebarHeader'
+import { SidebarNav } from '@/components/dashboard/sidebar/SidebarNav'
+import { SidebarFooter } from '@/components/dashboard/sidebar/SidebarFooter'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   staf: 'Staf',
   dokter: 'Dokter',
   admin: 'Admin',
-}
-
-const ROLE_COLORS: Record<UserRole, string> = {
-  staf: 'bg-sky-100 text-sky-700 border-sky-200',
-  dokter: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  admin: 'bg-amber-100 text-amber-700 border-amber-200',
-}
-
-function LiveClock() {
-  const [time, setTime] = useState<Date | null>(null)
-
-  useEffect(() => {
-    setTime(new Date())
-    const timer = setInterval(() => {
-      setTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
-
-  function formatIndonesianLiveDate(date: Date): string {
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-    const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ]
-    const dayName = days[date.getDay()]
-    const day = date.getDate()
-    const monthName = months[date.getMonth()]
-    const year = date.getFullYear()
-    return `${dayName}, ${day} ${monthName} ${year}`
-  }
-
-  function formatLiveTime(date: Date): string {
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const seconds = String(date.getSeconds()).padStart(2, '0')
-    return `${hours}:${minutes}:${seconds} WIB`
-  }
-
-  return (
-    <div className="flex flex-col text-gray-500">
-      <div className="text-base font-bold tracking-tight font-mono text-gray-800">
-        {time ? formatLiveTime(time) : '--:--:-- WIB'}
-      </div>
-      <div className="text-xs font-medium text-gray-400 truncate">
-        {time ? formatIndonesianLiveDate(time) : 'Memuat...'}
-      </div>
-    </div>
-  )
 }
 
 interface DashboardShellProps {
@@ -130,16 +42,12 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const navItems = NAV_ITEMS[userRole]
 
-
-
-  // Show welcome toast when landing on the dashboard
+  // ── Welcome toast ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const key = `welcome_toast_shown_${userName}`
-      const isShown = sessionStorage.getItem(key)
-      if (!isShown) {
+      if (!sessionStorage.getItem(key)) {
         toast.success(`Selamat datang kembali, ${userName}!`, {
           description: `Anda masuk sebagai ${ROLE_LABELS[userRole] || userRole}.`,
           duration: 5000,
@@ -149,48 +57,36 @@ export function DashboardShell({
     }
   }, [userName, userRole])
 
-  // UUID dynamic breadcrumb label resolver state
+  // ── UUID dynamic breadcrumb resolver ───────────────────────────────────────
   const [resolvedLabels, setResolvedLabels] = useState<Record<string, string>>({})
-
-  // Logout confirmation state
-  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
     const paths = pathname.split('/').filter(Boolean)
-    const uuids = paths.filter(path => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(path))
+    const isUUID = (s: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+    const uuids = paths.filter(isUUID)
+    const missing = uuids.filter((u) => !resolvedLabels[u])
+    if (missing.length === 0) return
 
-    const missingUuids = uuids.filter(uuid => !resolvedLabels[uuid])
-    if (missingUuids.length === 0) return
-
-    async function resolveUuids() {
+    async function resolve() {
       const updates: Record<string, string> = {}
-
-      for (const uuid of missingUuids) {
+      for (const uuid of missing) {
         try {
-          const resolvedName = await resolveBreadcrumbLabel(uuid)
-          if (resolvedName) {
-            updates[uuid] = resolvedName
-          } else {
-            // Truncate fallback
-            updates[uuid] = uuid.substring(0, 8) + '...'
-          }
-        } catch (err) {
-          console.error('[Breadcrumbs] Error resolving UUID:', err)
+          const name = await resolveBreadcrumbLabel(uuid)
+          updates[uuid] = name ?? uuid.substring(0, 8) + '...'
+        } catch {
           updates[uuid] = uuid.substring(0, 8) + '...'
         }
       }
-
       if (Object.keys(updates).length > 0) {
-        setResolvedLabels(prev => ({ ...prev, ...updates }))
+        setResolvedLabels((prev) => ({ ...prev, ...updates }))
       }
     }
 
-    resolveUuids()
+    resolve()
   }, [pathname, resolvedLabels])
 
-
-
+  // ── Breadcrumb renderer ────────────────────────────────────────────────────
   function renderBreadcrumbs() {
     const paths = pathname.split('/').filter(Boolean)
     if (paths.length <= 1) return null
@@ -211,9 +107,8 @@ export function DashboardShell({
       periksa: 'Periksa',
     }
 
-    const isUUID = (str: string) => {
-      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
-    }
+    const isUUID = (s: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 
     return (
       <Breadcrumb className="mb-4">
@@ -221,15 +116,23 @@ export function DashboardShell({
           {paths.map((path, idx) => {
             const isLast = idx === paths.length - 1
             const href = '/' + paths.slice(0, idx + 1).join('/')
-            const label = pathLabels[path] || resolvedLabels[path] || (isUUID(path) ? '...' : path.charAt(0).toUpperCase() + path.slice(1))
+            const label =
+              pathLabels[path] ||
+              resolvedLabels[path] ||
+              (isUUID(path) ? '...' : path.charAt(0).toUpperCase() + path.slice(1))
 
             return (
               <React.Fragment key={href}>
                 <BreadcrumbItem>
                   {isLast ? (
-                    <BreadcrumbPage className="font-semibold text-gray-900">{label}</BreadcrumbPage>
+                    <BreadcrumbPage className="font-semibold text-gray-900">
+                      {label}
+                    </BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={href} className="text-gray-500 hover:text-sky-600 transition-colors font-medium">
+                    <BreadcrumbLink
+                      href={href}
+                      className="text-gray-500 hover:text-sky-600 transition-colors font-medium"
+                    >
                       {label}
                     </BreadcrumbLink>
                   )}
@@ -243,133 +146,27 @@ export function DashboardShell({
     )
   }
 
-  function SidebarContent() {
+  // ── Sidebar assembly ───────────────────────────────────────────────────────
+  function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     return (
       <div className="flex h-full flex-col">
-        {/* Brand */}
-        <div className="px-4 py-5 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 shadow-md shadow-sky-500/20">
-              <Stethoscope className="h-5 w-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold text-gray-900">
-                Dr. Sudiman
-              </h2>
-              <p className="text-xs text-gray-500">Rekam Medis Elektronik</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Live Clock Widget */}
-        <div className="px-4 pb-4">
-          <LiveClock />
-        </div>
+        {/* Header: Brand + Clock + Metric Cards */}
+        <SidebarHeader />
 
         <Separator />
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
-                    ? 'bg-gradient-to-r from-sky-50 to-emerald-50 text-sky-700 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                >
-                  <Icon
-                    className={`h-4.5 w-4.5 shrink-0 ${isActive ? 'text-sky-600' : 'text-gray-400 group-hover:text-gray-600'
-                      }`}
-                  />
-                  <span className="truncate">{item.title}</span>
-                  {isActive && (
-                    <ChevronRight className="ml-auto h-4 w-4 text-sky-400" />
-                  )}
-                </Link>
-              )
-            })}
-          </nav>
-        </ScrollArea>
+        <SidebarNav userRole={userRole} onNavigate={onNavigate} />
 
         <Separator />
 
-        {/* User Info & Logout */}
-        <div className="p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600">
-              {userName.charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-gray-900">
-                {userName}
-              </p>
-              <Badge
-                variant="outline"
-                className={`mt-0.5 text-xs font-medium ${ROLE_COLORS[userRole]}`}
-              >
-                {ROLE_LABELS[userRole]}
-              </Badge>
-            </div>
-          </div>
-
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 text-gray-500 hover:text-red-600 hover:bg-red-50"
-            onClick={() => setIsLogoutDialogOpen(true)}
-          >
-            <LogOut className="h-4 w-4" />
-            Keluar
-          </Button>
-        </div>
-
-        {/* Logout Confirmation Dialog - Memoized to prevent re-renders from clock */}
-        {React.useMemo(() => (
-          <Dialog open={isLogoutDialogOpen} onOpenChange={(open) => !isLoggingOut && setIsLogoutDialogOpen(open)}>
-            <DialogContent className="sm:max-w-[400px]" onPointerDownOutside={(e) => isLoggingOut && e.preventDefault()} onEscapeKeyDown={(e) => isLoggingOut && e.preventDefault()}>
-              <DialogHeader>
-                <DialogTitle>Konfirmasi Keluar</DialogTitle>
-                <DialogDescription>
-                  Apakah Anda yakin ingin keluar dari sistem?
-                </DialogDescription>
-              </DialogHeader>
-              <div className="py-4">
-                <p className="text-sm text-gray-600">
-                  Anda akan dikembalikan ke halaman login dan perlu masuk kembali untuk mengakses dashboard.
-                </p>
-              </div>
-              <DialogFooter className="gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsLogoutDialogOpen(false)}
-                  disabled={isLoggingOut}
-                >
-                  Batal
-                </Button>
-                <form action={logout} onSubmit={() => setIsLoggingOut(true)}>
-                  <Button
-                    type="submit"
-                    variant="destructive"
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                    disabled={isLoggingOut}
-                  >
-                    {isLoggingOut ? 'Keluar...' : 'Ya, Keluar'}
-                  </Button>
-                </form>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        ), [isLogoutDialogOpen, isLoggingOut])}
+        {/* Footer: User Profile + Logout */}
+        <SidebarFooter userName={userName} userRole={userRole} />
       </div>
     )
   }
 
+  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50/50">
       {/* Desktop Sidebar */}
@@ -380,7 +177,7 @@ export function DashboardShell({
       {/* Mobile Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0 [&>button]:hidden">
-          <SidebarContent />
+          <SidebarContent onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 
@@ -398,14 +195,15 @@ export function DashboardShell({
           </Sheet>
           <div className="flex items-center gap-2">
             <Stethoscope className="h-5 w-5 text-sky-600" />
-            <span className="text-sm font-semibold text-gray-900">
-              Dr. Sudiman
-            </span>
+            <span className="text-sm font-semibold text-gray-900">Dr. Sudiman</span>
           </div>
         </header>
 
         {/* Page Content */}
-        <div id="main-scroll-container" className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <div
+          id="main-scroll-container"
+          className="flex-1 overflow-y-auto p-4 lg:p-6"
+        >
           {renderBreadcrumbs()}
           {children}
         </div>

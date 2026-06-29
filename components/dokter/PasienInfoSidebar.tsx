@@ -40,6 +40,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface PasienInfoSidebarProps {
   pasien: PasienRow
@@ -51,6 +52,7 @@ export function PasienInfoSidebar({
   kunjungan,
 }: PasienInfoSidebarProps) {
   const router = useRouter()
+  const isOnline = useNetworkStatus()
   const [riwayat, setRiwayat] = useState<RiwayatItem[]>([])
   const [loadingRiwayat, setLoadingRiwayat] = useState(true)
 
@@ -373,7 +375,7 @@ export function PasienInfoSidebar({
             </Button>
             <Button
               onClick={handleSaveAlergi}
-              disabled={savingAlergi}
+              disabled={savingAlergi || !isOnline}
               className="bg-sky-500 hover:bg-sky-600 text-white"
             >
               {savingAlergi ? (

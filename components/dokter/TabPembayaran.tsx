@@ -26,6 +26,7 @@ import {
   CreditCard,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface TabPembayaranProps {
   kunjunganId: string
@@ -54,6 +55,7 @@ export function TabPembayaran({
   rekamMedisData,
 }: TabPembayaranProps) {
   const router = useRouter()
+  const isOnline = useNetworkStatus()
   const [tarifPeriksa, setTarifPeriksa] = useState(50000)
   const [catatanBayar, setCatatanBayar] = useState('')
   const [saving, setSaving] = useState(false)
@@ -193,6 +195,7 @@ export function TabPembayaran({
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <Button
             size="lg"
+            disabled={!isOnline}
             className="w-full bg-gradient-to-r from-emerald-500 to-sky-500 hover:from-emerald-600 hover:to-sky-600 text-white shadow-lg shadow-emerald-500/20 text-base"
             onClick={(e) => {
               const hasEmptyDosis = resepItems.some(item => !item.dosis || !item.dosis.trim())
@@ -232,7 +235,7 @@ export function TabPembayaran({
               </Button>
               <Button
                 onClick={handleSelesai}
-                disabled={saving}
+                disabled={saving || !isOnline}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {saving ? (

@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/database'
 const ROLE_REDIRECTS: Record<UserRole, string> = {
   staf: '/dashboard/staf/pendaftaran',
   dokter: '/dashboard/dokter/antrian',
-  admin: '/dashboard/admin/users',
+  admin: '/dashboard/admin/dashboard',
 }
 
 export async function middleware(request: NextRequest) {

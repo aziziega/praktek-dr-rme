@@ -31,6 +31,7 @@ import {
   Pencil
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 interface TabRekamMedisProps {
   kunjungan: KunjunganRow
@@ -71,6 +72,8 @@ export function TabRekamMedis({
   resepItems = [],
   onDataChange,
 }: TabRekamMedisProps) {
+  const isOnline = useNetworkStatus()
+
   // Rekam Medis fields
   const [anamnesis, setAnamnesis] = useState(initialData?.anamnesis ?? '')
   const [pemeriksaanFisik, setPemeriksaanFisik] = useState(initialData?.pemeriksaan_fisik ?? '')
@@ -333,7 +336,11 @@ export function TabRekamMedis({
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      saveDataToServer(latestDataRef.current)
+      if (navigator.onLine) {
+        saveDataToServer(latestDataRef.current)
+      } else {
+        setIsTyping(false)
+      }
     }, 2000)
   }, [readOnly, saveDataToServer])
 
@@ -402,7 +409,7 @@ export function TabRekamMedis({
             size="sm"
             variant="outline"
             onClick={handleManualSave}
-            disabled={saving}
+            disabled={saving || !isOnline}
             className="h-7 text-xs gap-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all"
           >
             <Save className="h-3 w-3" />
@@ -798,7 +805,7 @@ export function TabRekamMedis({
             </Button>
             <Button
               onClick={handleSaveAlergi}
-              disabled={savingAlergi}
+              disabled={savingAlergi || !isOnline}
               className="bg-sky-500 hover:bg-sky-600 text-white"
             >
               {savingAlergi ? (
