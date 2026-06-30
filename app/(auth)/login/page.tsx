@@ -23,7 +23,7 @@ import { loginWithEmail } from '@/app/actions/auth'
 const ROLE_REDIRECTS: Record<UserRole, string> = {
   staf: '/dashboard/staf/pendaftaran',
   dokter: '/dashboard/dokter/antrian',
-  admin: '/dashboard/admin/dashboard',
+  admin: '/dashboard/admin/overview',
 }
 
 export default function LoginPage() {
