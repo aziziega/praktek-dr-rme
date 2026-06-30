@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Coins,
   User,
@@ -15,10 +15,22 @@ import {
   ChevronUp,
   Receipt,
   Pill,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -38,8 +50,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import {
   getKeuanganSummary,
+  getKeuanganDailyDetail,
   getKeuanganChart,
-  getKeuanganDetail,
+  getKeuanganRangeDetail,
 } from '@/app/actions/admin'
 import {
   BarChart,
@@ -85,6 +98,24 @@ function formatDateTimeIndo(dateStr: string): string {
   return `${day} ${month} ${year}, ${hours}:${minutes} WIB`
 }
 
+function formatDateToDDMMYYYY(dateStr: string): string {
+  if (!dateStr) return '-'
+  const [year, month, day] = dateStr.split('-')
+  return `${day}/${month}/${year}`
+}
+
+function formatDateIndoFull(dateStr: string): string {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  const dayName = days[date.getDay()]
+  const day = date.getDate()
+  const month = BULAN_LABELS[date.getMonth()]
+  const year = date.getFullYear()
+  return `${dayName}, ${day} ${month} ${year}`
+}
+
 interface SummaryData {
   totalPendapatan: number
   totalPeriksa: number
@@ -119,8 +150,13 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function KeuanganPage() {
   const now = new Date()
-  const [bulan, setBulan] = useState(now.getMonth() + 1)
-  const [tahun, setTahun] = useState(now.getFullYear())
+  const [tanggal, setTanggal] = useState(() => {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  })
   const [chartTahun, setChartTahun] = useState(now.getFullYear())
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar')
 
@@ -133,13 +169,25 @@ export default function KeuanganPage() {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
   const [exporting, setExporting] = useState<'xlsx' | 'pdf' | null>(null)
 
+  // Export modal state
+  const [exportModalType, setExportModalType] = useState<'xlsx' | 'pdf' | null>(null)
+  const [exportDariTanggal, setExportDariTanggal] = useState<string>('')
+  const [exportSampaiTanggal, setExportSampaiTanggal] = useState<string>('')
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  const dateInputRef = useRef<HTMLInputElement>(null)
+
   const fetchSummaryAndDetail = useCallback(async () => {
     setLoadingSummary(true)
     setLoadingDetail(true)
     try {
+      const [yearStr, monthStr] = tanggal.split('-')
+      const selectBulan = Number(monthStr)
+      const selectTahun = Number(yearStr)
+
       const [s, d] = await Promise.all([
-        getKeuanganSummary(bulan, tahun),
-        getKeuanganDetail(bulan, tahun),
+        getKeuanganSummary(selectBulan, selectTahun),
+        getKeuanganDailyDetail(tanggal),
       ])
       setSummary(s)
       setDetail(d)
@@ -149,7 +197,7 @@ export default function KeuanganPage() {
       setLoadingSummary(false)
       setLoadingDetail(false)
     }
-  }, [bulan, tahun])
+  }, [tanggal])
 
   const fetchChart = useCallback(async () => {
     setLoadingChart(true)
@@ -170,6 +218,32 @@ export default function KeuanganPage() {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  const handlePrevDay = () => {
+    const d = new Date(tanggal)
+    d.setDate(d.getDate() - 1)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    setTanggal(`${year}-${month}-${day}`)
+  }
+
+  const handleNextDay = () => {
+    const d = new Date(tanggal)
+    d.setDate(d.getDate() + 1)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    setTanggal(`${year}-${month}-${day}`)
+  }
+
+  const handleGoToToday = () => {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    setTanggal(`${year}-${month}-${day}`)
+  }
+
   const periksaPersen = summary && summary.totalPendapatan > 0
     ? Math.round((summary.totalPeriksa / summary.totalPendapatan) * 100)
     : 0
@@ -177,11 +251,59 @@ export default function KeuanganPage() {
     ? Math.round((summary.totalObat / summary.totalPendapatan) * 100)
     : 0
 
-  async function handleExportExcel() {
+  const [yearStr, monthStr] = tanggal.split('-')
+  const selectBulan = Number(monthStr)
+  const selectTahun = Number(yearStr)
+
+  // Buka modal export dan set default tanggal (awal bulan ini s.d. hari ini)
+  function openExportModal(type: 'xlsx' | 'pdf') {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}`
+    const firstOfMonth = `${year}-${month}-01`
+    setExportDariTanggal(firstOfMonth)
+    setExportSampaiTanggal(todayStr)
+    setExportError(null)
+    setExportModalType(type)
+  }
+
+  // Validasi rentang sebelum export
+  function validateExportRange(dari: string, sampai: string): string | null {
+    if (!dari || !sampai) return 'Harap pilih rentang tanggal terlebih dahulu.'
+    if (sampai < dari) return 'Tanggal akhir tidak boleh lebih awal dari tanggal awal.'
+    const diffMs = new Date(sampai).getTime() - new Date(dari).getTime()
+    const diffDays = diffMs / (1000 * 60 * 60 * 24)
+    if (diffDays > 365) return 'Rentang tanggal maksimal 1 tahun (365 hari).'
+    return null
+  }
+
+  async function handleExportExcel(dari: string, sampai: string) {
+    const err = validateExportRange(dari, sampai)
+    if (err) { setExportError(err); return }
+    setExportModalType(null)
     setExporting('xlsx')
     try {
+      const rangeData = await getKeuanganRangeDetail(dari, sampai)
       const XLSX = await import('xlsx')
-      const rows = detail.map((item: any) => ({
+
+      // Sheet ringkasan
+      const totalPendapatan = rangeData.reduce((s: number, r: any) => s + Number(r.total_bayar), 0)
+      const totalPeriksa = rangeData.reduce((s: number, r: any) => s + Number(r.tarif_periksa), 0)
+      const totalObat = rangeData.reduce((s: number, r: any) => s + Number(r.total_obat), 0)
+      const summaryRows = [
+        { Keterangan: 'Periode', Nilai: `${formatDateToDDMMYYYY(dari)} — ${formatDateToDDMMYYYY(sampai)}` },
+        { Keterangan: 'Total Pendapatan', Nilai: formatRupiah(totalPendapatan) },
+        { Keterangan: 'Jasa Periksa', Nilai: formatRupiah(totalPeriksa) },
+        { Keterangan: 'Omset Obat', Nilai: formatRupiah(totalObat) },
+        { Keterangan: 'Jumlah Transaksi', Nilai: rangeData.length },
+      ]
+      const wsSummary = XLSX.utils.json_to_sheet(summaryRows)
+      wsSummary['!cols'] = [{ wch: 22 }, { wch: 30 }]
+
+      // Sheet rincian
+      const rows = rangeData.map((item: any) => ({
         Tanggal: formatDateTimeIndo(item.created_at),
         'Nama Pasien': item.kunjungan?.pasien?.nama ?? '-',
         NRM: item.kunjungan?.pasien?.nrm ?? '-',
@@ -192,18 +314,16 @@ export default function KeuanganPage() {
         'Metode Bayar': item.metode_bayar ?? '-',
         Catatan: item.catatan ?? '-',
       }))
-
-      const ws = XLSX.utils.json_to_sheet(rows)
-
-      const colWidths = [
+      const wsDetail = XLSX.utils.json_to_sheet(rows)
+      wsDetail['!cols'] = [
         { wch: 28 }, { wch: 25 }, { wch: 10 }, { wch: 20 },
         { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 14 }, { wch: 20 },
       ]
-      ws['!cols'] = colWidths
 
       const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, `Keuangan ${BULAN_LABELS[bulan - 1]} ${tahun}`)
-      XLSX.writeFile(wb, `Laporan_Keuangan_${BULAN_LABELS[bulan - 1]}_${tahun}.xlsx`)
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Ringkasan')
+      XLSX.utils.book_append_sheet(wb, wsDetail, 'Rincian Transaksi')
+      XLSX.writeFile(wb, `Laporan_Keuangan_${dari}_${sampai}.xlsx`)
       toast.success('File Excel berhasil di-export')
     } catch (err: any) {
       toast.error('Gagal export Excel: ' + err.message)
@@ -212,29 +332,50 @@ export default function KeuanganPage() {
     }
   }
 
-  async function handleExportPDF() {
+  async function handleExportPDF(dari: string, sampai: string) {
+    const err = validateExportRange(dari, sampai)
+    if (err) { setExportError(err); return }
+    setExportModalType(null)
     setExporting('pdf')
     try {
+      const rangeData = await getKeuanganRangeDetail(dari, sampai)
       const jsPDFModule = await import('jspdf')
       const jsPDF = jsPDFModule.default
       const autoTableModule = await import('jspdf-autotable')
       const autoTable = autoTableModule.default
 
+      const totalPendapatan = rangeData.reduce((s: number, r: any) => s + Number(r.total_bayar), 0)
+      const totalPeriksa = rangeData.reduce((s: number, r: any) => s + Number(r.tarif_periksa), 0)
+      const totalObat = rangeData.reduce((s: number, r: any) => s + Number(r.total_obat), 0)
+
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
+      // Kop laporan
       doc.setFontSize(16)
       doc.text('Laporan Pendapatan Keuangan', 14, 15)
       doc.setFontSize(10)
-      doc.text(`Periode: ${BULAN_LABELS[bulan - 1]} ${tahun}`, 14, 22)
-      doc.text(`Praktek Dr. Umum Sudiman — Gupolo, Prambanan, Klaten`, 14, 27)
+      doc.text(`Periode: ${formatDateToDDMMYYYY(dari)} s.d. ${formatDateToDDMMYYYY(sampai)}`, 14, 22)
+      doc.text('Praktek Dr. Umum Sudiman — Gupolo, Prambanan, Klaten', 14, 27)
 
-      doc.setFontSize(9)
-      doc.text(`Total Pendapatan: ${formatRupiah(summary?.totalPendapatan ?? 0)}`, 14, 35)
-      doc.text(`Jasa Periksa: ${formatRupiah(summary?.totalPeriksa ?? 0)}`, 14, 40)
-      doc.text(`Omset Obat: ${formatRupiah(summary?.totalObat ?? 0)}`, 100, 35)
-      doc.text(`Jumlah Transaksi: ${summary?.jumlahTransaksi ?? 0}`, 100, 40)
+      // Tabel ringkasan
+      autoTable(doc, {
+        startY: 32,
+        head: [['Keterangan', 'Nilai']],
+        body: [
+          ['Total Pendapatan', formatRupiah(totalPendapatan)],
+          ['Jasa Periksa', formatRupiah(totalPeriksa)],
+          ['Omset Obat', formatRupiah(totalObat)],
+          ['Jumlah Transaksi', String(rangeData.length)],
+        ],
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [15, 118, 110], textColor: 255, fontStyle: 'bold' },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+        margin: { left: 14, right: 14 },
+        tableWidth: 120,
+      })
 
-      const tableData = detail.map((item: any) => [
+      // Tabel rincian transaksi
+      const tableData = rangeData.map((item: any) => [
         formatDateTimeIndo(item.created_at),
         item.kunjungan?.pasien?.nama ?? '-',
         item.dokter?.nama ?? '-',
@@ -245,7 +386,7 @@ export default function KeuanganPage() {
       ])
 
       autoTable(doc, {
-        startY: 46,
+        startY: (doc as any).lastAutoTable.finalY + 8,
         head: [['Tanggal', 'Pasien', 'Dokter', 'Tarif Periksa', 'Total Obat', 'Total Bayar', 'Metode']],
         body: tableData,
         styles: { fontSize: 7, cellPadding: 2 },
@@ -253,7 +394,7 @@ export default function KeuanganPage() {
         alternateRowStyles: { fillColor: [248, 250, 252] },
       })
 
-      doc.save(`Laporan_Keuangan_${BULAN_LABELS[bulan - 1]}_${tahun}.pdf`)
+      doc.save(`Laporan_Keuangan_${dari}_${sampai}.pdf`)
       toast.success('File PDF berhasil di-export')
     } catch (err: any) {
       toast.error('Gagal export PDF: ' + err.message)
@@ -278,8 +419,8 @@ export default function KeuanganPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExportExcel}
-            disabled={exporting !== null || loadingDetail}
+            onClick={() => openExportModal('xlsx')}
+            disabled={exporting !== null}
             className="gap-1.5 bg-white shadow-xs"
           >
             {exporting === 'xlsx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
@@ -288,8 +429,8 @@ export default function KeuanganPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleExportPDF}
-            disabled={exporting !== null || loadingDetail}
+            onClick={() => openExportModal('pdf')}
+            disabled={exporting !== null}
             className="gap-1.5 bg-white shadow-xs"
           >
             {exporting === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4 text-rose-600" />}
@@ -298,29 +439,6 @@ export default function KeuanganPage() {
         </div>
       </div>
 
-      {/* Filter Bulan & Tahun */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Select value={String(bulan)} onValueChange={(v) => setBulan(Number(v))}>
-          <SelectTrigger className="w-[160px] bg-white shadow-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {BULAN_LABELS.map((label, i) => (
-              <SelectItem key={i} value={String(i + 1)}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={String(tahun)} onValueChange={(v) => setTahun(Number(v))}>
-          <SelectTrigger className="w-[100px] bg-white shadow-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {tahunOptions.map((y) => (
-              <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -379,7 +497,7 @@ export default function KeuanganPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-extrabold text-gray-900">{summary?.jumlahTransaksi ?? 0}</div>
-                <p className="text-[10px] text-gray-400 mt-1">Bulan {BULAN_LABELS[bulan - 1]} {tahun}</p>
+                <p className="text-[10px] text-gray-400 mt-1">Bulan {BULAN_LABELS[selectBulan - 1]} {selectTahun}</p>
               </CardContent>
             </Card>
           </>
@@ -473,14 +591,72 @@ export default function KeuanganPage() {
       {/* Detail Table */}
       <Card className="shadow-xs border-gray-200 bg-white">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-sky-500" />
               <div>
                 <CardTitle className="text-sm font-bold text-gray-900">
-                  Rincian Transaksi — {BULAN_LABELS[bulan - 1]} {tahun}
+                  Rincian Transaksi
                 </CardTitle>
                 <p className="text-xs text-gray-400 mt-0.5">{detail.length} transaksi tercatat</p>
+              </div>
+            </div>
+
+            {/* Filter Tanggal (Daily Navigation Control - Light Theme) */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Left Arrow */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePrevDay}
+                className="h-8 w-8 bg-white border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Hari Ini Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGoToToday}
+                className="h-8 px-3 bg-white border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-bold text-xs"
+              >
+                Hari Ini
+              </Button>
+
+              {/* Right Arrow */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleNextDay}
+                className="h-8 w-8 bg-white border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg shrink-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+
+              {/* Date Picker Pill */}
+              <div className="relative">
+                <input
+                  type="date"
+                  ref={dateInputRef}
+                  value={tanggal} // YYYY-MM-DD
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setTanggal(e.target.value)
+                    }
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  className="h-8 px-3 bg-white border-gray-200 text-gray-700 rounded-full font-bold flex items-center gap-2 hover:bg-gray-50 shadow-2xs"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-red-500 shrink-0 fill-red-500/10" />
+                  <span className="font-mono text-xs tracking-wide">{formatDateToDDMMYYYY(tanggal)}</span>
+                  <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                </Button>
               </div>
             </div>
           </div>
@@ -609,6 +785,98 @@ export default function KeuanganPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Export Modal ── */}
+      <Dialog open={exportModalType !== null} onOpenChange={(open) => { if (!open) setExportModalType(null) }}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              {exportModalType === 'xlsx'
+                ? <><FileSpreadsheet className="h-5 w-5 text-emerald-600" /> Export Excel (.xlsx)</>
+                : <><FileText className="h-5 w-5 text-rose-600" /> Export PDF</>
+              }
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500">
+              Pilih rentang tanggal laporan keuangan yang ingin di-export.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Date Range Inputs */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="export-dari" className="text-xs font-semibold text-gray-700">Dari Tanggal</Label>
+                <input
+                  id="export-dari"
+                  type="date"
+                  value={exportDariTanggal}
+                  onChange={(e) => {
+                    setExportDariTanggal(e.target.value)
+                    setExportError(null)
+                  }}
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="export-sampai" className="text-xs font-semibold text-gray-700">Sampai Tanggal</Label>
+                <input
+                  id="export-sampai"
+                  type="date"
+                  value={exportSampaiTanggal}
+                  onChange={(e) => {
+                    setExportSampaiTanggal(e.target.value)
+                    setExportError(null)
+                  }}
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                />
+              </div>
+            </div>
+
+            {/* Error message */}
+            {exportError && (
+              <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                ⚠ {exportError}
+              </p>
+            )}
+
+            {/* Info note */}
+            <p className="text-xs text-gray-400 leading-relaxed">
+              {exportModalType === 'xlsx'
+                ? 'File Excel akan memiliki 2 sheet: "Ringkasan" berisi total, dan "Rincian Transaksi" berisi data per-baris.'
+                : 'File PDF akan memuat ringkasan keuangan dan tabel rincian transaksi yang rapi untuk dicetak.'
+              }
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 flex-row justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setExportModalType(null)}
+              className="border-gray-200 text-gray-600 hover:bg-gray-50"
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                if (exportModalType === 'xlsx') handleExportExcel(exportDariTanggal, exportSampaiTanggal)
+                else if (exportModalType === 'pdf') handleExportPDF(exportDariTanggal, exportSampaiTanggal)
+              }}
+              disabled={exporting !== null}
+              className={exportModalType === 'xlsx'
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5'
+                : 'bg-rose-600 hover:bg-rose-700 text-white gap-1.5'
+              }
+            >
+              {exporting !== null
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</>
+                : exportModalType === 'xlsx'
+                  ? <><FileSpreadsheet className="h-4 w-4" /> Download Excel (.xlsx)</>
+                  : <><FileText className="h-4 w-4" /> Download PDF</>
+              }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

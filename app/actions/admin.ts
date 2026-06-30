@@ -768,3 +768,118 @@ export async function getKeuanganDetail(bulan: number, tahun: number) {
 
   return (data ?? []) as any[]
 }
+
+export async function getKeuanganDailySummary(dateStr: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const startDate = `${dateStr}T00:00:00`
+  const endDate = `${dateStr}T23:59:59`
+
+  const { data, error } = await (supabase.from('pembayaran') as any)
+    .select('tarif_periksa, total_obat, total_bayar')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .eq('status', 'lunas')
+
+  if (error) throw new Error(error.message)
+
+  const rows = (data ?? []) as { tarif_periksa: number; total_obat: number; total_bayar: number }[]
+
+  return {
+    totalPendapatan: rows.reduce((s, r) => s + Number(r.total_bayar), 0),
+    totalPeriksa: rows.reduce((s, r) => s + Number(r.tarif_periksa), 0),
+    totalObat: rows.reduce((s, r) => s + Number(r.total_obat), 0),
+    jumlahTransaksi: rows.length,
+  }
+}
+
+export async function getKeuanganDailyDetail(dateStr: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const startDate = `${dateStr}T00:00:00`
+  const endDate = `${dateStr}T23:59:59`
+
+  const { data, error } = await (supabase.from('pembayaran') as any)
+    .select(`
+      id,
+      tarif_periksa,
+      total_obat,
+      total_bayar,
+      metode_bayar,
+      status,
+      catatan,
+      created_at,
+      kunjungan:kunjungan_id (
+        id,
+        tanggal,
+        jam_daftar,
+        pasien:pasien_id ( id, nrm, nama ),
+        resep_obat ( nama_obat, dosis, jumlah, harga_satuan, subtotal )
+      ),
+      dokter:dokter_id ( id, nama )
+    `)
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []) as any[]
+}
+
+// ---------------------------------------------------------------------------
+// KEUANGAN — RANGE DETAIL (export rentang tanggal)
+// ---------------------------------------------------------------------------
+
+export async function getKeuanganRangeDetail(dariTanggal: string, sampaiTanggal: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
+  if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
+
+  const startDate = `${dariTanggal}T00:00:00`
+  const endDate = `${sampaiTanggal}T23:59:59`
+
+  const { data, error } = await (supabase.from('pembayaran') as any)
+    .select(`
+      id,
+      tarif_periksa,
+      total_obat,
+      total_bayar,
+      metode_bayar,
+      status,
+      catatan,
+      created_at,
+      kunjungan:kunjungan_id (
+        id,
+        tanggal,
+        jam_daftar,
+        pasien:pasien_id ( id, nrm, nama ),
+        resep_obat ( nama_obat, dosis, jumlah, harga_satuan, subtotal )
+      ),
+      dokter:dokter_id ( id, nama )
+    `)
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .eq('status', 'lunas')
+    .order('created_at', { ascending: true })
+
+  if (error) throw new Error(error.message)
+
+  return (data ?? []) as any[]
+}
