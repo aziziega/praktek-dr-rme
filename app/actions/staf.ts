@@ -124,6 +124,40 @@ export async function createPasien(input: {
 }
 
 // ---------------------------------------------------------------------------
+// Import Pasien Lama (Manual Input for Staf)
+// ---------------------------------------------------------------------------
+export async function importPasienStaf(data: { nrm: number; nama: string; tanggal_lahir?: string; tempat_lahir?: string; jenis_kelamin?: string; alamat?: string; no_hp?: string; alergi_obat?: string }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Pastikan NRM unik
+  const { count } = await (supabase.from('pasien') as any)
+    .select('*', { count: 'exact', head: true })
+    .eq('nrm', data.nrm)
+  
+  if (count && count > 0) {
+    throw new Error(`NRM ${data.nrm} sudah terdaftar.`)
+  }
+
+  const { data: newPasien, error } = await (supabase.from('pasien') as any)
+    .insert(data)
+    .select()
+    .single()
+
+  if (error) throw new Error(error.message)
+
+  await logActivity({
+    userId: user.id,
+    aksi: 'IMPORT_PASIEN_STAF',
+    targetTabel: 'pasien',
+    targetId: newPasien.id,
+    detail: { nrm: data.nrm, nama: data.nama },
+  })
+}
+
+
+// ---------------------------------------------------------------------------
 // Get list of active doctors
 // ---------------------------------------------------------------------------
 export async function getActiveDokters(): Promise<

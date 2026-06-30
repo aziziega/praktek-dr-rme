@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getStafPasien, getRiwayatKunjunganPasienStaf, updatePasienStaf } from '@/app/actions/staf'
+import { getStafPasien, getRiwayatKunjunganPasienStaf, updatePasienStaf, importPasienStaf } from '@/app/actions/staf'
 import type { PasienRow, KunjunganRow, RekamMedisRow } from '@/types/database'
 
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -34,7 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Pencil, Search, AlertTriangle, Loader2, Activity, Thermometer } from 'lucide-react'
+import { Pencil, Search, AlertTriangle, Loader2, Activity, Thermometer, FilePlus } from 'lucide-react'
 import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
 
 // Extended interface for visit history
@@ -97,6 +98,19 @@ export default function StafPasienPage() {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editForm, setEditForm] = useState<Partial<PasienRow>>({})
+
+  // Dialog Import State
+  const [isImportOpen, setIsImportOpen] = useState(false)
+  const [importForm, setImportForm] = useState({
+    nrm: '',
+    nama: '',
+    tanggal_lahir: '',
+    tempat_lahir: '',
+    jenis_kelamin: '',
+    alamat: '',
+    no_hp: '',
+    alergi_obat: ''
+  })
 
   const [debugError, setDebugError] = useState<string | null>(null)
 
@@ -186,6 +200,46 @@ export default function StafPasienPage() {
     }
   }
 
+  const handleImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const parsedNrm = parseInt(importForm.nrm, 10)
+    if (isNaN(parsedNrm)) {
+      toast.error('NRM harus berupa angka')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await importPasienStaf({
+        ...importForm,
+        nrm: parsedNrm,
+        tanggal_lahir: importForm.tanggal_lahir || undefined,
+        tempat_lahir: importForm.tempat_lahir || undefined,
+        jenis_kelamin: importForm.jenis_kelamin || undefined,
+        alamat: importForm.alamat || undefined,
+        no_hp: importForm.no_hp || undefined,
+        alergi_obat: importForm.alergi_obat || undefined
+      })
+      toast.success('Pasien lama berhasil di-import')
+      setIsImportOpen(false)
+      setImportForm({
+        nrm: '',
+        nama: '',
+        tanggal_lahir: '',
+        tempat_lahir: '',
+        jenis_kelamin: '',
+        alamat: '',
+        no_hp: '',
+        alergi_obat: ''
+      })
+      fetchPasien()
+    } catch (err: any) {
+      toast.error(err.message || 'Terjadi kesalahan')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -195,6 +249,95 @@ export default function StafPasienPage() {
             Cari, edit, dan lihat riwayat pasien yang terdaftar.
           </p>
         </div>
+
+        <Dialog open={isImportOpen} onOpenChange={setIsImportOpen}>
+          <DialogTrigger asChild>
+            <Button className="shrink-0 gap-2">
+              <FilePlus className="h-4 w-4" />
+              Input Pasien Lama
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Input Pasien Lama</DialogTitle>
+              <DialogDescription>
+                Masukkan data pasien dari sistem rekam medis sebelumnya secara manual beserta NRM lamanya. NRM harus berupa angka.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleImportSubmit} className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="import-nrm">NRM Lama (Angka)</Label>
+                  <Input
+                    id="import-nrm"
+                    required
+                    type="number"
+                    value={importForm.nrm}
+                    onChange={(e) => setImportForm({ ...importForm, nrm: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="import-nama">Nama Lengkap</Label>
+                  <Input
+                    id="import-nama"
+                    required
+                    value={importForm.nama}
+                    onChange={(e) => setImportForm({ ...importForm, nama: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="import-tanggal-lahir">Tanggal Lahir</Label>
+                  <Input
+                    id="import-tanggal-lahir"
+                    type="date"
+                    value={importForm.tanggal_lahir}
+                    onChange={(e) => setImportForm({ ...importForm, tanggal_lahir: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="import-jenis-kelamin">Jenis Kelamin</Label>
+                  <Select
+                    value={importForm.jenis_kelamin}
+                    onValueChange={(val) => setImportForm({ ...importForm, jenis_kelamin: val as any })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="L">Laki-laki</SelectItem>
+                      <SelectItem value="P">Perempuan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="import-alamat">Alamat</Label>
+                <Textarea
+                  id="import-alamat"
+                  placeholder="Alamat lengkap"
+                  value={importForm.alamat}
+                  onChange={(e) => setImportForm({ ...importForm, alamat: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="import-alergi">Alergi Obat</Label>
+                <Input
+                  id="import-alergi"
+                  placeholder="Kosongkan jika tidak ada"
+                  value={importForm.alergi_obat}
+                  onChange={(e) => setImportForm({ ...importForm, alergi_obat: e.target.value })}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit" disabled={isSubmitting || !isOnline}>
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Pasien'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {debugError && (

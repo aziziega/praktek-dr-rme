@@ -374,6 +374,15 @@ export default function AdminPasienPage() {
                 </div>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="import-alamat">Alamat</Label>
+                <Textarea
+                  id="import-alamat"
+                  placeholder="Alamat lengkap"
+                  value={importForm.alamat}
+                  onChange={(e) => setImportForm({ ...importForm, alamat: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="import-alergi">Alergi Obat</Label>
                 <Input
                   id="import-alergi"
