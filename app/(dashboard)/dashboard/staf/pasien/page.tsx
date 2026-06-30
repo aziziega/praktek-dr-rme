@@ -321,14 +321,25 @@ export default function StafPasienPage() {
                   onChange={(e) => setImportForm({ ...importForm, alamat: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="import-alergi">Alergi Obat</Label>
-                <Input
-                  id="import-alergi"
-                  placeholder="Kosongkan jika tidak ada"
-                  value={importForm.alergi_obat}
-                  onChange={(e) => setImportForm({ ...importForm, alergi_obat: e.target.value })}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="import-hp">No HP</Label>
+                  <Input
+                    id="import-hp"
+                    placeholder="Kosongkan jika tidak ada"
+                    value={importForm.no_hp}
+                    onChange={(e) => setImportForm({ ...importForm, no_hp: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="import-alergi">Alergi Obat</Label>
+                  <Input
+                    id="import-alergi"
+                    placeholder="Kosongkan jika tidak ada"
+                    value={importForm.alergi_obat}
+                    onChange={(e) => setImportForm({ ...importForm, alergi_obat: e.target.value })}
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button type="submit" disabled={isSubmitting || !isOnline}>
