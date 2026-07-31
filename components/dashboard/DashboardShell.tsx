@@ -205,7 +205,9 @@ export function DashboardShell({
           className="flex-1 overflow-y-auto p-4 lg:p-6"
         >
           {renderBreadcrumbs()}
-          {children}
+          <div key={pathname} className="animate-fade-in">
+            {children}
+          </div>
         </div>
       </main>
     </div>
