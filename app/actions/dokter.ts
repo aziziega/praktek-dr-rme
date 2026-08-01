@@ -398,29 +398,47 @@ export async function uploadHandwritingImage(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Sesi habis.' }
 
-    const matches = base64DataUrl.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/)
-    if (!matches || matches.length !== 3) {
-      return { success: false, error: 'Format gambar tidak valid.' }
+    const commaIndex = base64DataUrl.indexOf(',')
+    if (commaIndex === -1) {
+      return { success: false, error: 'Format gambar base64 tidak valid.' }
     }
 
-    const imageBuffer = Buffer.from(matches[2], 'base64')
+    const base64Str = base64DataUrl.substring(commaIndex + 1)
+    const imageBuffer = Buffer.from(base64Str, 'base64')
     const fileName = `${kunjunganId}_${field}_${Date.now()}.png`
     const filePath = `handwriting/${fileName}`
 
-    const serviceRoleClient = createServiceRoleClient()
-    const { error } = await serviceRoleClient.storage
+    // 1. Coba upload dengan authenticated user client terlebih dahulu
+    let uploadRes = await supabase.storage
       .from('handwriting-notes')
       .upload(filePath, imageBuffer, {
         contentType: 'image/png',
         upsert: true,
       })
 
-    if (error) {
-      console.error('[uploadHandwritingImage] Storage error:', error)
-      return { success: false, error: error.message }
+    // 2. Jika gagal (misal RLS/policy), coba fallback ke service role client (admin key)
+    if (uploadRes.error) {
+      console.warn('[uploadHandwritingImage] User client upload failed, retrying with service role:', uploadRes.error.message)
+      try {
+        const serviceRoleClient = createServiceRoleClient()
+        uploadRes = await serviceRoleClient.storage
+          .from('handwriting-notes')
+          .upload(filePath, imageBuffer, {
+            contentType: 'image/png',
+            upsert: true,
+          })
+      } catch (e: any) {
+        console.error('[uploadHandwritingImage] Service role fallback error:', e.message)
+      }
     }
 
-    const { data: urlData } = serviceRoleClient.storage
+    if (uploadRes.error) {
+      console.error('[uploadHandwritingImage] Final upload error:', uploadRes.error)
+      return { success: false, error: `Gagal upload gambar: ${uploadRes.error.message}` }
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
       .from('handwriting-notes')
       .getPublicUrl(filePath)
 

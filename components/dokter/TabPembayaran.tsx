@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { selesaikanKunjungan, type ResepItem } from '@/app/actions/dokter'
+import { selesaikanKunjungan, uploadHandwritingImage, type ResepItem } from '@/app/actions/dokter'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
@@ -84,6 +84,23 @@ export function TabPembayaran({
 
     setSaving(true)
     try {
+      let finalAnamnesisUrl = rekamMedisData.anamnesis_handwriting_url
+      let finalDiagnosisUrl = rekamMedisData.diagnosis_handwriting_url
+      let finalTerapiUrl = rekamMedisData.terapi_handwriting_url
+
+      if (finalAnamnesisUrl && finalAnamnesisUrl.startsWith('data:image/')) {
+        const up = await uploadHandwritingImage(finalAnamnesisUrl, 'anamnesis', kunjunganId)
+        if (up.success && up.url) finalAnamnesisUrl = up.url
+      }
+      if (finalDiagnosisUrl && finalDiagnosisUrl.startsWith('data:image/')) {
+        const up = await uploadHandwritingImage(finalDiagnosisUrl, 'diagnosis', kunjunganId)
+        if (up.success && up.url) finalDiagnosisUrl = up.url
+      }
+      if (finalTerapiUrl && finalTerapiUrl.startsWith('data:image/')) {
+        const up = await uploadHandwritingImage(finalTerapiUrl, 'terapi', kunjunganId)
+        if (up.success && up.url) finalTerapiUrl = up.url
+      }
+
       const result = await selesaikanKunjungan({
         kunjunganId,
         anamnesis: rekamMedisData.anamnesis || undefined,
@@ -92,9 +109,9 @@ export function TabPembayaran({
         diagnosis_nama: rekamMedisData.diagnosis_nama || undefined,
         terapi: rekamMedisData.terapi || undefined,
         catatan_medis: rekamMedisData.catatan || undefined,
-        anamnesis_handwriting_url: rekamMedisData.anamnesis_handwriting_url,
-        diagnosis_handwriting_url: rekamMedisData.diagnosis_handwriting_url,
-        terapi_handwriting_url: rekamMedisData.terapi_handwriting_url,
+        anamnesis_handwriting_url: finalAnamnesisUrl,
+        diagnosis_handwriting_url: finalDiagnosisUrl,
+        terapi_handwriting_url: finalTerapiUrl,
         tensi_sistolik: rekamMedisData.tensi_sistolik ? parseInt(rekamMedisData.tensi_sistolik, 10) : undefined,
         tensi_diastolik: rekamMedisData.tensi_diastolik ? parseInt(rekamMedisData.tensi_diastolik, 10) : undefined,
         nadi: rekamMedisData.nadi ? parseInt(rekamMedisData.nadi, 10) : undefined,

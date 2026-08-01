@@ -63,6 +63,21 @@ export function HandwritingCanvas({
   const [activeTool, setActiveTool] = useState<'pen' | 'eraser'>('pen')
   const [isPenDetected, setIsPenDetected] = useState(false)
   const [loadedInitial, setLoadedInitial] = useState(false)
+  
+  // State for holding loaded background image
+  const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null)
+
+  // Load initialImage into HTMLImageElement
+  useEffect(() => {
+    if (initialImage) {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        setBgImage(img)
+      }
+      img.src = initialImage
+    }
+  }, [initialImage])
 
   // Load from localStorage if present for crash recovery
   useEffect(() => {
@@ -107,6 +122,11 @@ export function HandwritingCanvas({
     // Background paper color (#FAF9F6 - Ivory paper)
     ctx.fillStyle = '#FAF9F6'
     ctx.fillRect(0, 0, width, height)
+
+    // Draw saved background image if exists
+    if (bgImage) {
+      ctx.drawImage(bgImage, 0, 0, width, height)
+    }
 
     // Draw notebook lines (32px line spacing)
     ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)' // Subtle slate blue
@@ -185,13 +205,13 @@ export function HandwritingCanvas({
   // Export Data URL when strokes change
   const exportDataUrl = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas || strokes.length === 0) {
+    if (!canvas || (strokes.length === 0 && !bgImage)) {
       onChange?.(null)
       return
     }
     const dataUrl = canvas.toDataURL('image/png')
     onChange?.(dataUrl)
-  }, [strokes, onChange])
+  }, [strokes, onChange, bgImage])
 
   useEffect(() => {
     if (loadedInitial) {
@@ -279,15 +299,7 @@ export function HandwritingCanvas({
     setStrokes((prev) => prev.slice(0, prev.length - 1))
   }
 
-  const handleClear = () => {
-    if (readOnly || strokes.length === 0) return
-    setStrokes([])
-    setCurrentStroke([])
-    if (storageKey && typeof window !== 'undefined') {
-      localStorage.removeItem(`hw_draft_${storageKey}`)
-    }
-    toast.info('Canvas tulisan tangan dibersihkan')
-  }
+
 
   // Read Only Display if initialImage exists and no active strokes
   if (readOnly && initialImage && strokes.length === 0) {
@@ -352,17 +364,6 @@ export function HandwritingCanvas({
             >
               <Undo2 className="h-3.5 w-3.5" />
               Undo
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleClear}
-              disabled={strokes.length === 0}
-              className="h-7 px-2 text-xs gap-1 text-red-600 hover:bg-red-50 border-red-200"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Reset
             </Button>
           </div>
         </div>

@@ -6,7 +6,6 @@ import type { KunjunganRow, PasienRow, RekamMedisRow } from '@/types/database'
 import type { ResepItem } from '@/app/actions/dokter'
 import { updateAlergiObat } from '@/app/actions/staf'
 import { HandwritingCanvas } from '@/components/dokter/HandwritingCanvas'
-import { HandwritingToggle, type InputMode } from '@/components/dokter/HandwritingToggle'
 
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -90,18 +89,7 @@ export function TabRekamMedis({
   const [terapi, setTerapi] = useState(initialData?.terapi ?? '')
   const [catatan, setCatatan] = useState(initialData?.catatan ?? '')
 
-  // Input Modes ('text' | 'handwriting')
-  const [anamnesisMode, setAnamnesisMode] = useState<InputMode>(
-    initialData?.anamnesis_handwriting_url ? 'handwriting' : 'text'
-  )
-  const [diagnosisMode, setDiagnosisMode] = useState<InputMode>(
-    initialData?.diagnosis_handwriting_url ? 'handwriting' : 'text'
-  )
-  const [terapiMode, setTerapiMode] = useState<InputMode>(
-    initialData?.terapi_handwriting_url ? 'handwriting' : 'text'
-  )
-
-  // Handwriting canvas images
+  // Handwriting base64 temporary state (dari Canvas)
   const [anamnesisHwData, setAnamnesisHwData] = useState<string | null>(null)
   const [diagnosisHwData, setDiagnosisHwData] = useState<string | null>(null)
   const [terapiHwData, setTerapiHwData] = useState<string | null>(null)
@@ -325,6 +313,12 @@ export function TabRekamMedis({
     diagnosisNama,
     terapi,
     catatan,
+    anamnesisHwData,
+    diagnosisHwData,
+    terapiHwData,
+    anamnesisHwUrl,
+    diagnosisHwUrl,
+    terapiHwUrl,
     tensiSistolik,
     tensiDiastolik,
     nadi,
@@ -335,15 +329,21 @@ export function TabRekamMedis({
   useEffect(() => {
     latestDataRef.current = {
       anamnesis,
-      pemeriksaanFisik: pemeriksaanFisik,
-      diagnosisKode: diagnosisKode,
-      diagnosisNama: diagnosisNama,
-      terapi: terapi,
-      catatan: catatan,
-      tensiSistolik: tensiSistolik,
-      tensiDiastolik: tensiDiastolik,
-      nadi: nadi,
-      suhu: suhu,
+      pemeriksaanFisik,
+      diagnosisKode,
+      diagnosisNama,
+      terapi,
+      catatan,
+      anamnesisHwData,
+      diagnosisHwData,
+      terapiHwData,
+      anamnesisHwUrl,
+      diagnosisHwUrl,
+      terapiHwUrl,
+      tensiSistolik,
+      tensiDiastolik,
+      nadi,
+      suhu,
     }
   }, [
     anamnesis,
@@ -352,6 +352,12 @@ export function TabRekamMedis({
     diagnosisNama,
     terapi,
     catatan,
+    anamnesisHwData,
+    diagnosisHwData,
+    terapiHwData,
+    anamnesisHwUrl,
+    diagnosisHwUrl,
+    terapiHwUrl,
     tensiSistolik,
     tensiDiastolik,
     nadi,
@@ -363,6 +369,9 @@ export function TabRekamMedis({
     setSaving(true)
     setIsTyping(false)
     try {
+      // HANYA MENGUNGGAH TEKS KE DATABASE SAAT AUTO-SAVE.
+      // Draf gambar tulisan tangan hanya akan di-upload ke Supabase Storage saat dokter menekan "Simpan Draf" atau "Selesaikan Kunjungan".
+      // Hal ini dilakukan agar aplikasi tidak lag/lemot ("nge load terus") dan menghemat kuota Storage bandwidth.
       const result = await saveRekamMedis({
         kunjunganId: kunjungan.id,
         anamnesis: currentData.anamnesis || undefined,
@@ -667,116 +676,95 @@ export function TabRekamMedis({
                     </div>
                   </td>
 
-                  {/* 2. KOLOM ANAMNESA / PEMERIKSAAN (INPUT BEBAS TEXTAREA / CANVAS TULIS TANGAN) */}
-                  <td className="p-2 border-r border-gray-300 space-y-2">
+                  {/* 2. KOLOM ANAMNESA / PEMERIKSAAN (TEKS & CANVAS TAMPIL BERSAMAAN) */}
+                  <td className="p-2 border-r border-gray-300 space-y-3 align-top">
                     {!readOnly && (
-                      <div className="flex items-center justify-between pb-1 border-b border-dashed border-gray-200">
+                      <div className="pb-1 border-b border-dashed border-gray-200">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Anamnesis</span>
-                        <HandwritingToggle
-                          mode={anamnesisMode}
-                          onChange={setAnamnesisMode}
-                          hasHandwriting={Boolean(anamnesisHwUrl || anamnesisHwData)}
-                        />
                       </div>
                     )}
+                    
+                    <Textarea
+                      placeholder="Tulis keluhan dari staff di sini..."
+                      value={anamnesis}
+                      onChange={(e) => handleChange(setAnamnesis, e.target.value)}
+                      disabled={readOnly}
+                      rows={4}
+                      className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-sm shadow-none break-words rounded-md"
+                    />
 
-                    {anamnesisMode === 'handwriting' ? (
-                      <HandwritingCanvas
-                        initialImage={anamnesisHwUrl}
-                        readOnly={readOnly}
-                        storageKey={`anamnesis_${kunjungan.id}`}
-                        onChange={(dataUrl) => {
-                          setAnamnesisHwData(dataUrl)
-                          isDirty.current = true
-                        }}
-                        placeholder="Tulis anamnesis & hasil pemeriksaan dengan stylus di sini..."
-                        minHeight={220}
-                      />
-                    ) : (
-                      <Textarea
-                        placeholder="Tulis anamnesis lengkap keluhan pasien & hasil pemeriksaan fisik di sini secara bebas..."
-                        value={anamnesis}
-                        onChange={(e) => handleChange(setAnamnesis, e.target.value)}
-                        disabled={readOnly}
-                        rows={12}
-                        className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                      />
-                    )}
+                    <HandwritingCanvas
+                      initialImage={anamnesisHwUrl}
+                      readOnly={readOnly}
+                      storageKey={`anamnesis_${kunjungan.id}`}
+                      onChange={(dataUrl) => {
+                        setAnamnesisHwData(dataUrl)
+                        isDirty.current = true
+                      }}
+                      placeholder="Coretan tambahan dokter..."
+                      minHeight={250}
+                    />
                   </td>
 
-                  {/* 3. KOLOM DIAGNOSIS (INPUT TEKS DIAGNOSA / CANVAS TULIS TANGAN) */}
-                  <td className="p-2 border-r border-gray-300 space-y-2">
+                  {/* 3. KOLOM DIAGNOSIS (TEKS & CANVAS TAMPIL BERSAMAAN) */}
+                  <td className="p-2 border-r border-gray-300 space-y-3 align-top">
                     {!readOnly && (
-                      <div className="flex items-center justify-between pb-1 border-b border-dashed border-gray-200">
+                      <div className="pb-1 border-b border-dashed border-gray-200">
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Diagnosis</span>
-                        <HandwritingToggle
-                          mode={diagnosisMode}
-                          onChange={setDiagnosisMode}
-                          hasHandwriting={Boolean(diagnosisHwUrl || diagnosisHwData)}
-                        />
                       </div>
                     )}
 
-                    {diagnosisMode === 'handwriting' ? (
-                      <HandwritingCanvas
-                        initialImage={diagnosisHwUrl}
-                        readOnly={readOnly}
-                        storageKey={`diagnosis_${kunjungan.id}`}
-                        onChange={(dataUrl) => {
-                          setDiagnosisHwData(dataUrl)
-                          isDirty.current = true
-                        }}
-                        placeholder="Tulis diagnosis dengan stylus..."
-                        minHeight={220}
-                      />
-                    ) : (
-                      <Textarea
-                        placeholder="Diagnosis..."
-                        value={diagnosisNama}
-                        onChange={(e) => handleChange(setDiagnosisNama, e.target.value)}
-                        disabled={readOnly}
-                        rows={10}
-                        className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                      />
-                    )}
+                    <Textarea
+                      placeholder="Diagnosis teks (opsional)..."
+                      value={diagnosisNama}
+                      onChange={(e) => handleChange(setDiagnosisNama, e.target.value)}
+                      disabled={readOnly}
+                      rows={4}
+                      className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-sm shadow-none break-words rounded-md"
+                    />
+
+                    <HandwritingCanvas
+                      initialImage={diagnosisHwUrl}
+                      readOnly={readOnly}
+                      storageKey={`diagnosis_${kunjungan.id}`}
+                      onChange={(dataUrl) => {
+                        setDiagnosisHwData(dataUrl)
+                        isDirty.current = true
+                      }}
+                      placeholder="Coretan diagnosis..."
+                      minHeight={250}
+                    />
                   </td>
 
-                  {/* 4. KOLOM TERAPI (INPUT TINDAKAN / CANVAS TULIS TANGAN + AUTO-SINKRON RESEP OBAT) */}
-                  <td className="p-2 space-y-4">
-                    <div className="space-y-2">
+                  {/* 4. KOLOM TERAPI (TEKS & CANVAS TAMPIL BERSAMAAN) */}
+                  <td className="p-2 space-y-4 align-top">
+                    <div className="space-y-3">
                       {!readOnly && (
-                        <div className="flex items-center justify-between pb-1 border-b border-dashed border-gray-200">
+                        <div className="pb-1 border-b border-dashed border-gray-200">
                           <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Terapi</span>
-                          <HandwritingToggle
-                            mode={terapiMode}
-                            onChange={setTerapiMode}
-                            hasHandwriting={Boolean(terapiHwUrl || terapiHwData)}
-                          />
                         </div>
                       )}
 
-                      {terapiMode === 'handwriting' ? (
-                        <HandwritingCanvas
-                          initialImage={terapiHwUrl}
-                          readOnly={readOnly}
-                          storageKey={`terapi_${kunjungan.id}`}
-                          onChange={(dataUrl) => {
-                            setTerapiHwData(dataUrl)
-                            isDirty.current = true
-                          }}
-                          placeholder="Tulis terapi non-obat & edukasi di sini..."
-                          minHeight={150}
-                        />
-                      ) : (
-                        <Textarea
-                          placeholder="Terapi non-obat, edukasi, catatan..."
-                          value={terapi}
-                          onChange={(e) => handleChange(setTerapi, e.target.value)}
-                          disabled={readOnly}
-                          rows={6}
-                          className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                        />
-                      )}
+                      <Textarea
+                        placeholder="Terapi teks / edukasi..."
+                        value={terapi}
+                        onChange={(e) => handleChange(setTerapi, e.target.value)}
+                        disabled={readOnly}
+                        rows={3}
+                        className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-sm shadow-none break-words rounded-md"
+                      />
+
+                      <HandwritingCanvas
+                        initialImage={terapiHwUrl}
+                        readOnly={readOnly}
+                        storageKey={`terapi_${kunjungan.id}`}
+                        onChange={(dataUrl) => {
+                          setTerapiHwData(dataUrl)
+                          isDirty.current = true
+                        }}
+                        placeholder="Coretan terapi non-obat..."
+                        minHeight={250}
+                      />
                     </div>
 
                     {/* Sinkronisasi Daftar Resep Obat */}
