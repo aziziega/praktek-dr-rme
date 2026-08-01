@@ -40,6 +40,9 @@ interface TabPembayaranProps {
     diagnosis_nama: string
     terapi: string
     catatan: string
+    anamnesis_handwriting_url?: string | null
+    diagnosis_handwriting_url?: string | null
+    terapi_handwriting_url?: string | null
     tensi_sistolik?: string
     tensi_diastolik?: string
     nadi?: string
@@ -89,6 +92,9 @@ export function TabPembayaran({
         diagnosis_nama: rekamMedisData.diagnosis_nama || undefined,
         terapi: rekamMedisData.terapi || undefined,
         catatan_medis: rekamMedisData.catatan || undefined,
+        anamnesis_handwriting_url: rekamMedisData.anamnesis_handwriting_url,
+        diagnosis_handwriting_url: rekamMedisData.diagnosis_handwriting_url,
+        terapi_handwriting_url: rekamMedisData.terapi_handwriting_url,
         tensi_sistolik: rekamMedisData.tensi_sistolik ? parseInt(rekamMedisData.tensi_sistolik, 10) : undefined,
         tensi_diastolik: rekamMedisData.tensi_diastolik ? parseInt(rekamMedisData.tensi_diastolik, 10) : undefined,
         nadi: rekamMedisData.nadi ? parseInt(rekamMedisData.nadi, 10) : undefined,

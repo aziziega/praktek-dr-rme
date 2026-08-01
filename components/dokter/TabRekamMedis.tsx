@@ -839,9 +839,18 @@ export function TabRekamMedis({
                       )}
                     </td>
 
-                    {/* Kolom Anamnesa / Pemeriksaan Riwayat (Gaya Tulisan Tangan Pena Biru) */}
+                    {/* Kolom Anamnesa / Pemeriksaan Riwayat */}
                     <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.anamnesis || '-'}
+                      {row.anamnesis_handwriting_url ? (
+                        <div className="mb-2">
+                          <img
+                            src={row.anamnesis_handwriting_url}
+                            alt="Tulisan Tangan Anamnesis"
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      {row.anamnesis || (row.anamnesis_handwriting_url ? '' : '-')}
                       {row.pemeriksaan_fisik && (
                         <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
                           {row.pemeriksaan_fisik}
@@ -851,7 +860,16 @@ export function TabRekamMedis({
 
                     {/* Kolom Diagnosis Riwayat */}
                     <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.diagnosis_nama || '-'}
+                      {row.diagnosis_handwriting_url ? (
+                        <div className="mb-2">
+                          <img
+                            src={row.diagnosis_handwriting_url}
+                            alt="Tulisan Tangan Diagnosis"
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      {row.diagnosis_nama || (row.diagnosis_handwriting_url ? '' : '-')}
                       {row.diagnosis_kode && (
                         <span className="font-sans text-[10px] text-gray-500 block mt-1 font-normal select-all">
                           ({row.diagnosis_kode})
@@ -861,7 +879,16 @@ export function TabRekamMedis({
 
                     {/* Kolom Terapi Riwayat */}
                     <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.terapi || '-'}
+                      {row.terapi_handwriting_url ? (
+                        <div className="mb-2">
+                          <img
+                            src={row.terapi_handwriting_url}
+                            alt="Tulisan Tangan Terapi"
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      {row.terapi || (row.terapi_handwriting_url ? '' : '-')}
 
                       {/* Tampilan Resep Riwayat */}
                       {row.resep && row.resep.length > 0 && (

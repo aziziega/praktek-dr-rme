@@ -56,6 +56,9 @@ export interface RiwayatItem {
   pemeriksaan_fisik?: string | null
   terapi?: string | null
   catatan?: string | null
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   resep?: { nama_obat: string; dosis: string; jumlah: number }[]
 }
 
@@ -217,7 +220,7 @@ export async function getRiwayatKunjungan(
       nadi,
       suhu,
       dokter:dokter_id (nama),
-      rekam_medis (anamnesis, pemeriksaan_fisik, diagnosis_nama, diagnosis_kode, terapi, catatan),
+      rekam_medis (anamnesis, pemeriksaan_fisik, diagnosis_nama, diagnosis_kode, terapi, catatan, anamnesis_handwriting_url, diagnosis_handwriting_url, terapi_handwriting_url),
       resep_obat (nama_obat, dosis, jumlah)
     `)
     .eq('pasien_id', pasienId)
@@ -243,6 +246,9 @@ export async function getRiwayatKunjungan(
     pemeriksaan_fisik: (row.rekam_medis as any)?.pemeriksaan_fisik ?? null,
     terapi: (row.rekam_medis as any)?.terapi ?? null,
     catatan: (row.rekam_medis as any)?.catatan ?? null,
+    anamnesis_handwriting_url: (row.rekam_medis as any)?.anamnesis_handwriting_url ?? null,
+    diagnosis_handwriting_url: (row.rekam_medis as any)?.diagnosis_handwriting_url ?? null,
+    terapi_handwriting_url: (row.rekam_medis as any)?.terapi_handwriting_url ?? null,
     dokter_nama: row.dokter?.nama ?? null,
     resep: row.resep_obat ?? []
   }))
@@ -496,6 +502,9 @@ export async function selesaikanKunjungan(input: {
   diagnosis_nama?: string
   terapi?: string
   catatan_medis?: string
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   // Vital signs
   tensi_sistolik?: number
   tensi_diastolik?: number
@@ -560,6 +569,9 @@ export async function selesaikanKunjungan(input: {
       diagnosis_nama: input.diagnosis_nama,
       terapi: input.terapi,
       catatan: input.catatan_medis,
+      anamnesis_handwriting_url: input.anamnesis_handwriting_url,
+      diagnosis_handwriting_url: input.diagnosis_handwriting_url,
+      terapi_handwriting_url: input.terapi_handwriting_url,
       tensi_sistolik: input.tensi_sistolik,
       tensi_diastolik: input.tensi_diastolik,
       nadi: input.nadi,

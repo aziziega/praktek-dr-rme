@@ -313,28 +313,26 @@ export function HandwritingCanvas({
               size="sm"
               variant={activeTool === 'pen' ? 'default' : 'ghost'}
               onClick={() => setActiveTool('pen')}
-              className={`h-7 px-2.5 text-xs gap-1.5 ${
-                activeTool === 'pen'
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'text-gray-700 hover:bg-amber-100'
-              }`}
+              className={`h-7 px-2.5 text-xs gap-1.5 ${activeTool === 'pen'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'text-gray-700 hover:bg-amber-100'
+                }`}
             >
               <Pen className="h-3.5 w-3.5" />
-              Pena
+
             </Button>
             <Button
               type="button"
               size="sm"
               variant={activeTool === 'eraser' ? 'default' : 'ghost'}
               onClick={() => setActiveTool('eraser')}
-              className={`h-7 px-2.5 text-xs gap-1.5 ${
-                activeTool === 'eraser'
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                  : 'text-gray-700 hover:bg-amber-100'
-              }`}
+              className={`h-7 px-2.5 text-xs gap-1.5 ${activeTool === 'eraser'
+                ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                : 'text-gray-700 hover:bg-amber-100'
+                }`}
             >
               <Eraser className="h-3.5 w-3.5" />
-              Penghapus
+
             </Button>
           </div>
 
