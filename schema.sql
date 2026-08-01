@@ -99,6 +99,11 @@ CREATE TABLE public.rekam_medis (
   terapi TEXT,              -- Tindakan/terapi non-obat
   catatan TEXT,             
 
+  -- Handwriting canvas image URLs (Supabase Storage)
+  anamnesis_handwriting_url TEXT,
+  diagnosis_handwriting_url TEXT,
+  terapi_handwriting_url TEXT,
+
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

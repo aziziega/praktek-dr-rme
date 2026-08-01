@@ -297,6 +297,9 @@ export async function saveRekamMedis(input: {
   diagnosis_nama?: string
   terapi?: string
   catatan?: string
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   tensi_sistolik?: number | null
   tensi_diastolik?: number | null
   nadi?: number | null
@@ -335,18 +338,30 @@ export async function saveRekamMedis(input: {
     .eq('kunjungan_id', input.kunjunganId)
     .single()
 
+  const payload: Record<string, any> = {
+    anamnesis: input.anamnesis || null,
+    pemeriksaan_fisik: input.pemeriksaan_fisik || null,
+    diagnosis_kode: input.diagnosis_kode || null,
+    diagnosis_nama: input.diagnosis_nama || null,
+    terapi: input.terapi || null,
+    catatan: input.catatan || null,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (input.anamnesis_handwriting_url !== undefined) {
+    payload.anamnesis_handwriting_url = input.anamnesis_handwriting_url
+  }
+  if (input.diagnosis_handwriting_url !== undefined) {
+    payload.diagnosis_handwriting_url = input.diagnosis_handwriting_url
+  }
+  if (input.terapi_handwriting_url !== undefined) {
+    payload.terapi_handwriting_url = input.terapi_handwriting_url
+  }
+
   if (existing) {
     // Update
     const { error } = await (supabase.from('rekam_medis') as any)
-      .update({
-        anamnesis: input.anamnesis || null,
-        pemeriksaan_fisik: input.pemeriksaan_fisik || null,
-        diagnosis_kode: input.diagnosis_kode || null,
-        diagnosis_nama: input.diagnosis_nama || null,
-        terapi: input.terapi || null,
-        catatan: input.catatan || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('kunjungan_id', input.kunjunganId)
 
     if (error) return { success: false, error: error.message }
@@ -355,18 +370,59 @@ export async function saveRekamMedis(input: {
     const { error } = await (supabase.from('rekam_medis') as any).insert({
       kunjungan_id: input.kunjunganId,
       dokter_id: user.id,
-      anamnesis: input.anamnesis || null,
-      pemeriksaan_fisik: input.pemeriksaan_fisik || null,
-      diagnosis_kode: input.diagnosis_kode || null,
-      diagnosis_nama: input.diagnosis_nama || null,
-      terapi: input.terapi || null,
-      catatan: input.catatan || null,
+      ...payload,
     })
 
     if (error) return { success: false, error: error.message }
   }
 
   return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// 5b. Upload handwriting canvas PNG image to Supabase Storage
+// ---------------------------------------------------------------------------
+export async function uploadHandwritingImage(
+  base64DataUrl: string,
+  field: 'anamnesis' | 'diagnosis' | 'terapi',
+  kunjunganId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Sesi habis.' }
+
+    const matches = base64DataUrl.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/)
+    if (!matches || matches.length !== 3) {
+      return { success: false, error: 'Format gambar tidak valid.' }
+    }
+
+    const imageBuffer = Buffer.from(matches[2], 'base64')
+    const fileName = `${kunjunganId}_${field}_${Date.now()}.png`
+    const filePath = `handwriting/${fileName}`
+
+    const serviceRoleClient = createServiceRoleClient()
+    const { error } = await serviceRoleClient.storage
+      .from('handwriting-notes')
+      .upload(filePath, imageBuffer, {
+        contentType: 'image/png',
+        upsert: true,
+      })
+
+    if (error) {
+      console.error('[uploadHandwritingImage] Storage error:', error)
+      return { success: false, error: error.message }
+    }
+
+    const { data: urlData } = serviceRoleClient.storage
+      .from('handwriting-notes')
+      .getPublicUrl(filePath)
+
+    return { success: true, url: urlData.publicUrl }
+  } catch (err: any) {
+    console.error('[uploadHandwritingImage] Exception:', err)
+    return { success: false, error: err.message || 'Gagal mengunggah gambar tulisan tangan' }
+  }
 }
 
 // ---------------------------------------------------------------------------

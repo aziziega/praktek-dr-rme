@@ -148,6 +148,9 @@ export interface RekamMedisRow {
   diagnosis_nama: string | null
   terapi: string | null
   catatan: string | null
+  anamnesis_handwriting_url: string | null
+  diagnosis_handwriting_url: string | null
+  terapi_handwriting_url: string | null
   created_at: string
   updated_at: string
 }
@@ -162,6 +165,9 @@ export interface RekamMedisInsert {
   diagnosis_nama?: string | null
   terapi?: string | null
   catatan?: string | null
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -176,6 +182,9 @@ export interface RekamMedisUpdate {
   diagnosis_nama?: string | null
   terapi?: string | null
   catatan?: string | null
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   created_at?: string
   updated_at?: string
 }
