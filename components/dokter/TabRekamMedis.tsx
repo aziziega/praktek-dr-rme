@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { saveRekamMedis, getRiwayatKunjungan, type RiwayatItem } from '@/app/actions/dokter'
+import { saveRekamMedis, getRiwayatKunjungan, uploadHandwritingImage, type RiwayatItem } from '@/app/actions/dokter'
 import type { KunjunganRow, PasienRow, RekamMedisRow } from '@/types/database'
 import type { ResepItem } from '@/app/actions/dokter'
 import { updateAlergiObat } from '@/app/actions/staf'
+import { HandwritingCanvas } from '@/components/dokter/HandwritingCanvas'
 
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -43,6 +44,9 @@ interface TabRekamMedisProps {
     diagnosis_nama: string
     terapi: string
     catatan: string
+    anamnesis_handwriting_url?: string | null
+    diagnosis_handwriting_url?: string | null
+    terapi_handwriting_url?: string | null
     tensi_sistolik?: string
     tensi_diastolik?: string
     nadi?: string
@@ -57,6 +61,9 @@ interface TabRekamMedisProps {
     diagnosis_nama: string
     terapi: string
     catatan: string
+    anamnesis_handwriting_url: string | null
+    diagnosis_handwriting_url: string | null
+    terapi_handwriting_url: string | null
     tensi_sistolik: string
     tensi_diastolik: string
     nadi: string
@@ -81,6 +88,21 @@ export function TabRekamMedis({
   const [diagnosisNama, setDiagnosisNama] = useState(initialData?.diagnosis_nama ?? '')
   const [terapi, setTerapi] = useState(initialData?.terapi ?? '')
   const [catatan, setCatatan] = useState(initialData?.catatan ?? '')
+
+  // Handwriting base64 temporary state (dari Canvas)
+  const [anamnesisHwData, setAnamnesisHwData] = useState<string | null>(null)
+  const [diagnosisHwData, setDiagnosisHwData] = useState<string | null>(null)
+  const [terapiHwData, setTerapiHwData] = useState<string | null>(null)
+
+  const [anamnesisHwUrl, setAnamnesisHwUrl] = useState<string | null>(
+    initialData?.anamnesis_handwriting_url ?? null
+  )
+  const [diagnosisHwUrl, setDiagnosisHwUrl] = useState<string | null>(
+    initialData?.diagnosis_handwriting_url ?? null
+  )
+  const [terapiHwUrl, setTerapiHwUrl] = useState<string | null>(
+    initialData?.terapi_handwriting_url ?? null
+  )
 
   // Inline Vital Sign fields
   const [tensiSistolik, setTensiSistolik] = useState<string>(initialData?.tensi_sistolik ?? '')
@@ -191,10 +213,13 @@ export function TabRekamMedis({
       diagnosis_nama: diagnosisNama,
       terapi,
       catatan,
+      anamnesis_handwriting_url: anamnesisHwUrl,
+      diagnosis_handwriting_url: diagnosisHwUrl,
+      terapi_handwriting_url: terapiHwUrl,
       tensi_sistolik: tensiSistolik,
       tensi_diastolik: tensiDiastolik,
-      nadi,
-      suhu,
+      nadi: nadi,
+      suhu: suhu,
     })
   }, [
     anamnesis,
@@ -203,6 +228,9 @@ export function TabRekamMedis({
     diagnosisNama,
     terapi,
     catatan,
+    anamnesisHwUrl,
+    diagnosisHwUrl,
+    terapiHwUrl,
     tensiSistolik,
     tensiDiastolik,
     nadi,
@@ -224,6 +252,24 @@ export function TabRekamMedis({
   const handleManualSave = async () => {
     setSaving(true)
     try {
+      let finalAnamnesisUrl = anamnesisHwUrl
+      let finalDiagnosisUrl = diagnosisHwUrl
+      let finalTerapiUrl = terapiHwUrl
+
+      // Upload base64 handwriting PNG to Supabase Storage if present
+      if (anamnesisHwData && anamnesisHwData.startsWith('data:image/')) {
+        const up = await uploadHandwritingImage(anamnesisHwData, 'anamnesis', kunjungan.id)
+        if (up.success && up.url) finalAnamnesisUrl = up.url
+      }
+      if (diagnosisHwData && diagnosisHwData.startsWith('data:image/')) {
+        const up = await uploadHandwritingImage(diagnosisHwData, 'diagnosis', kunjungan.id)
+        if (up.success && up.url) finalDiagnosisUrl = up.url
+      }
+      if (terapiHwData && terapiHwData.startsWith('data:image/')) {
+        const up = await uploadHandwritingImage(terapiHwData, 'terapi', kunjungan.id)
+        if (up.success && up.url) finalTerapiUrl = up.url
+      }
+
       const result = await saveRekamMedis({
         kunjunganId: kunjungan.id,
         anamnesis: anamnesis || undefined,
@@ -232,6 +278,9 @@ export function TabRekamMedis({
         diagnosis_nama: diagnosisNama || undefined,
         terapi: terapi || undefined,
         catatan: catatan || undefined,
+        anamnesis_handwriting_url: finalAnamnesisUrl,
+        diagnosis_handwriting_url: finalDiagnosisUrl,
+        terapi_handwriting_url: finalTerapiUrl,
         tensi_sistolik: tensiSistolik ? Number(tensiSistolik) : null,
         tensi_diastolik: tensiDiastolik ? Number(tensiDiastolik) : null,
         nadi: nadi ? Number(nadi) : null,
@@ -239,6 +288,9 @@ export function TabRekamMedis({
       })
 
       if (result.success) {
+        setAnamnesisHwUrl(finalAnamnesisUrl)
+        setDiagnosisHwUrl(finalDiagnosisUrl)
+        setTerapiHwUrl(finalTerapiUrl)
         isDirty.current = false
         setLastSaved(new Date())
         toast.success('Draf rekam medis berhasil disimpan')
@@ -261,6 +313,12 @@ export function TabRekamMedis({
     diagnosisNama,
     terapi,
     catatan,
+    anamnesisHwData,
+    diagnosisHwData,
+    terapiHwData,
+    anamnesisHwUrl,
+    diagnosisHwUrl,
+    terapiHwUrl,
     tensiSistolik,
     tensiDiastolik,
     nadi,
@@ -271,15 +329,21 @@ export function TabRekamMedis({
   useEffect(() => {
     latestDataRef.current = {
       anamnesis,
-      pemeriksaanFisik: pemeriksaanFisik,
-      diagnosisKode: diagnosisKode,
-      diagnosisNama: diagnosisNama,
-      terapi: terapi,
-      catatan: catatan,
-      tensiSistolik: tensiSistolik,
-      tensiDiastolik: tensiDiastolik,
-      nadi: nadi,
-      suhu: suhu,
+      pemeriksaanFisik,
+      diagnosisKode,
+      diagnosisNama,
+      terapi,
+      catatan,
+      anamnesisHwData,
+      diagnosisHwData,
+      terapiHwData,
+      anamnesisHwUrl,
+      diagnosisHwUrl,
+      terapiHwUrl,
+      tensiSistolik,
+      tensiDiastolik,
+      nadi,
+      suhu,
     }
   }, [
     anamnesis,
@@ -288,6 +352,12 @@ export function TabRekamMedis({
     diagnosisNama,
     terapi,
     catatan,
+    anamnesisHwData,
+    diagnosisHwData,
+    terapiHwData,
+    anamnesisHwUrl,
+    diagnosisHwUrl,
+    terapiHwUrl,
     tensiSistolik,
     tensiDiastolik,
     nadi,
@@ -299,6 +369,9 @@ export function TabRekamMedis({
     setSaving(true)
     setIsTyping(false)
     try {
+      // HANYA MENGUNGGAH TEKS KE DATABASE SAAT AUTO-SAVE.
+      // Draf gambar tulisan tangan hanya akan di-upload ke Supabase Storage saat dokter menekan "Simpan Draf" atau "Selesaikan Kunjungan".
+      // Hal ini dilakukan agar aplikasi tidak lag/lemot ("nge load terus") dan menghemat kuota Storage bandwidth.
       const result = await saveRekamMedis({
         kunjunganId: kunjungan.id,
         anamnesis: currentData.anamnesis || undefined,
@@ -603,40 +676,96 @@ export function TabRekamMedis({
                     </div>
                   </td>
 
-                  {/* 2. KOLOM ANAMNESA / PEMERIKSAAN (INPUT BEBAS TEXTAREA BESAR) */}
-                  <td className="p-2 border-r border-gray-300">
+                  {/* 2. KOLOM ANAMNESA / PEMERIKSAAN (TEKS & CANVAS TAMPIL BERSAMAAN) */}
+                  <td className="p-2 border-r border-gray-300 space-y-3 align-top">
+                    {!readOnly && (
+                      <div className="pb-1 border-b border-dashed border-gray-200">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Anamnesis</span>
+                      </div>
+                    )}
+                    
                     <Textarea
-                      placeholder="Tulis anamnesis lengkap keluhan pasien & hasil pemeriksaan fisik di sini secara bebas..."
+                      placeholder="Tulis keluhan dari staff di sini..."
                       value={anamnesis}
                       onChange={(e) => handleChange(setAnamnesis, e.target.value)}
                       disabled={readOnly}
-                      rows={12}
-                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                      rows={4}
+                      className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-sm shadow-none break-words rounded-md"
+                    />
+
+                    <HandwritingCanvas
+                      initialImage={anamnesisHwUrl}
+                      readOnly={readOnly}
+                      storageKey={`anamnesis_${kunjungan.id}`}
+                      onChange={(dataUrl) => {
+                        setAnamnesisHwData(dataUrl)
+                        isDirty.current = true
+                      }}
+                      placeholder="Coretan tambahan dokter..."
+                      minHeight={250}
                     />
                   </td>
 
-                  {/* 3. KOLOM DIAGNOSIS (INPUT TEKS DIAGNOSA BEBAS) */}
-                  <td className="p-2 border-r border-gray-300">
+                  {/* 3. KOLOM DIAGNOSIS (TEKS & CANVAS TAMPIL BERSAMAAN) */}
+                  <td className="p-2 border-r border-gray-300 space-y-3 align-top">
+                    {!readOnly && (
+                      <div className="pb-1 border-b border-dashed border-gray-200">
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Diagnosis</span>
+                      </div>
+                    )}
+
                     <Textarea
-                      placeholder="Diagnosis..."
+                      placeholder="Diagnosis teks (opsional)..."
                       value={diagnosisNama}
                       onChange={(e) => handleChange(setDiagnosisNama, e.target.value)}
                       disabled={readOnly}
-                      rows={10}
-                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                      rows={4}
+                      className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-sm shadow-none break-words rounded-md"
+                    />
+
+                    <HandwritingCanvas
+                      initialImage={diagnosisHwUrl}
+                      readOnly={readOnly}
+                      storageKey={`diagnosis_${kunjungan.id}`}
+                      onChange={(dataUrl) => {
+                        setDiagnosisHwData(dataUrl)
+                        isDirty.current = true
+                      }}
+                      placeholder="Coretan diagnosis..."
+                      minHeight={250}
                     />
                   </td>
 
-                  {/* 4. KOLOM TERAPI (INPUT TINDAKAN + AUTO-SINKRON RESEP OBAT) */}
-                  <td className="p-2 space-y-4">
-                    <Textarea
-                      placeholder="Terapi non-obat, edukasi, catatan..."
-                      value={terapi}
-                      onChange={(e) => handleChange(setTerapi, e.target.value)}
-                      disabled={readOnly}
-                      rows={6}
-                      className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
-                    />
+                  {/* 4. KOLOM TERAPI (TEKS & CANVAS TAMPIL BERSAMAAN) */}
+                  <td className="p-2 space-y-4 align-top">
+                    <div className="space-y-3">
+                      {!readOnly && (
+                        <div className="pb-1 border-b border-dashed border-gray-200">
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Terapi</span>
+                        </div>
+                      )}
+
+                      <Textarea
+                        placeholder="Terapi teks / edukasi..."
+                        value={terapi}
+                        onChange={(e) => handleChange(setTerapi, e.target.value)}
+                        disabled={readOnly}
+                        rows={3}
+                        className="w-full p-2 resize-y font-handwritten text-blue-900 bg-transparent border border-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-sm shadow-none break-words rounded-md"
+                      />
+
+                      <HandwritingCanvas
+                        initialImage={terapiHwUrl}
+                        readOnly={readOnly}
+                        storageKey={`terapi_${kunjungan.id}`}
+                        onChange={(dataUrl) => {
+                          setTerapiHwData(dataUrl)
+                          isDirty.current = true
+                        }}
+                        placeholder="Coretan terapi non-obat..."
+                        minHeight={250}
+                      />
+                    </div>
 
                     {/* Sinkronisasi Daftar Resep Obat */}
                     {resepItems.length > 0 && (
@@ -698,9 +827,18 @@ export function TabRekamMedis({
                       )}
                     </td>
 
-                    {/* Kolom Anamnesa / Pemeriksaan Riwayat (Gaya Tulisan Tangan Pena Biru) */}
+                    {/* Kolom Anamnesa / Pemeriksaan Riwayat */}
                     <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.anamnesis || '-'}
+                      {row.anamnesis_handwriting_url ? (
+                        <div className="mb-2">
+                          <img
+                            src={row.anamnesis_handwriting_url}
+                            alt="Tulisan Tangan Anamnesis"
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      {row.anamnesis || (row.anamnesis_handwriting_url ? '' : '-')}
                       {row.pemeriksaan_fisik && (
                         <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
                           {row.pemeriksaan_fisik}
@@ -710,7 +848,16 @@ export function TabRekamMedis({
 
                     {/* Kolom Diagnosis Riwayat */}
                     <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.diagnosis_nama || '-'}
+                      {row.diagnosis_handwriting_url ? (
+                        <div className="mb-2">
+                          <img
+                            src={row.diagnosis_handwriting_url}
+                            alt="Tulisan Tangan Diagnosis"
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      {row.diagnosis_nama || (row.diagnosis_handwriting_url ? '' : '-')}
                       {row.diagnosis_kode && (
                         <span className="font-sans text-[10px] text-gray-500 block mt-1 font-normal select-all">
                           ({row.diagnosis_kode})
@@ -720,7 +867,16 @@ export function TabRekamMedis({
 
                     {/* Kolom Terapi Riwayat */}
                     <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.terapi || '-'}
+                      {row.terapi_handwriting_url ? (
+                        <div className="mb-2">
+                          <img
+                            src={row.terapi_handwriting_url}
+                            alt="Tulisan Tangan Terapi"
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      {row.terapi || (row.terapi_handwriting_url ? '' : '-')}
 
                       {/* Tampilan Resep Riwayat */}
                       {row.resep && row.resep.length > 0 && (

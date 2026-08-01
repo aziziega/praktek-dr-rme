@@ -646,7 +646,16 @@ export default function StafPasienPage() {
 
                                 {/* Kolom Anamnesa / Pemeriksaan Riwayat */}
                                 <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                                  {rm?.anamnesis || '-'}
+                                  {rm?.anamnesis_handwriting_url && (
+                                    <div className="mb-2">
+                                      <img
+                                        src={rm.anamnesis_handwriting_url}
+                                        alt="Tulisan Tangan Anamnesis"
+                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                  {rm?.anamnesis || (rm?.anamnesis_handwriting_url ? '' : '-')}
                                   {rm?.pemeriksaan_fisik && (
                                     <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
                                       {rm.pemeriksaan_fisik}
@@ -656,7 +665,16 @@ export default function StafPasienPage() {
 
                                 {/* Kolom Diagnosis Riwayat */}
                                 <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                                  {rm?.diagnosis_nama || '-'}
+                                  {rm?.diagnosis_handwriting_url && (
+                                    <div className="mb-2">
+                                      <img
+                                        src={rm.diagnosis_handwriting_url}
+                                        alt="Tulisan Tangan Diagnosis"
+                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                  {rm?.diagnosis_nama || (rm?.diagnosis_handwriting_url ? '' : '-')}
                                   {rm?.diagnosis_kode && (
                                     <span className="font-sans text-[10px] text-gray-500 block mt-1 font-normal select-all">
                                       ({rm.diagnosis_kode})
@@ -666,7 +684,16 @@ export default function StafPasienPage() {
 
                                 {/* Kolom Terapi Riwayat */}
                                 <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                                  {rm?.terapi || '-'}
+                                  {rm?.terapi_handwriting_url && (
+                                    <div className="mb-2">
+                                      <img
+                                        src={rm.terapi_handwriting_url}
+                                        alt="Tulisan Tangan Terapi"
+                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                                      />
+                                    </div>
+                                  )}
+                                  {rm?.terapi || (rm?.terapi_handwriting_url ? '' : '-')}
                                   
                                   {/* Tampilan Resep Riwayat */}
                                   {row.resep_obat && row.resep_obat.length > 0 && (

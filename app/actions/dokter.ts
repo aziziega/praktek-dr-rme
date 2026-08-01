@@ -56,6 +56,9 @@ export interface RiwayatItem {
   pemeriksaan_fisik?: string | null
   terapi?: string | null
   catatan?: string | null
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   resep?: { nama_obat: string; dosis: string; jumlah: number }[]
 }
 
@@ -217,7 +220,7 @@ export async function getRiwayatKunjungan(
       nadi,
       suhu,
       dokter:dokter_id (nama),
-      rekam_medis (anamnesis, pemeriksaan_fisik, diagnosis_nama, diagnosis_kode, terapi, catatan),
+      rekam_medis (anamnesis, pemeriksaan_fisik, diagnosis_nama, diagnosis_kode, terapi, catatan, anamnesis_handwriting_url, diagnosis_handwriting_url, terapi_handwriting_url),
       resep_obat (nama_obat, dosis, jumlah)
     `)
     .eq('pasien_id', pasienId)
@@ -243,6 +246,9 @@ export async function getRiwayatKunjungan(
     pemeriksaan_fisik: (row.rekam_medis as any)?.pemeriksaan_fisik ?? null,
     terapi: (row.rekam_medis as any)?.terapi ?? null,
     catatan: (row.rekam_medis as any)?.catatan ?? null,
+    anamnesis_handwriting_url: (row.rekam_medis as any)?.anamnesis_handwriting_url ?? null,
+    diagnosis_handwriting_url: (row.rekam_medis as any)?.diagnosis_handwriting_url ?? null,
+    terapi_handwriting_url: (row.rekam_medis as any)?.terapi_handwriting_url ?? null,
     dokter_nama: row.dokter?.nama ?? null,
     resep: row.resep_obat ?? []
   }))
@@ -297,6 +303,9 @@ export async function saveRekamMedis(input: {
   diagnosis_nama?: string
   terapi?: string
   catatan?: string
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   tensi_sistolik?: number | null
   tensi_diastolik?: number | null
   nadi?: number | null
@@ -335,18 +344,30 @@ export async function saveRekamMedis(input: {
     .eq('kunjungan_id', input.kunjunganId)
     .single()
 
+  const payload: Record<string, any> = {
+    anamnesis: input.anamnesis || null,
+    pemeriksaan_fisik: input.pemeriksaan_fisik || null,
+    diagnosis_kode: input.diagnosis_kode || null,
+    diagnosis_nama: input.diagnosis_nama || null,
+    terapi: input.terapi || null,
+    catatan: input.catatan || null,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (input.anamnesis_handwriting_url !== undefined) {
+    payload.anamnesis_handwriting_url = input.anamnesis_handwriting_url
+  }
+  if (input.diagnosis_handwriting_url !== undefined) {
+    payload.diagnosis_handwriting_url = input.diagnosis_handwriting_url
+  }
+  if (input.terapi_handwriting_url !== undefined) {
+    payload.terapi_handwriting_url = input.terapi_handwriting_url
+  }
+
   if (existing) {
     // Update
     const { error } = await (supabase.from('rekam_medis') as any)
-      .update({
-        anamnesis: input.anamnesis || null,
-        pemeriksaan_fisik: input.pemeriksaan_fisik || null,
-        diagnosis_kode: input.diagnosis_kode || null,
-        diagnosis_nama: input.diagnosis_nama || null,
-        terapi: input.terapi || null,
-        catatan: input.catatan || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(payload)
       .eq('kunjungan_id', input.kunjunganId)
 
     if (error) return { success: false, error: error.message }
@@ -355,18 +376,77 @@ export async function saveRekamMedis(input: {
     const { error } = await (supabase.from('rekam_medis') as any).insert({
       kunjungan_id: input.kunjunganId,
       dokter_id: user.id,
-      anamnesis: input.anamnesis || null,
-      pemeriksaan_fisik: input.pemeriksaan_fisik || null,
-      diagnosis_kode: input.diagnosis_kode || null,
-      diagnosis_nama: input.diagnosis_nama || null,
-      terapi: input.terapi || null,
-      catatan: input.catatan || null,
+      ...payload,
     })
 
     if (error) return { success: false, error: error.message }
   }
 
   return { success: true }
+}
+
+// ---------------------------------------------------------------------------
+// 5b. Upload handwriting canvas PNG image to Supabase Storage
+// ---------------------------------------------------------------------------
+export async function uploadHandwritingImage(
+  base64DataUrl: string,
+  field: 'anamnesis' | 'diagnosis' | 'terapi',
+  kunjunganId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Sesi habis.' }
+
+    const commaIndex = base64DataUrl.indexOf(',')
+    if (commaIndex === -1) {
+      return { success: false, error: 'Format gambar base64 tidak valid.' }
+    }
+
+    const base64Str = base64DataUrl.substring(commaIndex + 1)
+    const imageBuffer = Buffer.from(base64Str, 'base64')
+    const fileName = `${kunjunganId}_${field}_${Date.now()}.png`
+    const filePath = `handwriting/${fileName}`
+
+    // 1. Coba upload dengan authenticated user client terlebih dahulu
+    let uploadRes = await supabase.storage
+      .from('handwriting-notes')
+      .upload(filePath, imageBuffer, {
+        contentType: 'image/png',
+        upsert: true,
+      })
+
+    // 2. Jika gagal (misal RLS/policy), coba fallback ke service role client (admin key)
+    if (uploadRes.error) {
+      console.warn('[uploadHandwritingImage] User client upload failed, retrying with service role:', uploadRes.error.message)
+      try {
+        const serviceRoleClient = createServiceRoleClient()
+        uploadRes = await serviceRoleClient.storage
+          .from('handwriting-notes')
+          .upload(filePath, imageBuffer, {
+            contentType: 'image/png',
+            upsert: true,
+          })
+      } catch (e: any) {
+        console.error('[uploadHandwritingImage] Service role fallback error:', e.message)
+      }
+    }
+
+    if (uploadRes.error) {
+      console.error('[uploadHandwritingImage] Final upload error:', uploadRes.error)
+      return { success: false, error: `Gagal upload gambar: ${uploadRes.error.message}` }
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('handwriting-notes')
+      .getPublicUrl(filePath)
+
+    return { success: true, url: urlData.publicUrl }
+  } catch (err: any) {
+    console.error('[uploadHandwritingImage] Exception:', err)
+    return { success: false, error: err.message || 'Gagal mengunggah gambar tulisan tangan' }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -440,6 +520,9 @@ export async function selesaikanKunjungan(input: {
   diagnosis_nama?: string
   terapi?: string
   catatan_medis?: string
+  anamnesis_handwriting_url?: string | null
+  diagnosis_handwriting_url?: string | null
+  terapi_handwriting_url?: string | null
   // Vital signs
   tensi_sistolik?: number
   tensi_diastolik?: number
@@ -504,6 +587,9 @@ export async function selesaikanKunjungan(input: {
       diagnosis_nama: input.diagnosis_nama,
       terapi: input.terapi,
       catatan: input.catatan_medis,
+      anamnesis_handwriting_url: input.anamnesis_handwriting_url,
+      diagnosis_handwriting_url: input.diagnosis_handwriting_url,
+      terapi_handwriting_url: input.terapi_handwriting_url,
       tensi_sistolik: input.tensi_sistolik,
       tensi_diastolik: input.tensi_diastolik,
       nadi: input.nadi,
