@@ -55,8 +55,9 @@ const STATUS_CONFIG: Record<
   },
 }
 
-// Global AudioContext singleton
+// Global AudioContext singleton & cooldown timestamp
 let globalAudioCtx: AudioContext | null = null
+let lastSoundTimestamp = 0
 
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null
@@ -87,8 +88,15 @@ if (typeof window !== 'undefined') {
   window.addEventListener('touchstart', unlockAudio)
 }
 
-// Play notification sound
+// Play notification sound (with 5-second cooldown to prevent double sound)
 function playNotificationBeep() {
+  const now = Date.now()
+  if (now - lastSoundTimestamp < 5000) {
+    console.log('[AntrianDokter] Sound skipped due to 5s cooldown')
+    return
+  }
+  lastSoundTimestamp = now
+
   try {
     const ctx = getAudioContext()
     if (!ctx) return
@@ -162,29 +170,30 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   useEffect(() => {
     if (!loading) {
       const currentIds = new Set(antrian.map((a) => a.id))
-      const freshIds = new Set<string>()
 
       if (hasInitialLoadRef.current) {
+        const freshIds = new Set<string>()
         currentIds.forEach((id) => {
           if (!prevAntrianIdsRef.current.has(id)) {
             freshIds.add(id)
           }
         })
+
+        if (freshIds.size > 0) {
+          setNewItemIds(freshIds)
+          playNotificationBeep()
+          toast.info('🔔 Pasien baru masuk antrian Anda!', {
+            description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
+            duration: 8000,
+          })
+          const timer = setTimeout(() => setNewItemIds(new Set()), 3000)
+          prevAntrianIdsRef.current = currentIds
+          return () => clearTimeout(timer)
+        }
       } else {
         hasInitialLoadRef.current = true
       }
 
-      if (freshIds.size > 0) {
-        setNewItemIds(freshIds)
-        playNotificationBeep()
-        toast.info('🔔 Pasien baru masuk antrian Anda!', {
-          description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
-          duration: 8000,
-        })
-        // Clear the flash after 3 seconds
-        const timer = setTimeout(() => setNewItemIds(new Set()), 3000)
-        return () => clearTimeout(timer)
-      }
       prevAntrianIdsRef.current = currentIds
     }
   }, [antrian, loading])
@@ -224,11 +233,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
               // Filter client-side: only react to rows assigned to this doctor today
               if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
                 console.log('[Realtime Dokter] ✅ New patient assigned to me!')
-                playNotificationBeep()
-                toast.info('🔔 Pasien baru masuk antrian Anda!', {
-                  description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
-                  duration: 8000,
-                })
+                // fetchAntrian will trigger setAntrian which fires the single notification sound in useEffect
                 fetchAntrian()
               }
             } else if (payload.eventType === 'UPDATE') {
