@@ -55,12 +55,46 @@ const STATUS_CONFIG: Record<
   },
 }
 
-// Simple beep sound using Web Audio API (no external file needed)
+// Global AudioContext singleton
+let globalAudioCtx: AudioContext | null = null
+
+function getAudioContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null
+  if (!globalAudioCtx) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+    if (AudioContextClass) {
+      globalAudioCtx = new AudioContextClass()
+    }
+  }
+  if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+    globalAudioCtx.resume().catch(() => {})
+  }
+  return globalAudioCtx
+}
+
+// Auto-unlock AudioContext on first user interaction anywhere on page (click/touch/keypress)
+if (typeof window !== 'undefined') {
+  const unlockAudio = () => {
+    const ctx = getAudioContext()
+    if (ctx && ctx.state === 'running') {
+      window.removeEventListener('pointerdown', unlockAudio)
+      window.removeEventListener('keydown', unlockAudio)
+      window.removeEventListener('touchstart', unlockAudio)
+    }
+  }
+  window.addEventListener('pointerdown', unlockAudio)
+  window.addEventListener('keydown', unlockAudio)
+  window.addEventListener('touchstart', unlockAudio)
+}
+
+// Play notification sound
 function playNotificationBeep() {
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-    if (!AudioContext) return
-    const ctx = new AudioContext()
+    const ctx = getAudioContext()
+    if (!ctx) return
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
     const oscillator = ctx.createOscillator()
     const gainNode = ctx.createGain()
     oscillator.connect(gainNode)
@@ -71,7 +105,8 @@ function playNotificationBeep() {
     gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
     oscillator.start(ctx.currentTime)
     oscillator.stop(ctx.currentTime + 0.5)
-    // Play a second beep after a short pause
+
+    // Play second tone after short pause
     const osc2 = ctx.createOscillator()
     const gain2 = ctx.createGain()
     osc2.connect(gain2)
@@ -123,7 +158,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
     fetchAntrian()
   }, [fetchAntrian])
 
-  // Track previous antrian IDs to detect newly inserted items
+  // Track previous antrian IDs to detect newly inserted items and play notification
   useEffect(() => {
     if (!loading) {
       const currentIds = new Set(antrian.map((a) => a.id))
@@ -141,6 +176,11 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
       if (freshIds.size > 0) {
         setNewItemIds(freshIds)
+        playNotificationBeep()
+        toast.info('🔔 Pasien baru masuk antrian Anda!', {
+          description: 'Berkas kunjungan telah dikirim oleh staf. Silakan periksa daftar antrian.',
+          duration: 8000,
+        })
         // Clear the flash after 3 seconds
         const timer = setTimeout(() => setNewItemIds(new Set()), 3000)
         return () => clearTimeout(timer)
