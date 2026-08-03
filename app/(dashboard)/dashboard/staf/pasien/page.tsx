@@ -661,7 +661,7 @@ export default function StafPasienPage() {
                                         src={rm.anamnesis_handwriting_url}
                                         alt="Tulisan Tangan Anamnesis"
                                         onClick={() => setSelectedImage({ url: rm.anamnesis_handwriting_url, title: 'Tulisan Tangan Anamnesis' })}
-                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 max-h-[200px] w-full object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
                                       />
                                       <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
                                         <Eye className="h-3 w-3" /> Perbesar Canvas
@@ -684,7 +684,7 @@ export default function StafPasienPage() {
                                         src={rm.diagnosis_handwriting_url}
                                         alt="Tulisan Tangan Diagnosis"
                                         onClick={() => setSelectedImage({ url: rm.diagnosis_handwriting_url, title: 'Tulisan Tangan Diagnosis' })}
-                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 max-h-[200px] w-full object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
                                       />
                                       <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
                                         <Eye className="h-3 w-3" /> Perbesar Canvas
@@ -702,7 +702,7 @@ export default function StafPasienPage() {
                                         src={rm.terapi_handwriting_url}
                                         alt="Tulisan Tangan Terapi"
                                         onClick={() => setSelectedImage({ url: rm.terapi_handwriting_url, title: 'Tulisan Tangan Terapi' })}
-                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 max-h-[200px] w-full object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
                                       />
                                       <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
                                         <Eye className="h-3 w-3" /> Perbesar Canvas

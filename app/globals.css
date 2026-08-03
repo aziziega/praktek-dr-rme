@@ -238,3 +238,15 @@ span[role="switch"],
 [role="menuitem"] {
   cursor: pointer !important;
 }
+
+/* Full Screen Canvas Mode for Dokter Examination iPad Focus */
+body.full-canvas-mode aside {
+  display: none !important;
+}
+body.full-canvas-mode main {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+body.full-canvas-mode #main-scroll-container {
+  padding: 1rem !important;
+}

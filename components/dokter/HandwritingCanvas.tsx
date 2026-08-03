@@ -78,7 +78,7 @@ export function HandwritingCanvas({
   const [activeTool, setActiveTool] = useState<'pen' | 'eraser'>('pen')
   const [isPenDetected, setIsPenDetected] = useState(false)
   const [loadedInitial, setLoadedInitial] = useState(false)
-  
+
   // State for holding loaded background image
   const [bgImage, setBgImage] = useState<HTMLImageElement | null>(null)
 
@@ -381,7 +381,7 @@ export function HandwritingCanvas({
               className="h-7 px-2 text-xs gap-1 hover:bg-amber-100 border-amber-200"
             >
               <Undo2 className="h-3.5 w-3.5" />
-              Undo
+
             </Button>
           </div>
         </div>

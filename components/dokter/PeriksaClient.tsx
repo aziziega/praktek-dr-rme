@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { KunjunganRow, PasienRow, RekamMedisRow } from '@/types/database'
 import type { ResepItem } from '@/app/actions/dokter'
 
@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, FileText, Pill, CreditCard, Lock } from 'lucide-react'
+import { ArrowLeft, FileText, Pill, CreditCard, Lock, Maximize2, Minimize2 } from 'lucide-react'
 import Link from 'next/link'
 
 interface PeriksaClientProps {
@@ -27,6 +27,20 @@ export function PeriksaClient({
   rekamMedis,
 }: PeriksaClientProps) {
   const isSelesai = kunjungan.status === 'selesai'
+
+  // Full Screen / Focus Mode State for iPad
+  const [isFullMode, setIsFullMode] = useState(false)
+
+  useEffect(() => {
+    if (isFullMode) {
+      document.body.classList.add('full-canvas-mode')
+    } else {
+      document.body.classList.remove('full-canvas-mode')
+    }
+    return () => {
+      document.body.classList.remove('full-canvas-mode')
+    }
+  }, [isFullMode])
 
   // Shared state between tabs
   const [rekamMedisData, setRekamMedisData] = useState({
@@ -82,12 +96,38 @@ export function PeriksaClient({
             </p>
           </div>
         </div>
-        {isSelesai && (
-          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
-            <Lock className="h-3 w-3 mr-1" />
-            Kunjungan Selesai (Read-Only)
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Tombol Mode Penuh (iPad / Wide Screen Focus Mode) */}
+          <Button
+            variant={isFullMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsFullMode((prev) => !prev)}
+            className={`gap-1.5 text-xs font-semibold shadow-xs transition-all ${
+              isFullMode
+                ? "bg-sky-600 hover:bg-sky-700 text-white"
+                : "border-sky-200 text-sky-700 hover:bg-sky-50 bg-white"
+            }`}
+          >
+            {isFullMode ? (
+              <>
+                <Minimize2 className="h-3.5 w-3.5" />
+                Keluar Mode Penuh
+              </>
+            ) : (
+              <>
+                <Maximize2 className="h-3.5 w-3.5" />
+                Mode Penuh (iPad Focus)
+              </>
+            )}
+          </Button>
+
+          {isSelesai && (
+            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200">
+              <Lock className="h-3 w-3 mr-1" />
+              Kunjungan Selesai (Read-Only)
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Full-width Layout (Sidebar Deleted for a Cleaner, Non-Redundant Aesthetic) */}
