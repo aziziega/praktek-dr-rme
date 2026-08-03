@@ -29,7 +29,9 @@ import {
   Heart,
   Calendar,
   AlertTriangle,
-  Pencil
+  Pencil,
+  Eye,
+  PenTool
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNetworkStatus } from '@/components/providers/NetworkStatusProvider'
@@ -103,6 +105,9 @@ export function TabRekamMedis({
   const [terapiHwUrl, setTerapiHwUrl] = useState<string | null>(
     initialData?.terapi_handwriting_url ?? null
   )
+
+  // Modal preview Canvas (Tulisan Tangan) state
+  const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null)
 
   // Inline Vital Sign fields
   const [tensiSistolik, setTensiSistolik] = useState<string>(initialData?.tensi_sistolik ?? '')
@@ -832,54 +837,66 @@ export function TabRekamMedis({
 
                     {/* Kolom Anamnesa / Pemeriksaan Riwayat */}
                     <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.anamnesis_handwriting_url ? (
-                        <div className="mb-2">
-                          <img
-                            src={row.anamnesis_handwriting_url}
-                            alt="Tulisan Tangan Anamnesis"
-                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
-                          />
-                        </div>
-                      ) : null}
                       {row.anamnesis || (row.anamnesis_handwriting_url ? '' : '-')}
                       {row.pemeriksaan_fisik && (
                         <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
                           {row.pemeriksaan_fisik}
                         </div>
                       )}
+                      {row.anamnesis_handwriting_url && (
+                        <div className="mt-2 group relative">
+                          <img
+                            src={row.anamnesis_handwriting_url}
+                            alt="Tulisan Tangan Anamnesis"
+                            onClick={() => setSelectedImage({ url: row.anamnesis_handwriting_url!, title: 'Tulisan Tangan Anamnesis' })}
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 max-h-[200px] w-full object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                          />
+                          <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
+                            <Eye className="h-3 w-3" /> Perbesar Canvas
+                          </div>
+                        </div>
+                      )}
                     </td>
 
                     {/* Kolom Diagnosis Riwayat */}
                     <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.diagnosis_handwriting_url ? (
-                        <div className="mb-2">
-                          <img
-                            src={row.diagnosis_handwriting_url}
-                            alt="Tulisan Tangan Diagnosis"
-                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
-                          />
-                        </div>
-                      ) : null}
                       {row.diagnosis_nama || (row.diagnosis_handwriting_url ? '' : '-')}
                       {row.diagnosis_kode && (
                         <span className="font-sans text-[10px] text-gray-500 block mt-1 font-normal select-all">
                           ({row.diagnosis_kode})
                         </span>
                       )}
+                      {row.diagnosis_handwriting_url && (
+                        <div className="mt-2 group relative">
+                          <img
+                            src={row.diagnosis_handwriting_url}
+                            alt="Tulisan Tangan Diagnosis"
+                            onClick={() => setSelectedImage({ url: row.diagnosis_handwriting_url!, title: 'Tulisan Tangan Diagnosis' })}
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 max-h-[200px] w-full object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                          />
+                          <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
+                            <Eye className="h-3 w-3" /> Perbesar Canvas
+                          </div>
+                        </div>
+                      )}
                     </td>
 
                     {/* Kolom Terapi Riwayat */}
                     <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
-                      {row.terapi_handwriting_url ? (
-                        <div className="mb-2">
+                      {row.terapi || (row.terapi_handwriting_url ? '' : '-')}
+                      {row.terapi_handwriting_url && (
+                        <div className="mt-2 group relative">
                           <img
                             src={row.terapi_handwriting_url}
                             alt="Tulisan Tangan Terapi"
-                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1 max-h-[200px] object-contain"
+                            onClick={() => setSelectedImage({ url: row.terapi_handwriting_url!, title: 'Tulisan Tangan Terapi' })}
+                            className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 max-h-[200px] w-full object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
                           />
+                          <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
+                            <Eye className="h-3 w-3" /> Perbesar Canvas
+                          </div>
                         </div>
-                      ) : null}
-                      {row.terapi || (row.terapi_handwriting_url ? '' : '-')}
+                      )}
 
                       {/* Tampilan Resep Riwayat */}
                       {row.resep && row.resep.length > 0 && (
@@ -975,6 +992,41 @@ export function TabRekamMedis({
               ) : (
                 'Simpan'
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Preview Gambar Canvas (Tulisan Tangan) Full-size */}
+      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+        <DialogContent className="sm:max-w-[750px] p-6 rounded-2xl">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <PenTool className="h-4 w-4 text-blue-600" />
+              {selectedImage?.title || 'Preview Canvas Tulisan Tangan'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
+              Berkas tulisan tangan / corat-coret dokter pada rekam medis pasien.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedImage && (
+            <div className="my-3 flex justify-center bg-[#FAF9F6] border-2 border-amber-200/80 rounded-xl p-4 shadow-inner max-h-[70vh] overflow-auto">
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.title}
+                className="max-w-full h-auto object-contain rounded-lg shadow-sm"
+              />
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedImage(null)}
+              className="w-full sm:w-auto border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 bg-white"
+            >
+              Tutup
             </Button>
           </DialogFooter>
         </DialogContent>
