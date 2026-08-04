@@ -27,6 +27,7 @@ import {
   ChevronRight,
   Calendar,
   CalendarDays,
+  MousePointerClick,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -74,15 +75,17 @@ function getAudioContext(): AudioContext | null {
 }
 
 // Auto-unlock AudioContext on first user interaction anywhere on page (click/touch/keypress)
-if (typeof window !== 'undefined') {
-  const unlockAudio = () => {
-    const ctx = getAudioContext()
-    if (ctx && ctx.state === 'running') {
-      window.removeEventListener('pointerdown', unlockAudio)
-      window.removeEventListener('keydown', unlockAudio)
-      window.removeEventListener('touchstart', unlockAudio)
-    }
+const unlockAudio = () => {
+  if (typeof window === 'undefined') return
+  const ctx = getAudioContext()
+  if (ctx && ctx.state === 'running') {
+    window.removeEventListener('pointerdown', unlockAudio)
+    window.removeEventListener('keydown', unlockAudio)
+    window.removeEventListener('touchstart', unlockAudio)
   }
+}
+
+if (typeof window !== 'undefined') {
   window.addEventListener('pointerdown', unlockAudio)
   window.addEventListener('keydown', unlockAudio)
   window.addEventListener('touchstart', unlockAudio)
@@ -144,6 +147,25 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
 
+  // Interaction state for audio/notifications
+  const [hasInteracted, setHasInteracted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dokter_audio_interacted') === 'true'
+    }
+    return false
+  })
+
+  const handleInteraction = () => {
+    setHasInteracted(true)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dokter_audio_interacted', 'true')
+    }
+    unlockAudio()
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {})
+    }
+  }
+
   // Reset loading and initial load ref when selectedDate changes to prevent false positive notifications
   useEffect(() => {
     setLoading(true)
@@ -166,6 +188,22 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
     fetchAntrian()
   }, [fetchAntrian])
 
+  // Load known IDs on mount so returning from another page doesn't re-notify
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem(`antrian_known_ids_${dokterId}`)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            prevAntrianIdsRef.current = new Set(parsed)
+            hasInitialLoadRef.current = true // We already have a history!
+          }
+        }
+      } catch {}
+    }
+  }, [dokterId])
+
   // Track previous antrian IDs to detect newly inserted items and play notification
   useEffect(() => {
     if (!loading) {
@@ -187,16 +225,28 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
             duration: 8000,
           })
           const timer = setTimeout(() => setNewItemIds(new Set()), 3000)
-          prevAntrianIdsRef.current = currentIds
+          
+          prevAntrianIdsRef.current = new Set([...prevAntrianIdsRef.current, ...currentIds])
+          try {
+            sessionStorage.setItem(`antrian_known_ids_${dokterId}`, JSON.stringify(Array.from(prevAntrianIdsRef.current)))
+          } catch {}
+
           return () => clearTimeout(timer)
+        } else {
+          prevAntrianIdsRef.current = new Set([...prevAntrianIdsRef.current, ...currentIds])
+          try {
+            sessionStorage.setItem(`antrian_known_ids_${dokterId}`, JSON.stringify(Array.from(prevAntrianIdsRef.current)))
+          } catch {}
         }
       } else {
         hasInitialLoadRef.current = true
+        prevAntrianIdsRef.current = new Set([...prevAntrianIdsRef.current, ...currentIds])
+        try {
+          sessionStorage.setItem(`antrian_known_ids_${dokterId}`, JSON.stringify(Array.from(prevAntrianIdsRef.current)))
+        } catch {}
       }
-
-      prevAntrianIdsRef.current = currentIds
     }
-  }, [antrian, loading])
+  }, [antrian, loading, dokterId])
 
   // Supabase Realtime: listen for new patients assigned to this doctor for selectedDate
   useEffect(() => {
@@ -399,7 +449,29 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 relative">
+      {!hasInteracted && (
+        <div 
+          onClick={handleInteraction}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm cursor-pointer transition-all duration-500 animate-in fade-in"
+        >
+          <div className="flex flex-col items-center p-8 bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-sm w-[90%] text-center transform transition-transform hover:scale-105 active:scale-95">
+            <div className="w-16 h-16 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-sm ring-4 ring-sky-50">
+              <MousePointerClick className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              Tap untuk Melanjutkan
+            </h2>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Interaksi diperlukan untuk mengaktifkan 
+              <strong className="text-sky-600 font-semibold px-1">Suara</strong> dan
+              <strong className="text-sky-600 font-semibold px-1">Notifikasi</strong>
+              antrian pasien.
+            </p>
+          </div>
+        </div>
+      )}
+      
       {isNavigating && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/85 backdrop-blur-md transition-all duration-300">
           <div className="flex flex-col items-center space-y-4">
