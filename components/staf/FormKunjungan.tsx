@@ -181,25 +181,21 @@ export function FormKunjungan({
     fetchRiwayat()
   }, [pasien.id])
 
-  // Helper: Format date & time with day, date, month, year, and WIB local time
+  // Helper: Format date with day, date, month, year, and time (e.g., Selasa, 04/08/26 · 14:30 WIB)
   function formatIndonesianDateTime(dateStr: string | null | Date): string {
     if (!dateStr) return '-'
     try {
       const date = new Date(dateStr)
       const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
-      const months = [
-        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-      ]
       const dayName = days[date.getDay()]
       const day = String(date.getDate()).padStart(2, '0')
-      const monthName = months[date.getMonth()]
-      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = String(date.getFullYear()).slice(-2)
 
       const hours = String(date.getHours()).padStart(2, '0')
       const minutes = String(date.getMinutes()).padStart(2, '0')
 
-      return `${dayName}, ${day} ${monthName} ${year} · ${hours}:${minutes} WIB`
+      return `${dayName}, ${day}/${month}/${year} · ${hours}:${minutes} WIB`
     } catch {
       return String(dateStr)
     }
@@ -573,10 +569,10 @@ export function FormKunjungan({
           <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
             <thead>
               <tr className="bg-gray-100 border-b border-gray-400 text-center font-bold">
-                <th className="p-3 border-r border-gray-400 w-[20%] bg-gray-100 sticky top-0 z-10 shadow-xs">Tanggal</th>
-                <th className="p-3 border-r border-gray-400 w-[45%] bg-gray-100 sticky top-0 z-10 shadow-xs">Anamnesa / Pemeriksaan</th>
+                <th className="p-3 border-r border-gray-400 w-[12%] bg-gray-100 sticky top-0 z-10 shadow-xs">Tanggal</th>
+                <th className="p-3 border-r border-gray-400 w-[43%] bg-gray-100 sticky top-0 z-10 shadow-xs">Anamnesa / Pemeriksaan</th>
                 <th className="p-3 border-r border-gray-400 w-[18%] bg-gray-100 sticky top-0 z-10 shadow-xs">Diagnosis</th>
-                <th className="p-3 bg-gray-100 w-[17%] sticky top-0 z-10 shadow-xs">Terapi</th>
+                <th className="p-3 bg-gray-100 w-[27%] sticky top-0 z-10 shadow-xs">Terapi</th>
               </tr>
             </thead>
             <tbody>
