@@ -128,9 +128,12 @@ export function TabPembayaran({
         return
       }
 
-      // Clear sessionStorage for this kunjungan
+      // Clear sessionStorage & localStorage for this kunjungan
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem(`resep-items-${kunjunganId}`)
+        localStorage.removeItem(`hw_draft_anamnesis_${kunjunganId}`)
+        localStorage.removeItem(`hw_draft_diagnosis_${kunjunganId}`)
+        localStorage.removeItem(`hw_draft_terapi_${kunjunganId}`)
       }
 
       toast.success('Kunjungan berhasil diselesaikan!', {

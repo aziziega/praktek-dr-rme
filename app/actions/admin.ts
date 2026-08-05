@@ -676,9 +676,9 @@ export async function getKeuanganSummary(bulan: number, tahun: number) {
   const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
   if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
 
-  const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00`
+  const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00+07:00`
   const lastDay = new Date(tahun, bulan, 0).getDate()
-  const endDate = `${tahun}-${String(bulan).padStart(2, '0')}-${lastDay}T23:59:59`
+  const endDate = `${tahun}-${String(bulan).padStart(2, '0')}-${lastDay}T23:59:59+07:00`
 
   const { data, error } = await (supabase.from('pembayaran') as any)
     .select('tarif_periksa, total_obat, total_bayar')
@@ -707,8 +707,8 @@ export async function getKeuanganChart(tahun: number) {
   const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single() as any
   if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
-  const startDate = `${tahun}-01-01T00:00:00`
-  const endDate = `${tahun}-12-31T23:59:59`
+  const startDate = `${tahun}-01-01T00:00:00+07:00`
+  const endDate = `${tahun}-12-31T23:59:59+07:00`
 
   const { data, error } = await (supabase.from('pembayaran') as any)
     .select('tarif_periksa, total_obat, total_bayar, created_at')
@@ -749,9 +749,9 @@ export async function getKeuanganDetail(bulan: number, tahun: number) {
   const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single() as any
   if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
-  const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00`
+  const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00+07:00`
   const lastDay = new Date(tahun, bulan, 0).getDate()
-  const endDate = `${tahun}-${String(bulan).padStart(2, '0')}-${lastDay}T23:59:59`
+  const endDate = `${tahun}-${String(bulan).padStart(2, '0')}-${lastDay}T23:59:59+07:00`
 
   const { data, error } = await (supabase.from('pembayaran') as any)
     .select(`
@@ -790,8 +790,8 @@ export async function getKeuanganDailySummary(dateStr: string) {
   const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
   if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
 
-  const startDate = `${dateStr}T00:00:00`
-  const endDate = `${dateStr}T23:59:59`
+  const startDate = `${dateStr}T00:00:00+07:00`
+  const endDate = `${dateStr}T23:59:59+07:00`
 
   const { data, error } = await (supabase.from('pembayaran') as any)
     .select('tarif_periksa, total_obat, total_bayar')
@@ -820,8 +820,8 @@ export async function getKeuanganDailyDetail(dateStr: string) {
   const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
   if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
 
-  const startDate = `${dateStr}T00:00:00`
-  const endDate = `${dateStr}T23:59:59`
+  const startDate = `${dateStr}T00:00:00+07:00`
+  const endDate = `${dateStr}T23:59:59+07:00`
 
   const { data, error } = await (supabase.from('pembayaran') as any)
     .select(`
@@ -864,8 +864,8 @@ export async function getKeuanganRangeDetail(dariTanggal: string, sampaiTanggal:
   const { data: adminUser } = await (supabase.from('users') as any).select('role').eq('id', user.id).single()
   if (adminUser?.role !== 'admin') throw new Error('Unauthorized - Admin Only')
 
-  const startDate = `${dariTanggal}T00:00:00`
-  const endDate = `${sampaiTanggal}T23:59:59`
+  const startDate = `${dariTanggal}T00:00:00+07:00`
+  const endDate = `${sampaiTanggal}T23:59:59+07:00`
 
   const { data, error } = await (supabase.from('pembayaran') as any)
     .select(`

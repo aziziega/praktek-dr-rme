@@ -70,6 +70,7 @@ export function HandwritingCanvas({
 }: HandwritingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
   // Stored strokes: Array of StrokeData
   const [strokes, setStrokes] = useState<StrokeData[]>([])
@@ -156,12 +157,20 @@ export function HandwritingCanvas({
     }
     ctx.setLineDash([]) // reset dash
 
-    // 3. Create Offscreen Canvas for background image & strokes (enabling destination-out erasing)
-    const offscreen = document.createElement('canvas')
-    offscreen.width = canvas.width
-    offscreen.height = canvas.height
+    // 3. Create or reuse Offscreen Canvas for background image & strokes
+    if (!offscreenCanvasRef.current) {
+      offscreenCanvasRef.current = document.createElement('canvas')
+    }
+    const offscreen = offscreenCanvasRef.current
+    if (offscreen.width !== canvas.width || offscreen.height !== canvas.height) {
+      offscreen.width = canvas.width
+      offscreen.height = canvas.height
+    }
+    
     const offCtx = offscreen.getContext('2d')
     if (offCtx) {
+      offCtx.clearRect(0, 0, offscreen.width, offscreen.height)
+      offCtx.save()
       offCtx.scale(dpr, dpr)
 
       // Draw background image if exists
@@ -199,7 +208,8 @@ export function HandwritingCanvas({
       if (currentStroke) {
         drawStroke(currentStroke)
       }
-
+      offCtx.restore()
+      
       // Render offscreen canvas onto main canvas
       ctx.drawImage(offscreen, 0, 0, width, height)
     }
@@ -233,7 +243,15 @@ export function HandwritingCanvas({
   }, [resizeCanvas])
 
   useEffect(() => {
-    renderCanvas()
+    let animationFrameId: number
+    const render = () => {
+      renderCanvas()
+      // We don't continuously loop requestAnimationFrame, we just use it 
+      // to debounce if renderCanvas is called rapidly. 
+      // But since we just want to defer the render to the next frame:
+    }
+    animationFrameId = requestAnimationFrame(render)
+    return () => cancelAnimationFrame(animationFrameId)
   }, [renderCanvas])
 
   // Export Data URL when strokes change

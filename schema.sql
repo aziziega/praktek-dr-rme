@@ -210,7 +210,9 @@ CREATE POLICY "Hanya admin yang bisa memodifikasi data user" ON public.users
 
 -- 2. Policies untuk Tabel Pasien
 CREATE POLICY "Semua user terautentikasi bisa membaca data pasien" ON public.pasien
-  FOR SELECT TO authenticated USING (true);
+  FOR SELECT TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
 
 CREATE POLICY "Staf dan admin bisa menambah atau edit pasien" ON public.pasien
   FOR ALL TO authenticated USING (
@@ -219,7 +221,9 @@ CREATE POLICY "Staf dan admin bisa menambah atau edit pasien" ON public.pasien
 
 -- 3. Policies untuk Tabel Kunjungan
 CREATE POLICY "Semua user terautentikasi bisa membaca antrean kunjungan" ON public.kunjungan
-  FOR SELECT TO authenticated USING (true);
+  FOR SELECT TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
 
 CREATE POLICY "Staf dan admin bisa mendaftarkan & mengatur kunjungan" ON public.kunjungan
   FOR ALL TO authenticated USING (
@@ -233,7 +237,9 @@ CREATE POLICY "Dokter bisa memperbarui status kunjungan yang ditugaskan padanya"
 
 -- 4. Policies untuk Tabel Rekam Medis
 CREATE POLICY "Staf, Dokter, dan Admin bisa membaca rekam medis" ON public.rekam_medis
-  FOR SELECT TO authenticated USING (true);
+  FOR SELECT TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
 
 CREATE POLICY "Dokter hanya bisa mengelola rekam medis miliknya sendiri, Admin bebas" ON public.rekam_medis
   FOR ALL TO authenticated USING (
@@ -251,7 +257,9 @@ CREATE POLICY "Hanya admin yang bisa memodifikasi stok/daftar obat" ON public.ob
 
 -- 6. Policies untuk Tabel Resep Obat
 CREATE POLICY "Semua user terautentikasi bisa membaca resep" ON public.resep_obat
-  FOR SELECT TO authenticated USING (true);
+  FOR SELECT TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
 
 CREATE POLICY "Dokter dan Admin bisa mengelola resep obat" ON public.resep_obat
   FOR ALL TO authenticated USING (
@@ -260,7 +268,9 @@ CREATE POLICY "Dokter dan Admin bisa mengelola resep obat" ON public.resep_obat
 
 -- 7. Policies untuk Tabel Pembayaran
 CREATE POLICY "Semua user terautentikasi bisa melihat rekap pembayaran" ON public.pembayaran
-  FOR SELECT TO authenticated USING (true);
+  FOR SELECT TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
 
 CREATE POLICY "Dokter dan Admin bisa mencatat/mengelola pembayaran" ON public.pembayaran
   FOR ALL TO authenticated USING (
