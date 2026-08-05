@@ -213,17 +213,17 @@ export function HandwritingCanvas({
     const container = containerRef.current
     if (!canvas || !container) return
 
-    const rect = container.getBoundingClientRect()
     const dpr = window.devicePixelRatio || 1
-    const targetWidth = rect.width
-    const targetHeight = Math.max(minHeight, rect.height)
+    const targetWidth = container.clientWidth
+    const targetHeight = Math.max(minHeight, container.clientHeight)
 
-    canvas.width = targetWidth * dpr
-    canvas.height = targetHeight * dpr
-    canvas.style.width = `${targetWidth}px`
-    canvas.style.height = `${targetHeight}px`
-
-    renderCanvas()
+    if (canvas.style.width !== `${targetWidth}px` || canvas.style.height !== `${targetHeight}px`) {
+      canvas.width = targetWidth * dpr
+      canvas.height = targetHeight * dpr
+      canvas.style.width = `${targetWidth}px`
+      canvas.style.height = `${targetHeight}px`
+      renderCanvas()
+    }
   }, [minHeight, renderCanvas])
 
   useEffect(() => {
@@ -243,9 +243,53 @@ export function HandwritingCanvas({
       onChange?.(null)
       return
     }
-    const dataUrl = canvas.toDataURL('image/png')
+    
+    // Create a temporary canvas to export ONLY the transparent handwriting
+    // This drastically reduces file size and prevents background lines from overlapping/stretching
+    const tempCanvas = document.createElement('canvas')
+    tempCanvas.width = canvas.width
+    tempCanvas.height = canvas.height
+    const tempCtx = tempCanvas.getContext('2d')
+    
+    if (tempCtx) {
+      const dpr = window.devicePixelRatio || 1
+      tempCtx.scale(dpr, dpr)
+
+      // Draw previous image if exists (should be transparent too)
+      if (bgImage) {
+        tempCtx.drawImage(bgImage, 0, 0, canvas.width / dpr, canvas.height / dpr)
+      }
+
+      // Draw all strokes
+      const drawStroke = (s: StrokeData) => {
+        if (s.points.length === 0) return
+        const opts = s.tool === 'eraser' ? ERASER_STROKE_OPTIONS : STROKE_OPTIONS
+        const strokeOutline = getStroke(
+          s.points.map((p) => [p.x, p.y, p.pressure ?? 0.5]),
+          opts
+        )
+        const pathData = getSvgPathFromStroke(strokeOutline)
+        if (pathData) {
+          const path = new Path2D(pathData)
+          tempCtx.save()
+          if (s.tool === 'eraser') {
+            tempCtx.globalCompositeOperation = 'destination-out'
+            tempCtx.fillStyle = '#000000'
+          } else {
+            tempCtx.globalCompositeOperation = 'source-over'
+            tempCtx.fillStyle = '#1e3a8a'
+          }
+          tempCtx.fill(path)
+          tempCtx.restore()
+        }
+      }
+
+      strokes.forEach(drawStroke)
+    }
+
+    const dataUrl = tempCanvas.toDataURL('image/png')
     onChange?.(dataUrl)
-  }, [strokes, onChange, bgImage])
+  }, [strokes, bgImage, onChange])
 
   useEffect(() => {
     if (loadedInitial) {
@@ -403,6 +447,7 @@ export function HandwritingCanvas({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           onPointerLeave={handlePointerUp}
           className="block w-full h-full"
         />
