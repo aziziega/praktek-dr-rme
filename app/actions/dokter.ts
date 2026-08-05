@@ -408,41 +408,23 @@ export async function uploadHandwritingImage(
     const fileName = `${kunjunganId}_${field}_${Date.now()}.png`
     const filePath = `handwriting/${fileName}`
 
-    // 1. Coba upload dengan authenticated user client terlebih dahulu
-    let uploadRes = await supabase.storage
+    // 1. Upload dengan authenticated user client
+    const uploadRes = await supabase.storage
       .from('handwriting-notes')
       .upload(filePath, imageBuffer, {
         contentType: 'image/png',
         upsert: true,
       })
 
-    // 2. Jika gagal (misal RLS/policy), coba fallback ke service role client (admin key)
     if (uploadRes.error) {
-      console.warn('[uploadHandwritingImage] User client upload failed, retrying with service role:', uploadRes.error.message)
-      try {
-        const serviceRoleClient = createServiceRoleClient()
-        uploadRes = await serviceRoleClient.storage
-          .from('handwriting-notes')
-          .upload(filePath, imageBuffer, {
-            contentType: 'image/png',
-            upsert: true,
-          })
-      } catch (e: any) {
-        console.error('[uploadHandwritingImage] Service role fallback error:', e.message)
-      }
-    }
-
-    if (uploadRes.error) {
-      console.error('[uploadHandwritingImage] Final upload error:', uploadRes.error)
+      console.error('[uploadHandwritingImage] Upload error:', uploadRes.error)
       return { success: false, error: `Gagal upload gambar: ${uploadRes.error.message}` }
     }
 
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('handwriting-notes')
-      .getPublicUrl(filePath)
+    // Gunakan internal API route untuk signed URL proxy
+    const proxyUrl = `/api/handwriting?path=${encodeURIComponent(filePath)}`
 
-    return { success: true, url: urlData.publicUrl }
+    return { success: true, url: proxyUrl }
   } catch (err: any) {
     console.error('[uploadHandwritingImage] Exception:', err)
     return { success: false, error: err.message || 'Gagal mengunggah gambar tulisan tangan' }
@@ -557,36 +539,19 @@ export async function selesaikanKunjungan(input: {
   }
 
   try {
-    // 0. Verifikasi ketersediaan stok obat terlebih dahulu
-    for (const item of input.resepItems) {
-      if (item.obat_id) {
-        const { data: obatData } = await supabase
-          .from('obat')
-          .select('stok, nama')
-          .eq('id', item.obat_id)
-          .single()
-
-        if (obatData) {
-          const o = obatData as any
-          if (o.stok < item.jumlah) {
-            return { 
-              success: false, 
-              error: `Stok obat "${o.nama}" tidak mencukupi. Tersedia: ${o.stok}, Diminta: ${item.jumlah}.` 
-            }
-          }
-        }
-      }
-    }
-
-    // 1. Save/update rekam medis
-    await saveRekamMedis({
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+    const payload = {
       kunjunganId: input.kunjunganId,
+      dokterId: user.id,
+      tarif_periksa: input.tarif_periksa,
+      catatan_bayar: input.catatan_bayar,
+      resepItems: input.resepItems,
       anamnesis: input.anamnesis,
       pemeriksaan_fisik: input.pemeriksaan_fisik,
       diagnosis_kode: input.diagnosis_kode,
       diagnosis_nama: input.diagnosis_nama,
       terapi: input.terapi,
-      catatan: input.catatan_medis,
+      catatan_medis: input.catatan_medis,
       anamnesis_handwriting_url: input.anamnesis_handwriting_url,
       diagnosis_handwriting_url: input.diagnosis_handwriting_url,
       terapi_handwriting_url: input.terapi_handwriting_url,
@@ -594,116 +559,26 @@ export async function selesaikanKunjungan(input: {
       tensi_diastolik: input.tensi_diastolik,
       nadi: input.nadi,
       suhu: input.suhu,
-    })
-
-    // 2. Delete old resep & insert new
-    await (supabase.from('resep_obat') as any)
-      .delete()
-      .eq('kunjungan_id', input.kunjunganId)
-
-    if (input.resepItems.length > 0) {
-      const resepData = input.resepItems.map((item) => ({
-        kunjungan_id: input.kunjunganId,
-        obat_id: item.obat_id || null,
-        nama_obat: item.nama_obat,
-        dosis: item.dosis,
-        jumlah: item.jumlah,
-        harga_satuan: item.harga_satuan,
-      }))
-
-      await (supabase.from('resep_obat') as any).insert(resepData)
+      tanggal_hari_ini: today
     }
 
-    // 3. Calculate totals
-    const totalObat = input.resepItems.reduce(
-      (sum, item) => sum + item.jumlah * item.harga_satuan,
-      0
-    )
-    const totalBayar = input.tarif_periksa + totalObat
-
-    // 4. Insert pembayaran
-    await (supabase.from('pembayaran') as any).insert({
-      kunjungan_id: input.kunjunganId,
-      dokter_id: user.id,
-      tarif_periksa: input.tarif_periksa,
-      total_obat: totalObat,
-      total_bayar: totalBayar,
-      metode_bayar: 'cash',
-      status: 'lunas',
-      catatan: input.catatan_bayar || null,
+    const { data, error } = await (supabase.rpc as any)('selesaikan_kunjungan_trx', {
+      payload: payload
     })
 
-    // 5. Reduce obat stock for items with obat_id
-    const serviceRoleClient = createServiceRoleClient()
-    for (const item of input.resepItems) {
-      if (item.obat_id) {
-        const { data: obatData } = await serviceRoleClient
-          .from('obat')
-          .select('stok')
-          .eq('id', item.obat_id)
-          .single()
-
-        if (obatData) {
-          const newStok = Math.max(0, (obatData as any).stok - item.jumlah)
-          await (serviceRoleClient.from('obat') as any)
-            .update({ stok: newStok, updated_at: new Date().toISOString() })
-            .eq('id', item.obat_id)
-        }
-      }
+    if (error) {
+      console.error('[selesaikanKunjungan] RPC Error:', error)
+      return { success: false, error: error.message }
     }
 
-    // 6. Update kunjungan status
-    await (supabase.from('kunjungan') as any)
-      .update({
-        status: 'selesai',
-        jam_selesai: new Date().toISOString(),
-      })
-      .eq('id', input.kunjunganId)
-
-    // 7. Update attendance: jumlah_pasien_ditangani + 1
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-    const { data: attendanceData } = await supabase
-      .from('attendance_logs')
-      .select('id, jumlah_pasien_ditangani')
-      .eq('user_id', user.id)
-      .eq('tanggal', today)
-      .single()
-
-    if (attendanceData) {
-      const att = attendanceData as any
-      await (supabase.from('attendance_logs') as any)
-        .update({
-          jumlah_pasien_ditangani: (att.jumlah_pasien_ditangani ?? 0) + 1,
-        })
-        .eq('id', att.id)
+    if (data && !data.success) {
+      console.error('[selesaikanKunjungan] Logika RPC Error:', data.error)
+      return { success: false, error: data.error }
     }
-
-    // 8. Log activities
-    await logActivity({
-      userId: user.id,
-      aksi: 'SIMPAN_REKAM_MEDIS',
-      targetTabel: 'rekam_medis',
-      targetId: input.kunjunganId,
-      detail: {
-        diagnosis: input.diagnosis_nama ?? '-',
-      },
-    })
-
-    await logActivity({
-      userId: user.id,
-      aksi: 'CATAT_BAYAR',
-      targetTabel: 'pembayaran',
-      targetId: input.kunjunganId,
-      detail: {
-        tarif_periksa: input.tarif_periksa,
-        total_obat: totalObat,
-        total_bayar: totalBayar,
-      },
-    })
 
     return { success: true }
   } catch (err) {
-    console.error('[selesaikanKunjungan] Error:', err)
+    console.error('[selesaikanKunjungan] Exception:', err)
     return { success: false, error: 'Terjadi kesalahan saat menyelesaikan kunjungan.' }
   }
 }
