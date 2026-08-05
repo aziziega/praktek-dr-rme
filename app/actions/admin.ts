@@ -80,6 +80,9 @@ export async function updateUser(id: string, data: { nama: string; role: string 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
+
   // Cek jika edit role diri sendiri
   if (id === user.id && data.role !== 'admin') {
     throw new Error('Tidak bisa menghapus role admin dari diri sendiri.')
@@ -104,6 +107,9 @@ export async function toggleUserStatus(id: string, aktif: boolean) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
+
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
   if (id === user.id) throw new Error('Tidak bisa menonaktifkan diri sendiri.')
 
@@ -698,6 +704,9 @@ export async function getKeuanganChart(tahun: number) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
+
   const startDate = `${tahun}-01-01T00:00:00`
   const endDate = `${tahun}-12-31T23:59:59`
 
@@ -736,6 +745,9 @@ export async function getKeuanganDetail(bulan: number, tahun: number) {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
+
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
   const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00`
   const lastDay = new Date(tahun, bulan, 0).getDate()

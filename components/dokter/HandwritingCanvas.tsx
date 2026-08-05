@@ -285,14 +285,11 @@ export function HandwritingCanvas({
       }
 
       strokes.forEach(drawStroke)
-      if (currentStroke) {
-        drawStroke(currentStroke)
-      }
     }
 
     const dataUrl = tempCanvas.toDataURL('image/png')
     onChange?.(dataUrl)
-  }, [strokes, currentStroke, bgImage, onChange])
+  }, [strokes, bgImage, onChange])
 
   useEffect(() => {
     if (loadedInitial) {
@@ -450,6 +447,7 @@ export function HandwritingCanvas({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           onPointerLeave={handlePointerUp}
           className="block w-full h-full"
         />
