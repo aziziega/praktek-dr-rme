@@ -80,7 +80,7 @@ export async function updateUser(id: string, data: { nama: string; role: string 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single() as any
   if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
   // Cek jika edit role diri sendiri
@@ -108,7 +108,7 @@ export async function toggleUserStatus(id: string, aktif: boolean) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single() as any
   if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
   if (id === user.id) throw new Error('Tidak bisa menonaktifkan diri sendiri.')
@@ -704,7 +704,7 @@ export async function getKeuanganChart(tahun: number) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single() as any
   if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
   const startDate = `${tahun}-01-01T00:00:00`
@@ -746,7 +746,7 @@ export async function getKeuanganDetail(bulan: number, tahun: number) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single()
+  const { data: executor } = await supabase.from('users').select('role').eq('id', user.id).single() as any
   if (!executor || executor.role !== 'admin') throw new Error('Unauthorized: Admin role required')
 
   const startDate = `${tahun}-${String(bulan).padStart(2, '0')}-01T00:00:00`
