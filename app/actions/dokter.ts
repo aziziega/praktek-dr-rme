@@ -408,8 +408,19 @@ export async function uploadHandwritingImage(
     const fileName = `${kunjunganId}_${field}_${Date.now()}.png`
     const filePath = `handwriting/${fileName}`
 
-    // 1. Upload dengan authenticated user client
-    const uploadRes = await supabase.storage
+    // Gunakan admin client (bypassing RLS) karena upsert membutuhkan SELECT & UPDATE yang terkadang gagal pada RLS storage
+    const { createClient: createSupabaseJs } = await import('@supabase/supabase-js')
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    
+    if (!supabaseUrl || !serviceRoleKey) {
+      return { success: false, error: 'Server configuration error (missing Supabase keys)' }
+    }
+
+    const adminSupabase = createSupabaseJs(supabaseUrl, serviceRoleKey)
+
+    // 1. Upload dengan admin client
+    const uploadRes = await adminSupabase.storage
       .from('handwriting-notes')
       .upload(filePath, imageBuffer, {
         contentType: 'image/png',

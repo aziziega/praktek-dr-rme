@@ -1,31 +1,29 @@
 # 🏥 Sistem Rekam Medis Elektronik (RME) Praktek Dr. Sudiman
 
-Sistem Rekam Medis Elektronik (RME) modern berbasis web yang dirancang khusus untuk mempermudah operasional pendaftaran, antrian pemeriksaan, rekam medis klinis, pencatatan transaksi obat, dan audit keamanan data (audit trail) pada Praktek Dokter Umum Dr. Sudiman.
+Sistem Rekam Medis Elektronik (RME) modern berbasis web yang dirancang khusus untuk mempermudah operasional pendaftaran, antrian pemeriksaan, rekam medis klinis, pencatatan transaksi obat, dan audit keamanan data pada tingkat *Enterprise* untuk Klinik / Praktek Dokter Umum.
 
 ---
 
-## 🚀 Fitur Utama & Alur Kerja Sistem
+## 🚀 Fitur Utama & Keunggulan Sistem
 
-### 1. Manajemen Multi-Role Akses & Proteksi Rute
-Sistem mendeteksi peran pengguna secara otomatis di tingkat server dan memproteksi rute dari akses silang peran secara real-time:
-*   **Staf Pendaftaran**: Mendaftarkan pasien baru, menginput vital sign dasar (tensi, suhu, nadi), dan memasukkan ke antrian dokter.
-*   **Dokter**: Mengelola antrian periksa, menginput hasil pemeriksaan (anamnesis, fisik, diagnosis ICD-10, terapi), meresepkan obat dengan proteksi stok minus, dan merekam pembayaran.
-*   **Administrator**: Mengelola master pengguna (staf & dokter), memantau stok dan log barang masuk obat, memantau *Attendance* (kehadiran harian & rekap bulanan), serta memantau *Activity Log (Audit Trail)* sistem.
+### 1. Kinerja Medis & UI/UX Eksekutif
+*   **Kanvas Rekam Medis Interaktif:** Dokter dapat menggambar (mencoret) anamnesis, diagnosis, dan terapi pada kanvas khusus bergaya kertas *ivory* klasik. Rendering dioptimalkan di tingkat *frame-rate* (`requestAnimationFrame`) tanpa *lag*.
+*   **Live Ticking Clock:** Widget waktu bergerak dinamis yang tersinkronisasi zona waktu (WIB) untuk semua role.
+*   **Desain Responsif & Premium:** Dibangun dengan Tailwind CSS v4 dan komponen shadcn berpalet *Harmonious HSL*.
 
-### 2. Live Ticking Clock & UX Premium
-*   Widget waktu bergerak dinamis (Live Clock) terintegrasi pada navigasi sidebar untuk semua role yang disesuaikan dengan zona waktu lokal (WIB).
-*   Desain antarmuka eksklusif lembar fisik rekam medis (gaya kertas fisik ivory dengan kop Klaten dan tulisan tinta pena biru) untuk memberikan transisi mulus bagi dokter.
-*   Penerapan dialog konfirmasi (*Alert Dialog*) sebelum penghapusan data dan visual responsif penuh pada resolusi desktop maupun mobile.
+### 2. Transaksi Terpadu & Aman (Postgres RPC)
+*   Sistem telah dirombak menggunakan **Remote Procedure Call (RPC)** tingkat *Database*. Proses penyelesaian kunjungan, pemotongan stok obat, penyimpanan rekam medis, pembuatan tagihan kasir, dan kalkulasi kehadiran dokter dieksekusi secara **Atomic** dalam 1 API *Request*. 
+*   Mencegah isu *Race Condition* (stok obat ganda) dan menjamin konsistensi data finansial 100%.
 
-### 3. Monitoring Attendance & Activity Logs (Admin)
-*   **Kehadiran Real-time**: Menampilkan tabel log harian (jam masuk, keluar, durasi kerja, jumlah pasien ditangani). Row disorot merah jika karyawan lupa/belum melakukan logout.
-*   **Rekap Performa Bulanan**: Menampilkan total kehadiran, rata-rata jam kerja, dan kontribusi penanganan pasien dalam bentuk *Grid Card* per user.
-*   **Audit Trail (Activity Log)**: Mencatat setiap penambahan, pembaruan, aktivasi/nonaktivasi entitas lengkap dengan detail perubahan data (format JSON terurai dan collapsible), pelaksana, dan alamat IP.
-*   **Multi-Ekspor Data**: Mendukung ekspor data dalam format **CSV** dan cetak cetakan laporan **PDF** berdesain elegan lengkap dengan kop klinik resmi dan ringkasan kinerja.
+### 3. Keamanan Tingkat Rumah Sakit (HIPAA / Permenkes Ready)
+*   **Row Level Security (RLS) Ketat:** Akses ke setiap tabel (Rekam Medis, Pendapatan, Log, Obat) dikunci eksklusif berdasarkan *Role* user (Admin, Dokter, Staf).
+*   **Private Storage Bucket & Signed URLs:** Berkas gambar rekam medis bersifat rahasia (Private Bucket). URL akses dibangkitkan sementara (*Signed URL*) secara dinamis melalui server yang tervalidasi auth, sehingga data rekam medis aman dari publik.
+*   **Audit Trail (Activity Log):** Mencatat setiap aktivitas manipulasi data lengkap dengan format JSON historis, pelaksana, dan waktu. Sistem *Audit Log* bersifat *read-only* bahkan untuk Admin, mencegah pengelabuan rekam medis.
 
-### 4. Keamanan Data & Form Validation
-*   Validasi forms terpusat menggunakan **Zod Schema** dengan umpan balik pesan kesalahan dalam Bahasa Indonesia yang informatif.
-*   Proteksi level database menggunakan Supabase **Row Level Security (RLS) Policies** di seluruh tabel transaksi.
+### 4. Manajemen Multi-Role & Laporan Keuangan
+*   **Staf Pendaftaran**: Mendaftarkan pasien baru, vital sign, dan manajemen antrian.
+*   **Dokter**: Mengelola antrian, rekam medis digital, dan e-resep otomatis.
+*   **Administrator**: Mengelola master pengguna (staf & dokter), laporan keuangan (pendapatan bersih/kotor) dengan grafik, memantau *Attendance* (kehadiran & pasien yang ditangani), serta memantau *Activity Log*.
 
 ---
 
@@ -34,8 +32,8 @@ Sistem mendeteksi peran pengguna secara otomatis di tingkat server dan memprotek
 *   **Framework**: [Next.js (App Router)](https://nextjs.org/)
 *   **Language**: [TypeScript (Strict Mode)](https://www.typescriptlang.org/)
 *   **Database & Auth**: [Supabase (PostgreSQL)](https://supabase.com/)
-*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) dengan Harmonious HSL Palettes
-*   **Components**: Radix UI Primitives (Accessible components)
+*   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+*   **Components**: Radix UI Primitives (shadcn/ui)
 *   **Validations**: Zod & React Hook Form
 *   **State & Toast**: Sonner, Lucide Icons
 
@@ -50,21 +48,19 @@ Sistem mendeteksi peran pengguna secara otomatis di tingkat server dan memprotek
 │   │   ├── admin/              # Monitoring, manajemen user, obat, pasien
 │   │   ├── dokter/             # Antrean periksa & pengisian rekam medis
 │   │   └── staf/               # Pendaftaran pasien & check-in kunjungan
-│   ├── actions/                # Server Actions terbagi per fungsionalitas
-│   ├── error.tsx               # Error boundary global (Bahasa Indonesia)
-│   └── not-found.tsx           # Halaman fallback 404
+│   ├── api/handwriting/        # API Proxy untuk generate Signed URL Storage Private
+│   └── actions/                # Server Actions terbagi per fungsionalitas
 ├── components/
 │   ├── ui/                     # Komponen UI dasar reusable (shadcn)
-│   └── dashboard/              # Kerangka dashboard & Sidebar dinamis
+│   └── dokter/                 # Komponen Kanvas Medis (HandwritingCanvas) dll.
 ├── database/
 │   ├── schema.sql              # Struktur tabel, indeks, RLS, & triggers
-│   └── seed.sql                # Data dummy awal (akun, obat, ICD-10)
-├── lib/
-│   ├── validations.ts          # Zod schema terpusat
-│   ├── activity-logger.ts      # Logger aktivitas audit trail
-│   └── attendance.ts           # Tracker sign-in & sign-out otomatis
-├── middleware.ts               # Next.js Middleware pengaman rute
-└── package.json
+│   ├── seed.sql                # Data dummy awal (akun, obat, ICD-10)
+│   └── selesaikan_kunjungan_rpc.sql # Fungsi Transaksional Atomic
+├── docs/                       # Dokumentasi arsitektur, estimasi storage & checklist 
+└── lib/
+    ├── validations.ts          # Zod schema terpusat
+    └── activity-logger.ts      # Logger aktivitas audit trail
 ```
 
 ---
@@ -76,24 +72,26 @@ Pastikan Anda sudah menginstal **Node.js (v18+)** dan memiliki akun **Supabase**
 
 ### 2. Kloning & Instalasi Dependensi
 ```bash
-# Install paket dependensi
 npm install
 ```
 
 ### 3. Konfigurasi Environment Variables
-Buat berkas `.env.local` atau isi berkas `.env` di root project Anda:
+Buat berkas `.env.local` di *root* project Anda:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 > [!IMPORTANT]  
-> `SUPABASE_SERVICE_ROLE_KEY` sangat diperlukan oleh admin server actions untuk mendaftarkan dan mengelola user baru di auth.users secara aman bypass RLS.
+> `SUPABASE_SERVICE_ROLE_KEY` sangat diperlukan untuk *generate signed URLs* pada bucket privat dan admin server actions (*bypass RLS auth*).
 
 ### 4. Setup Database & Seeding
 Jalankan perintah SQL berikut di **Supabase SQL Editor**:
-1.  Salin dan jalankan seluruh isi file `database/schema.sql` untuk membuat tabel, fungsi helper, mengaktifkan RLS, dan membuat relasi index.
-2.  Salin dan jalankan isi file `database/seed.sql` untuk mengisi data obat dan diagnosis ICD-10, serta mendaftarkan kredensial akun default untuk pengujian.
+1. Jalankan isi file `database/schema.sql` (struktur tabel & RLS).
+2. Jalankan isi file `database/seed.sql` (dummy data & akun).
+3. Jalankan isi file `selesaikan_kunjungan_rpc.sql` (untuk fungsi atomic transaksi).
+
+*Pastikan Anda juga telah membuat Storage Bucket bernama `handwriting-notes` dengan status **Private** di panel Storage Supabase.*
 
 ### 5. Jalankan Local Dev Server
 ```bash
@@ -116,8 +114,9 @@ Kredensial akun default yang siap digunakan (setelah melakukan database seeding)
 ---
 
 ## 🛡️ Kebijakan Keamanan (Security Audit & RLS)
-Seluruh tabel diaktifkan **Row Level Security (RLS)** dengan kebijakan akses ketat:
-*   `activity_logs`: Hanya dapat dibaca oleh Admin. Input diizinkan otomatis saat user melakukan aksi di server.
-*   `attendance_logs`: Hanya dapat dibaca oleh pemilik log tersebut atau Admin.
-*   `obat`: Semua user terautentikasi dapat membaca stok. Modifikasi (tambah obat, ubah harga, mutasi stok) eksklusif untuk Admin.
-*   `rekam_medis`: Dapat dibaca oleh staf/dokter. Modifikasi hanya diizinkan untuk Dokter yang terdaftar menangani pasien pada hari kunjungan terkait.
+Seluruh tabel telah diaktifkan **Row Level Security (RLS)** dengan kebijakan akses level produksi:
+*   `activity_logs`: *Read-only* terbatas untuk Admin.
+*   `attendance_logs`: Privat untuk pemilik log atau Admin.
+*   `obat`: *Read-only* publik, *Write* eksklusif Admin.
+*   `rekam_medis` & `kunjungan`: Diproteksi menggunakan validasi autentikasi ketat. Hak memodifikasi hanya untuk Dokter spesifik yang menangani kunjungan tersebut.
+*   Gambar Rekam Medis dijaga kerahasiaannya dengan **Bucket Private** dan di-akses melalui *API Proxy Signed URL* yang kadaluarsa dalam 1 jam.
