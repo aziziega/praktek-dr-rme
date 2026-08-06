@@ -382,6 +382,11 @@ export async function saveRekamMedis(input: {
     if (error) return { success: false, error: error.message }
   }
 
+  // Invalidate cache
+  revalidatePath('/dashboard/dokter/periksa/[kunjunganId]', 'page')
+  revalidatePath('/dashboard/dokter/antrian')
+  revalidatePath('/dashboard/staf/antrian')
+
   return { success: true }
 }
 
@@ -586,6 +591,12 @@ export async function selesaikanKunjungan(input: {
       console.error('[selesaikanKunjungan] Logika RPC Error:', data.error)
       return { success: false, error: data.error }
     }
+
+    // Invalidate cache
+    revalidatePath('/dashboard/dokter/periksa/[kunjunganId]', 'page')
+    revalidatePath('/dashboard/dokter/antrian')
+    revalidatePath('/dashboard/staf/antrian')
+    revalidatePath('/dashboard/admin/overview')
 
     return { success: true }
   } catch (err) {

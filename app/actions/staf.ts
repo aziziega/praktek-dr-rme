@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/lib/supabase/service-role'
 import { logActivity } from '@/lib/activity-logger'
+import { revalidatePath } from 'next/cache'
 import type { PasienRow, KunjunganInsert } from '@/types/database'
 
 // ---------------------------------------------------------------------------
@@ -120,6 +121,9 @@ export async function createPasien(input: {
     detail: { nama: data.nama, nrm: data.nrm },
   })
 
+  // Invalidate cache
+  revalidatePath('/dashboard/staf/pasien')
+
   return { success: true, data: data as PasienRow }
 }
 
@@ -154,6 +158,10 @@ export async function importPasienStaf(data: { nrm: number; nama: string; tangga
     targetId: newPasien.id,
     detail: { nrm: data.nrm, nama: data.nama },
   })
+
+  // Invalidate cache
+  revalidatePath('/dashboard/staf/pasien')
+  revalidatePath('/dashboard/staf/antrian')
 }
 
 
@@ -234,6 +242,11 @@ export async function createKunjungan(input: {
       dokter_id: input.dokter_id,
     },
   })
+
+  // Invalidate cache
+  revalidatePath('/dashboard/staf/antrian')
+  revalidatePath('/dashboard/staf/pasien')
+  revalidatePath('/dashboard/dokter/antrian')
 
   return { success: true }
 }
@@ -487,4 +500,8 @@ export async function updatePasienStaf(id: string, data: { nama: string; tanggal
     targetId: id,
     detail: { nama: data.nama },
   })
+
+  // Invalidate cache
+  revalidatePath('/dashboard/staf/pasien')
+  revalidatePath('/dashboard/staf/antrian')
 }
