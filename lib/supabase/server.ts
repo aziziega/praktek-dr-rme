@@ -10,10 +10,10 @@ export async function createClient() {
 
   // Filter out literal string replacements from Next.js bundler
   if (!url || url === 'undefined' || url === 'null' || !url.startsWith('http')) {
-    url = 'https://wgyndrneovhawabxuwfh.supabase.co'
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is not set or invalid')
   }
   if (!anonKey || anonKey === 'undefined' || anonKey === 'null') {
-    anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndneW5kcm5lb3ZoYXdhYnh1d2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MzQ4NjMsImV4cCI6MjA5NTQxMDg2M30.QoddsS0UcwAoHrMkEnwgQrhlgFXwcSQqvHXFl4fJ354'
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is not set or invalid')
   }
 
   return createServerClient<Database>(

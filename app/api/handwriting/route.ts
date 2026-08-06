@@ -17,8 +17,20 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
 
-  // 2. Generate signed URL (expires in 1 hour / 3600 seconds)
-  const { data, error } = await supabase.storage
+  // 2. Generate signed URL using admin client (bypassing Storage RLS)
+  const { createClient: createSupabaseJs } = await import('@supabase/supabase-js')
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('Missing Supabase environment variables for Admin Client')
+    return new NextResponse('Internal Server Error', { status: 500 })
+  }
+
+  const adminSupabase = createSupabaseJs(supabaseUrl, serviceRoleKey)
+
+  const { data, error } = await adminSupabase.storage
     .from('handwriting-notes')
     .createSignedUrl(path, 3600)
 

@@ -66,11 +66,12 @@ BEGIN
 
   -- 4b. Simpan / Update rekam medis
   INSERT INTO rekam_medis (
-    kunjungan_id, anamnesis, pemeriksaan_fisik, diagnosis_kode, diagnosis_nama, 
+    kunjungan_id, dokter_id, anamnesis, pemeriksaan_fisik, diagnosis_kode, diagnosis_nama, 
     terapi, catatan, anamnesis_handwriting_url, diagnosis_handwriting_url, 
     terapi_handwriting_url
   ) VALUES (
     v_kunjungan_id, 
+    v_dokter_id,
     payload->>'anamnesis', 
     payload->>'pemeriksaan_fisik', 
     payload->>'diagnosis_kode', 
@@ -82,6 +83,7 @@ BEGIN
     payload->>'terapi_handwriting_url'
   )
   ON CONFLICT (kunjungan_id) DO UPDATE SET
+    dokter_id = EXCLUDED.dokter_id,
     anamnesis = EXCLUDED.anamnesis,
     pemeriksaan_fisik = EXCLUDED.pemeriksaan_fisik,
     diagnosis_kode = EXCLUDED.diagnosis_kode,
@@ -90,8 +92,7 @@ BEGIN
     catatan = EXCLUDED.catatan,
     anamnesis_handwriting_url = EXCLUDED.anamnesis_handwriting_url,
     diagnosis_handwriting_url = EXCLUDED.diagnosis_handwriting_url,
-    terapi_handwriting_url = EXCLUDED.terapi_handwriting_url,
-    updated_at = NOW();
+    terapi_handwriting_url = EXCLUDED.terapi_handwriting_url;
 
   -- 5. Hapus resep lama dan insert resep baru
   DELETE FROM resep_obat WHERE kunjungan_id = v_kunjungan_id;
@@ -126,14 +127,14 @@ BEGIN
   LOOP
     IF v_item->>'obat_id' IS NOT NULL THEN
       UPDATE obat 
-      SET stok = stok - (v_item->>'jumlah')::int, updated_at = NOW() 
+      SET stok = stok - (v_item->>'jumlah')::int 
       WHERE id = (v_item->>'obat_id')::uuid;
     END IF;
   END LOOP;
 
   -- 8. Update status kunjungan
   UPDATE kunjungan 
-  SET status = 'selesai', jam_selesai = NOW(), updated_at = NOW() 
+  SET status = 'selesai', jam_selesai = NOW() 
   WHERE id = v_kunjungan_id;
 
   -- 9. Update attendance logs (jumlah pasien ditangani)
@@ -144,7 +145,7 @@ BEGIN
 
   IF FOUND THEN
     UPDATE attendance_logs
-    SET jumlah_pasien_ditangani = COALESCE(v_jumlah_pasien, 0) + 1, updated_at = NOW()
+    SET jumlah_pasien_ditangani = COALESCE(v_jumlah_pasien, 0) + 1
     WHERE id = v_attendance_id;
   END IF;
 
