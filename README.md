@@ -101,18 +101,6 @@ Buka peramban di [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 🔑 Akun Uji Coba Default
-
-Kredensial akun default yang siap digunakan (setelah melakukan database seeding):
-
-| Peran (Role) | Email | Password |
-| :--- | :--- | :--- |
-| **Admin** | `admin@klinik.com` | `admin123` |
-| **Dokter** | `dokter.budi@klinik.com` | `dokter123` |
-| **Staf** | `staf.nisa@klinik.com` | `staf123` |
-
----
-
 ## 🛡️ Kebijakan Keamanan (Security Audit & RLS)
 Seluruh tabel telah diaktifkan **Row Level Security (RLS)** dengan kebijakan akses level produksi:
 *   `activity_logs`: *Read-only* terbatas untuk Admin.
