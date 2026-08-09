@@ -279,17 +279,20 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
             const newRow = payload.new as any
             const oldRow = payload.old as any
 
+            const newDate = newRow?.tanggal ? String(newRow.tanggal).slice(0, 10) : ''
+            const oldDate = oldRow?.tanggal ? String(oldRow.tanggal).slice(0, 10) : ''
+
             if (payload.eventType === 'INSERT') {
               // Filter client-side: only react to rows assigned to this doctor today
-              if (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) {
+              if (newRow && newRow.dokter_id === dokterId && (newDate === selectedDate || !newRow.tanggal)) {
                 console.log('[Realtime Dokter] ✅ New patient assigned to me!')
                 // fetchAntrian will trigger setAntrian which fires the single notification sound in useEffect
                 fetchAntrian()
               }
             } else if (payload.eventType === 'UPDATE') {
               if (
-                (newRow && newRow.dokter_id === dokterId && newRow.tanggal === selectedDate) ||
-                (oldRow && oldRow.dokter_id === dokterId && oldRow.tanggal === selectedDate)
+                (newRow && newRow.dokter_id === dokterId && (newDate === selectedDate || !newRow.tanggal)) ||
+                (oldRow && oldRow.dokter_id === dokterId && (oldDate === selectedDate || !oldRow.tanggal))
               ) {
                 console.log('[Realtime Dokter] Visit updated')
                 fetchAntrian()
@@ -303,24 +306,28 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
           console.log(`[Realtime Dokter] Status: ${status}`, err ?? '')
           if (status === 'SUBSCRIBED') {
             console.log('[Realtime Dokter] ✅ Connected and listening')
-            // Clear polling fallback once realtime is confirmed working
-            if (pollInterval) {
-              clearInterval(pollInterval)
-              pollInterval = null
-            }
+            // Reduce polling interval to 30s backup while realtime is active
+            if (pollInterval) clearInterval(pollInterval)
+            pollInterval = setInterval(() => {
+              if (active) fetchAntrian()
+            }, 30000)
           }
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn('[Realtime Dokter] ⚠️ Channel error, will use polling fallback')
+            console.warn('[Realtime Dokter] ⚠️ Channel error, will use 8s polling fallback')
+            if (pollInterval) clearInterval(pollInterval)
+            pollInterval = setInterval(() => {
+              if (active) fetchAntrian()
+            }, 8000)
           }
         })
 
-      // Polling fallback: refresh every 15s in case realtime is blocked/slow
+      // Initial Polling fallback: refresh every 10s until realtime channel status is set
       pollInterval = setInterval(() => {
         if (active) {
           console.log('[Realtime Dokter] 🔄 Polling fallback refresh')
           fetchAntrian()
         }
-      }, 15000)
+      }, 10000)
     }
 
     connect()
