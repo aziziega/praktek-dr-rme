@@ -631,7 +631,7 @@ export function TabRekamMedis({
                             value={tensiSistolik}
                             onChange={(e) => handleChange(setTensiSistolik, e.target.value)}
                             disabled={readOnly}
-                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <span className="text-gray-400">/</span>
                           <Input
@@ -640,7 +640,7 @@ export function TabRekamMedis({
                             value={tensiDiastolik}
                             onChange={(e) => handleChange(setTensiDiastolik, e.target.value)}
                             disabled={readOnly}
-                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       </div>
@@ -658,7 +658,7 @@ export function TabRekamMedis({
                             value={nadi}
                             onChange={(e) => handleChange(setNadi, e.target.value)}
                             disabled={readOnly}
-                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                         <div className="space-y-1">
@@ -673,7 +673,7 @@ export function TabRekamMedis({
                             value={suhu}
                             onChange={(e) => handleChange(setSuhu, e.target.value)}
                             disabled={readOnly}
-                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500"
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       </div>

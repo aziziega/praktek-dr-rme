@@ -603,7 +603,7 @@ export function FormKunjungan({
                             value={tensiSistolik}
                             onChange={(e) => setTensiSistolik(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <span className="text-gray-400">/</span>
                           <Input
@@ -612,7 +612,7 @@ export function FormKunjungan({
                             value={tensiDiastolik}
                             onChange={(e) => setTensiDiastolik(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       </div>
@@ -630,7 +630,7 @@ export function FormKunjungan({
                             value={nadi}
                             onChange={(e) => setNadi(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                         <div className="space-y-1">
@@ -645,7 +645,7 @@ export function FormKunjungan({
                             value={suhu}
                             onChange={(e) => setSuhu(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300"
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       </div>

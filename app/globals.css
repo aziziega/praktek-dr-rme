@@ -243,10 +243,18 @@ span[role="switch"],
 body.full-canvas-mode aside {
   display: none !important;
 }
-body.full-canvas-mode main {
-  width: 100% !important;
-  max-width: 100% !important;
-}
 body.full-canvas-mode #main-scroll-container {
   padding: 1rem !important;
+}
+
+/* Hide number input spin buttons (up & down arrows) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
