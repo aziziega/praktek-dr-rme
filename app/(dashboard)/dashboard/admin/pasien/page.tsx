@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { getAdminPasien, getRiwayatKunjunganPasien, updatePasien, importPasien, deletePasien, getPatientDeletePreview } from '@/app/actions/admin'
@@ -304,8 +304,8 @@ export default function AdminPasienPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Manajemen Pasien</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Manajemen Pasien</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Cari, edit, dan lihat riwayat seluruh pasien.
           </p>
         </div>
@@ -412,8 +412,8 @@ export default function AdminPasienPage() {
       </div>
 
       {debugError && (
-        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
-          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 text-red-900 dark:text-red-300 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700 dark:text-red-300">
             <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
             Diagnostik Kesalahan (Gagal Load Data):
           </p>
@@ -423,7 +423,7 @@ export default function AdminPasienPage() {
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cari berdasarkan nama atau NRM..."
             className="pl-9"
@@ -433,7 +433,7 @@ export default function AdminPasienPage() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -467,10 +467,10 @@ export default function AdminPasienPage() {
               paginatedPasien.map((p) => (
                 <TableRow 
                   key={p.id} 
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="cursor-pointer hover:bg-muted transition-colors"
                   onClick={() => handleRowClick(p)}
                 >
-                  <TableCell className="font-medium text-blue-600">
+                  <TableCell className="font-medium text-blue-600 dark:text-blue-300">
                     {p.nrm}
                   </TableCell>
                   <TableCell className="font-semibold">{p.nama}</TableCell>
@@ -480,11 +480,11 @@ export default function AdminPasienPage() {
                   <TableCell>{p.no_hp || '-'}</TableCell>
                   <TableCell>
                     {p.alergi_obat ? (
-                      <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200">
+                      <Badge variant="destructive" className="bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 hover:bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800">
                         {p.alergi_obat}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400 text-sm">Tidak ada</span>
+                      <span className="text-muted-foreground text-sm">Tidak ada</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -500,7 +500,7 @@ export default function AdminPasienPage() {
                         variant="ghost"
                         size="icon"
                         onClick={(e) => handleDeleteClick(e, p)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 dark:text-red-300 hover:text-red-700 dark:text-red-300 hover:bg-red-50 dark:bg-red-900/20"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -521,7 +521,7 @@ export default function AdminPasienPage() {
             size="sm"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="text-gray-500 hover:text-sky-600 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
+            className="text-muted-foreground hover:text-sky-600 dark:text-sky-300 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
           >
             &lt; &nbsp; Sebelumnya
           </Button>
@@ -535,8 +535,8 @@ export default function AdminPasienPage() {
                 variant={isActive ? 'outline' : 'ghost'}
                 className={`h-9 w-9 rounded-xl font-bold transition-all ${
                   isActive
-                    ? 'border border-gray-200 bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'border border-border bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => setCurrentPage(pageNum)}
               >
@@ -550,7 +550,7 @@ export default function AdminPasienPage() {
             size="sm"
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="text-gray-500 hover:text-sky-600 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
+            className="text-muted-foreground hover:text-sky-600 dark:text-sky-300 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
           >
             Selanjutnya &nbsp; &gt;
           </Button>
@@ -561,7 +561,7 @@ export default function AdminPasienPage() {
       <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <DialogContent className="w-full sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl">
           <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="text-xl font-bold text-gray-900">Berkas Rekam Medis Elektronik</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-foreground">Berkas Rekam Medis Elektronik</DialogTitle>
             <DialogDescription>
               Lembaran riwayat lengkap rekam medis dan data kunjungan pasien.
             </DialogDescription>
@@ -570,44 +570,44 @@ export default function AdminPasienPage() {
           <div className="flex-1 overflow-y-auto -mx-6 px-6 py-4">
             {selectedPasien && (
               <div className="space-y-6">
-                {/* 📄 LEBARAN KERTAS IVORY REKAM MEDIS PASIEN */}
+                {/* ðŸ“„ LEBARAN KERTAS IVORY REKAM MEDIS PASIEN */}
                 <div className="bg-[#FAF9F6] border-2 border-[#EADFC9] shadow-xl rounded-xl p-6 md:p-8 space-y-6 relative overflow-hidden">
                   
                   {/* Kop Lembar Rekam Medis */}
                   <div className="text-center space-y-1">
-                    <h2 className="text-2xl font-extrabold tracking-widest text-gray-800 border-b border-gray-400 pb-1 inline-block">
+                    <h2 className="text-2xl font-extrabold tracking-widest text-foreground border-b border-border pb-1 inline-block">
                       REKAM MEDIS PASIEN
                     </h2>
-                    <p className="text-xs text-gray-500 font-medium">
+                    <p className="text-xs text-muted-foreground font-medium">
                       Alamat : Gupolo Rt. 04 Rw. 02, Cucukan, Prambanan, Klaten 57454
                     </p>
                     <div className="border-t-4 border-double border-gray-800 my-3" />
                   </div>
 
                   {/* Metadata Pasien dengan Garis Dotted */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-800">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-foreground">
                     {/* Kolom Kiri */}
                     <div className="space-y-3">
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Nama Pasien</span>
-                        <span className="text-gray-400">:</span>
-                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
+                        <span className="font-semibold text-muted-foreground w-28 shrink-0 pb-0.5">Nama Pasien</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 dark:text-blue-300 px-2 font-bold text-lg select-all">
                           {selectedPasien.nama}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
-                        <span className="text-gray-400">:</span>
-                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
+                        <span className="font-semibold text-muted-foreground w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 dark:text-blue-300 px-2 select-all">
                           {selectedPasien.tempat_lahir ?? 'Sragen'}, {selectedPasien.tanggal_lahir ? new Date(selectedPasien.tanggal_lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Alamat</span>
-                        <span className="text-gray-400">:</span>
-                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all leading-snug">
+                        <span className="font-semibold text-muted-foreground w-28 shrink-0 pb-0.5">Alamat</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 dark:text-blue-300 px-2 select-all leading-snug">
                           {selectedPasien.alamat ?? '-'}
                         </span>
                       </div>
@@ -616,20 +616,20 @@ export default function AdminPasienPage() {
                     {/* Kolom Kanan */}
                     <div className="space-y-3">
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. RM</span>
-                        <span className="text-gray-400">:</span>
-                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
+                        <span className="font-semibold text-muted-foreground w-24 shrink-0 pb-0.5">No. RM</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 dark:text-blue-300 px-2 font-bold text-lg select-all">
                           {selectedPasien.nrm}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Alergi Obat</span>
-                        <span className="text-gray-400">:</span>
-                        <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all ${selectedPasien.alergi_obat ? 'text-red-600 border-red-300' : 'text-blue-900'}`}>
+                        <span className="font-semibold text-muted-foreground w-24 shrink-0 pb-0.5">Alergi Obat</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all ${selectedPasien.alergi_obat ? 'text-red-600 dark:text-red-300 border-red-300 dark:border-red-800' : 'text-blue-900 dark:text-blue-300'}`}>
                           {selectedPasien.alergi_obat ? (
                             <span className="flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3 inline text-red-500" />
+                              <AlertTriangle className="h-3 w-3 inline text-red-500 dark:text-red-300" />
                               {selectedPasien.alergi_obat}
                             </span>
                           ) : '-'}
@@ -637,45 +637,45 @@ export default function AdminPasienPage() {
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. HP</span>
-                        <span className="text-gray-400">:</span>
-                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
+                        <span className="font-semibold text-muted-foreground w-24 shrink-0 pb-0.5">No. HP</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 dark:text-blue-300 px-2 select-all">
                           {selectedPasien.no_hp ?? '-'}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
-                        <span className="text-gray-400">:</span>
-                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
+                        <span className="font-semibold text-muted-foreground w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
+                        <span className="text-muted-foreground">:</span>
+                        <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 dark:text-blue-300 px-2 select-all">
                           {selectedPasien.jenis_kelamin === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* 📚 TABEL REKAM MEDIS GRID 4 KOLOM UTAMA */}
-                  <div className="border border-gray-400 bg-white rounded-lg overflow-x-auto mt-6">
-                    <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
+                  {/* ðŸ“š TABEL REKAM MEDIS GRID 4 KOLOM UTAMA */}
+                  <div className="border border-border bg-card rounded-lg overflow-x-auto mt-6">
+                    <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-foreground">
                       <thead>
-                        <tr className="bg-gray-100 border-b border-gray-400 text-center font-bold">
-                          <th className="p-3 border-r border-gray-400 w-[12%] bg-gray-100">Tanggal / Dokter / Vital</th>
-                          <th className="p-3 border-r border-gray-400 w-[43%] bg-gray-100">Anamnesa / Pemeriksaan</th>
-                          <th className="p-3 border-r border-gray-400 w-[18%] bg-gray-100">Diagnosis</th>
-                          <th className="p-3 bg-gray-100 w-[27%]">Terapi</th>
+                        <tr className="bg-muted border-b border-border text-center font-bold">
+                          <th className="p-3 border-r border-border w-[12%] bg-muted">Tanggal / Dokter / Vital</th>
+                          <th className="p-3 border-r border-border w-[43%] bg-muted">Anamnesa / Pemeriksaan</th>
+                          <th className="p-3 border-r border-border w-[18%] bg-muted">Diagnosis</th>
+                          <th className="p-3 bg-muted w-[27%]">Terapi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {loadingRiwayat ? (
                           <tr>
-                            <td colSpan={4} className="p-8 text-center text-gray-400">
+                            <td colSpan={4} className="p-8 text-center text-muted-foreground">
                               <Loader2 className="h-6 w-6 animate-spin inline mr-2" />
                               Memuat berkas rekam medis...
                             </td>
                           </tr>
                         ) : riwayat.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="p-8 text-center text-gray-400 font-medium italic">
+                            <td colSpan={4} className="p-8 text-center text-muted-foreground font-medium italic">
                               Belum ada riwayat kunjungan medis pasien pada sistem.
                             </td>
                           </tr>
@@ -683,30 +683,30 @@ export default function AdminPasienPage() {
                           paginatedRiwayat.map((row) => {
                             const rm = Array.isArray(row.rekam_medis) ? row.rekam_medis[0] : row.rekam_medis
                             return (
-                              <tr key={row.id} className="border-b border-gray-200 align-top hover:bg-gray-50/50 transition-colors">
+                              <tr key={row.id} className="border-b border-border align-top hover:bg-muted/50 transition-colors">
                                 
                                 {/* Kolom Tanggal Riwayat + Vital Signs */}
-                                <td className="p-3 border-r border-gray-200 text-gray-600 font-semibold leading-normal">
-                                  <div className="text-gray-900">{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>
-                                  <div className="text-[11px] text-sky-700 mt-1 font-sans font-medium">
+                                <td className="p-3 border-r border-border text-muted-foreground font-semibold leading-normal">
+                                  <div className="text-foreground">{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>
+                                  <div className="text-[11px] text-sky-700 dark:text-sky-300 mt-1 font-sans font-medium">
                                     Dr. {row.dokter?.nama || 'Tidak diketahui'}
                                   </div>
                                   
                                   {/* Tampilan Vital Signs Riwayat */}
                                   {(row.tensi_sistolik || row.nadi || row.suhu) && (
-                                    <div className="mt-2.5 space-y-1 pt-1.5 border-t border-dashed border-gray-200 text-[11px] font-handwritten text-blue-800 text-xs">
+                                    <div className="mt-2.5 space-y-1 pt-1.5 border-t border-dashed border-border text-[11px] font-handwritten text-blue-800 dark:text-blue-300 text-xs">
                                       {row.tensi_sistolik && (
                                         <div>BP: {row.tensi_sistolik}/{row.tensi_diastolik ?? '-'} mmHg</div>
                                       )}
                                       {row.nadi && (
                                         <div className="flex items-center gap-1">
-                                          <Activity className="h-3 w-3 text-blue-500 inline" />
+                                          <Activity className="h-3 w-3 text-blue-500 dark:text-blue-300 inline" />
                                           {row.nadi} /menit
                                         </div>
                                       )}
                                       {row.suhu && (
                                         <div className="flex items-center gap-1">
-                                          <Thermometer className="h-3 w-3 text-amber-500 inline" />
+                                          <Thermometer className="h-3 w-3 text-amber-500 dark:text-amber-300 inline" />
                                           {row.suhu} °C
                                         </div>
                                       )}
@@ -715,10 +715,10 @@ export default function AdminPasienPage() {
                                 </td>
 
                                 {/* Kolom Anamnesa / Pemeriksaan Riwayat (Gaya Tulisan Tangan Pena Biru) */}
-                                <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
+                                <td className="p-3 border-r border-border font-handwritten text-blue-900 dark:text-blue-300 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
                                   {rm?.anamnesis || (rm?.anamnesis_handwriting_url ? '' : '-')}
                                   {rm?.pemeriksaan_fisik && (
-                                    <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
+                                    <div className="mt-2 pt-2 border-t border-dashed border-border">
                                       {rm.pemeriksaan_fisik}
                                     </div>
                                   )}
@@ -728,7 +728,7 @@ export default function AdminPasienPage() {
                                         src={rm.anamnesis_handwriting_url}
                                         alt="Tulisan Tangan Anamnesis"
                                         onClick={() => setSelectedImage({ url: rm.anamnesis_handwriting_url, title: 'Tulisan Tangan Anamnesis' })}
-                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                                        className="rounded-lg border border-amber-200 dark:border-amber-800 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 dark:border-blue-800 hover:shadow-md transition-all"
                                       />
                                       <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
                                         <Eye className="h-3 w-3" /> Perbesar Canvas
@@ -738,10 +738,10 @@ export default function AdminPasienPage() {
                                 </td>
 
                                 {/* Kolom Diagnosis Riwayat */}
-                                <td className="p-3 border-r border-gray-200 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
+                                <td className="p-3 border-r border-border font-handwritten text-blue-900 dark:text-blue-300 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
                                   {rm?.diagnosis_nama || (rm?.diagnosis_handwriting_url ? '' : '-')}
                                   {rm?.diagnosis_kode && (
-                                    <span className="font-sans text-[10px] text-gray-500 block mt-1 font-normal select-all">
+                                    <span className="font-sans text-[10px] text-muted-foreground block mt-1 font-normal select-all">
                                       ({rm.diagnosis_kode})
                                     </span>
                                   )}
@@ -751,7 +751,7 @@ export default function AdminPasienPage() {
                                         src={rm.diagnosis_handwriting_url}
                                         alt="Tulisan Tangan Diagnosis"
                                         onClick={() => setSelectedImage({ url: rm.diagnosis_handwriting_url, title: 'Tulisan Tangan Diagnosis' })}
-                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                                        className="rounded-lg border border-amber-200 dark:border-amber-800 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 dark:border-blue-800 hover:shadow-md transition-all"
                                       />
                                       <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
                                         <Eye className="h-3 w-3" /> Perbesar Canvas
@@ -761,7 +761,7 @@ export default function AdminPasienPage() {
                                 </td>
 
                                 {/* Kolom Terapi Riwayat */}
-                                <td className="p-3 font-handwritten text-blue-900 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
+                                <td className="p-3 font-handwritten text-blue-900 dark:text-blue-300 text-sm whitespace-pre-wrap break-words leading-relaxed select-text">
                                   {rm?.terapi || (rm?.terapi_handwriting_url ? '' : '-')}
                                   {rm?.terapi_handwriting_url && (
                                     <div className="mt-2 group relative">
@@ -769,7 +769,7 @@ export default function AdminPasienPage() {
                                         src={rm.terapi_handwriting_url}
                                         alt="Tulisan Tangan Terapi"
                                         onClick={() => setSelectedImage({ url: rm.terapi_handwriting_url, title: 'Tulisan Tangan Terapi' })}
-                                        className="rounded-lg border border-amber-200 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 hover:shadow-md transition-all"
+                                        className="rounded-lg border border-amber-200 dark:border-amber-800 bg-[#FAF9F6] p-1.5 w-full max-h-none object-contain cursor-zoom-in hover:border-blue-400 dark:border-blue-800 hover:shadow-md transition-all"
                                       />
                                       <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-1 font-sans shadow-sm">
                                         <Eye className="h-3 w-3" /> Perbesar Canvas
@@ -779,8 +779,8 @@ export default function AdminPasienPage() {
                                   
                                   {/* Tampilan Resep Riwayat */}
                                   {row.resep_obat && row.resep_obat.length > 0 && (
-                                    <div className="mt-2.5 pt-2 border-t border-dashed border-gray-200 text-xs">
-                                      <ul className="space-y-1 list-disc list-inside text-blue-800 font-medium">
+                                    <div className="mt-2.5 pt-2 border-t border-dashed border-border text-xs">
+                                      <ul className="space-y-1 list-disc list-inside text-blue-800 dark:text-blue-300 font-medium">
                                         {row.resep_obat.map((r, idx) => (
                                           <li key={idx} className="leading-snug">
                                             {r.nama_obat} ({r.dosis}) x{r.jumlah}
@@ -806,7 +806,7 @@ export default function AdminPasienPage() {
                         size="sm"
                         onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 1))}
                         disabled={historyPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6]"
+                        className="px-4 py-2 border border-border rounded text-xs font-semibold text-gray-700 hover:bg-muted disabled:opacity-40 bg-[#FAF9F6]"
                       >
                         Sebelumnya
                       </Button>
@@ -820,7 +820,7 @@ export default function AdminPasienPage() {
                         size="sm"
                         onClick={() => setHistoryPage((prev) => Math.min(prev + 1, totalHistoryPages))}
                         disabled={historyPage === totalHistoryPages}
-                        className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6]"
+                        className="px-4 py-2 border border-border rounded text-xs font-semibold text-gray-700 hover:bg-muted disabled:opacity-40 bg-[#FAF9F6]"
                       >
                         Selanjutnya
                       </Button>
@@ -917,7 +917,7 @@ export default function AdminPasienPage() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
+            <DialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-300">
               <AlertTriangle className="h-5 w-5" />
               Hapus Pasien - Tindakan Permanen
             </DialogTitle>
@@ -930,7 +930,7 @@ export default function AdminPasienPage() {
             {patientToDelete && (
               <>
                 {/* Patient Info */}
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="bg-muted rounded-lg p-4 space-y-2">
                   <div className="text-sm">
                     <span className="font-semibold text-gray-700">NRM:</span> {patientToDelete.nrm}
                   </div>
@@ -941,15 +941,15 @@ export default function AdminPasienPage() {
 
                 {/* Summary Stats */}
                 {loadingPreview ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                    <span className="text-sm text-blue-700">Memuat detail data...</span>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-300" />
+                    <span className="text-sm text-blue-700 dark:text-blue-300">Memuat detail data...</span>
                   </div>
                 ) : deletePreview?.hasData ? (
                   <>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm font-semibold text-blue-900 mb-2">Ringkasan Data</p>
-                      <div className="text-sm text-blue-800 space-y-1">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <p className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">Ringkasan Data</p>
+                      <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                         <div>Total Kunjungan: <strong>{deletePreview.totalVisits}x</strong></div>
                         <div>Total Pendapatan: <strong>Rp {deletePreview.totalRevenue.toLocaleString('id-ID')}</strong></div>
                       </div>
@@ -957,18 +957,18 @@ export default function AdminPasienPage() {
 
                     {/* Medicines List with Stock Restoration */}
                     {deletePreview.medicines && deletePreview.medicines.length > 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p className="text-sm font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                        <p className="text-sm font-semibold text-amber-900 dark:text-amber-300 mb-2 flex items-center gap-2">
                           <Pill className="h-4 w-4" />
                           Obat yang Akan Dikembalikan ke Stok
                         </p>
-                        <ul className="text-sm text-amber-800 space-y-1">
+                        <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1">
                           {deletePreview.medicines.map((med: any, idx: number) => (
                             <li key={idx} className="flex items-start gap-2">
-                              {med.will_restore_stock && <CheckCircle className="h-3 w-3 text-green-600 mt-0.5 shrink-0" />}
+                              {med.will_restore_stock && <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-300 mt-0.5 shrink-0" />}
                               <span>
                                 <strong>{med.nama_obat}</strong>: +{med.total_jumlah}
-                                {med.will_restore_stock && <span className="text-green-700 ml-1">(stok dikembalikan)</span>}
+                                {med.will_restore_stock && <span className="text-green-700 dark:text-green-300 ml-1">(stok dikembalikan)</span>}
                               </span>
                             </li>
                           ))}
@@ -979,19 +979,19 @@ export default function AdminPasienPage() {
                 ) : null}
 
                 {/* RED WARNINGS */}
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 space-y-3">
-                  <p className="text-sm font-bold text-red-700 flex items-center gap-2">
+                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4 space-y-3">
+                  <p className="text-sm font-bold text-red-700 dark:text-red-300 flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
                     PERINGATAN: Data yang akan dihapus PERMANEN
                   </p>
-                  <ul className="text-sm text-red-600 space-y-1 ml-6 list-disc">
+                  <ul className="text-sm text-red-600 dark:text-red-300 space-y-1 ml-6 list-disc">
                     <li className="font-semibold">Semua riwayat kunjungan</li>
                     <li className="font-semibold">Semua rekam medis</li>
                     <li className="font-semibold">Semua resep obat</li>
                     <li className="font-semibold">Semua data pembayaran</li>
                   </ul>
-                  <p className="text-sm font-bold text-red-700 mt-3">
-                    ⚠️ Tindakan ini TIDAK DAPAT dibatalkan!
+                  <p className="text-sm font-bold text-red-700 dark:text-red-300 mt-3">
+                    âš ï¸ Tindakan ini TIDAK DAPAT dibatalkan!
                   </p>
                 </div>
               </>
@@ -1022,17 +1022,17 @@ export default function AdminPasienPage() {
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
         <DialogContent className="sm:max-w-[750px] p-6 rounded-2xl">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <PenTool className="h-4 w-4 text-blue-600" />
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <PenTool className="h-4 w-4 text-blue-600 dark:text-blue-300" />
               {selectedImage?.title || 'Preview Canvas Tulisan Tangan'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
+            <DialogDescription className="text-xs text-muted-foreground">
               Berkas tulisan tangan / corat-coret dokter pada rekam medis pasien.
             </DialogDescription>
           </DialogHeader>
 
           {selectedImage && (
-            <div className="my-3 flex justify-center bg-[#FAF9F6] border-2 border-amber-200/80 rounded-xl p-4 shadow-inner max-h-[70vh] overflow-auto">
+            <div className="my-3 flex justify-center bg-[#FAF9F6] border-2 border-amber-200 dark:border-amber-800/80 rounded-xl p-4 shadow-inner max-h-[70vh] overflow-auto">
               <img
                 src={selectedImage.url}
                 alt={selectedImage.title}
@@ -1045,7 +1045,7 @@ export default function AdminPasienPage() {
             <Button
               variant="outline"
               onClick={() => setSelectedImage(null)}
-              className="w-full sm:w-auto border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 bg-white"
+              className="w-full sm:w-auto border-border font-semibold text-gray-700 hover:bg-muted bg-card"
             >
               Tutup
             </Button>
@@ -1055,3 +1055,5 @@ export default function AdminPasienPage() {
     </div>
   )
 }
+
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { Calendar, Users, ShieldAlert, FileSpreadsheet, FileText, User, RefreshCw, Clock } from 'lucide-react'
@@ -367,7 +367,7 @@ export default function AttendancePage() {
         </head>
         <body>
           <div class="header-container">
-            <div class="logo">✙</div>
+            <div class="logo">âœ™</div>
             <div class="clinic-details">
               <h1 class="clinic-name">Praktek Dokter Umum Sudiman</h1>
               <p class="clinic-sub">Jl. Solo - Klaten KM 4, Klaten, Jawa Tengah | Telp: (0272) 321-456</p>
@@ -456,9 +456,9 @@ export default function AttendancePage() {
   }
 
   const roleColors: Record<string, string> = {
-    staf: 'bg-sky-100 text-sky-700 hover:bg-sky-100/80',
-    dokter: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80',
-    admin: 'bg-amber-100 text-amber-700 hover:bg-amber-100/80',
+    staf: 'bg-sky-100 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:bg-sky-900/20/80',
+    dokter: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:bg-emerald-900/20/80',
+    admin: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:bg-amber-900/20/80',
   }
 
   return (
@@ -476,19 +476,19 @@ export default function AttendancePage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Monitoring Attendance</h1>
-            <p className="text-sm text-gray-500 mt-1">Lacak kehadiran, durasi kerja, dan produktivitas staf serta dokter secara real-time.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Monitoring Attendance</h1>
+            <p className="text-sm text-muted-foreground mt-1">Lacak kehadiran, durasi kerja, dan produktivitas staf serta dokter secara real-time.</p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-center">
             <Button variant="outline" size="sm" onClick={fetchLogs} disabled={isLoading} className="h-9 gap-1.5">
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-sky-700 border-sky-200 hover:bg-sky-50">
+            <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800 hover:bg-sky-50 dark:bg-sky-900/20">
               <FileSpreadsheet className="h-4 w-4" />
               CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
+            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={isLoading || logs.length === 0} className="h-9 gap-1.5 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:bg-emerald-900/20">
               <FileText className="h-4 w-4" />
               PDF
             </Button>
@@ -496,42 +496,42 @@ export default function AttendancePage() {
         </div>
 
         {/* Filter Card */}
-        <Card className="shadow-xs border-gray-200 bg-white">
+        <Card className="shadow-xs border-border bg-card">
           <CardContent className="p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                   Tanggal Mulai
                 </label>
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
+                  className="h-10 text-foreground bg-muted/50 border-border focus:bg-card"
                 />
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                   Tanggal Selesai
                 </label>
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
+                  className="h-10 text-foreground bg-muted/50 border-border focus:bg-card"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 text-gray-400" />
+                <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
                   Filter Karyawan
                 </label>
                 <Select value={selectedUser} onValueChange={setSelectedUser}>
-                  <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
+                  <SelectTrigger className="h-10 text-foreground bg-muted/50 border-border">
                     <SelectValue placeholder="Pilih Karyawan" />
                   </SelectTrigger>
                   <SelectContent>
@@ -546,12 +546,12 @@ export default function AttendancePage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5 text-gray-400" />
+                <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
                   Filter Peran
                 </label>
                 <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
+                  <SelectTrigger className="h-10 text-foreground bg-muted/50 border-border">
                     <SelectValue placeholder="Pilih Peran" />
                   </SelectTrigger>
                   <SelectContent>
@@ -568,24 +568,24 @@ export default function AttendancePage() {
 
         {/* Section B: Rekap Bulanan Grid Card */}
         <div className="space-y-3">
-          <h2 className="text-base font-bold tracking-tight text-gray-900 flex items-center gap-2">
-            <Users className="h-4.5 w-4.5 text-sky-500" />
+          <h2 className="text-base font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Users className="h-4.5 w-4.5 text-sky-500 dark:text-sky-300" />
             Rekapitulasi Kinerja Karyawan
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {rekapList.map((rekap, i) => (
-              <Card key={i} className="shadow-xs border-gray-200 bg-white">
+              <Card key={i} className="shadow-xs border-border bg-card">
                 <CardHeader className="p-4 pb-2">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <CardTitle className="text-sm font-bold text-gray-900 truncate max-w-[180px]">
+                      <CardTitle className="text-sm font-bold text-foreground truncate max-w-[180px]">
                         {rekap.name}
                       </CardTitle>
-                      <Badge className={`mt-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${roleColors[rekap.role] || 'bg-gray-100 text-gray-600'}`}>
+                      <Badge className={`mt-1.5 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${roleColors[rekap.role] || 'bg-muted text-muted-foreground'}`}>
                         {rekap.role}
                       </Badge>
                     </div>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600 font-bold text-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-300 font-bold text-sm">
                       {rekap.totalHadir}
                     </div>
                   </div>
@@ -596,17 +596,17 @@ export default function AttendancePage() {
         </div>
 
         {/* Section A: Tabel Detail Kehadiran Harian */}
-        <Card className="shadow-xs border-gray-200 bg-white">
+        <Card className="shadow-xs border-border bg-card">
           <CardHeader className="p-4 sm:p-6 pb-2">
-            <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Clock className="h-4.5 w-4.5 text-emerald-500" />
+            <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <Clock className="h-4.5 w-4.5 text-emerald-500 dark:text-emerald-300" />
               Detail Log Kehadiran Harian
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-gray-50/50">
+                <TableHeader className="bg-muted/50">
                   <TableRow>
                     <TableHead className="w-[120px] font-bold text-gray-700 pl-4 sm:pl-6">Tanggal</TableHead>
                     <TableHead className="font-bold text-gray-700">Nama Lengkap</TableHead>
@@ -621,14 +621,14 @@ export default function AttendancePage() {
                   {logs.slice(0, 3).map((log) => {
                     const isNotLoggedOut = !log.jam_keluar
                     return (
-                      <TableRow key={log.id} className="hover:bg-gray-50/50">
-                        <TableCell className="font-medium text-gray-900 pl-4 sm:pl-6">{formatDateIndo(log.tanggal)}</TableCell>
-                        <TableCell><span className="font-semibold text-gray-900">{log.users?.nama || 'User'}</span></TableCell>
+                      <TableRow key={log.id} className="hover:bg-muted/50">
+                        <TableCell className="font-medium text-foreground pl-4 sm:pl-6">{formatDateIndo(log.tanggal)}</TableCell>
+                        <TableCell><span className="font-semibold text-foreground">{log.users?.nama || 'User'}</span></TableCell>
                         <TableCell><Badge className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full">{log.users?.role || 'staf'}</Badge></TableCell>
                         <TableCell className="font-mono text-xs">-</TableCell>
                         <TableCell className="font-mono text-xs">-</TableCell>
                         <TableCell className="font-medium">-</TableCell>
-                        <TableCell className="pr-4 sm:pr-6 text-right font-bold text-gray-900">0 Pasien</TableCell>
+                        <TableCell className="pr-4 sm:pr-6 text-right font-bold text-foreground">0 Pasien</TableCell>
                       </TableRow>
                     )
                   })}
@@ -641,23 +641,23 @@ export default function AttendancePage() {
 
       {/* Premium Coming Soon Overlay */}
       <div className="absolute inset-0 flex items-center justify-center z-10 p-4">
-        <div className="bg-white/80 backdrop-blur-md border border-gray-200/60 shadow-2xl rounded-3xl p-8 sm:p-10 text-center max-w-md space-y-6 transform hover:scale-[1.01] transition-all duration-300">
+        <div className="bg-card/80 backdrop-blur-md border border-border/60 shadow-2xl rounded-3xl p-8 sm:p-10 text-center max-w-md space-y-6 transform hover:scale-[1.01] transition-all duration-300">
           <div className="inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-rose-500 text-white shadow-xl shadow-amber-500/20 animate-pulse">
             <Clock className="h-10 w-10" />
           </div>
           <div className="space-y-3">
-            <Badge className="bg-amber-100 text-amber-800 border-none px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
+            <Badge className="bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-none px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
               Under Construction
             </Badge>
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground">
               Coming Soon!
             </h2>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Fitur **Monitoring Attendance** sedang dalam tahap pengembangan akhir. Modul ini segera hadir dengan pencatatan jam kerja realtime, kalkulasi otomatis durasi kerja, dan rekapitulasi data absensi klinis bulanan.
             </p>
           </div>
           <div className="pt-2">
-            <div className="h-2 w-32 bg-gray-100 rounded-full mx-auto overflow-hidden relative">
+            <div className="h-2 w-32 bg-muted rounded-full mx-auto overflow-hidden relative">
               <div className="absolute top-0 bottom-0 left-0 w-1/2 bg-gradient-to-r from-amber-500 to-rose-500 rounded-full animate-[shimmer_1.5s_infinite_ease-in-out]" />
             </div>
           </div>
@@ -666,3 +666,5 @@ export default function AttendancePage() {
     </div>
   )
 }
+
+

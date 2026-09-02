@@ -233,7 +233,7 @@ export function TabResepObat({
             onClick={addObatManual}
             className="flex items-center gap-1.5 h-9 text-xs font-medium transition-colors shadow-sm"
           >
-            <Plus className="h-3.5 w-3.5 mr-0.5 text-gray-500" />
+            <Plus className="h-3.5 w-3.5 mr-0.5 text-muted-foreground" />
             Tambah Obat Manual (Racikan)
           </Button>
         </div>
@@ -247,26 +247,26 @@ export function TabResepObat({
               <Pill className="h-5 w-5 text-sky-600" />
               Katalog Master Obat
             </DialogTitle>
-            <DialogDescription className="text-gray-500 text-xs mt-1">
+            <DialogDescription className="text-muted-foreground text-xs mt-1">
               Pilih obat dari master catalog untuk langsung dimasukkan ke resep pasien.
             </DialogDescription>
           </DialogHeader>
 
           {/* Search Inside Modal */}
           <div className="relative mt-4">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari berdasarkan nama atau kode obat..."
               value={modalSearchQuery}
               onChange={(e) => setModalSearchQuery(e.target.value)}
-              className="pl-10 h-10 text-sm bg-white border-gray-200 focus-visible:ring-sky-500 rounded-xl"
+              className="pl-10 h-10 text-sm bg-card border-border focus-visible:ring-sky-500 rounded-xl"
             />
           </div>
 
           {/* List Wrapper */}
           <div className="flex-1 overflow-y-auto mt-4 pr-1 space-y-2 max-h-[45vh]">
             {loadingAllObat ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin text-sky-500 mb-2" />
                 <p className="text-xs">Memuat katalog obat...</p>
               </div>
@@ -283,17 +283,17 @@ export function TabResepObat({
                     onClick={() => addObatFromMaster(obat)}
                     className={`w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
                       isOutOfStock
-                        ? 'bg-gray-50 border-gray-100 opacity-60 cursor-not-allowed'
-                        : 'bg-white border-gray-200 hover:border-sky-300 hover:shadow-xs active:scale-[0.99]'
+                        ? 'bg-muted border-border opacity-60 cursor-not-allowed'
+                        : 'bg-card border-border hover:border-sky-300 hover:shadow-xs active:scale-[0.99]'
                     }`}
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-gray-900 truncate">
+                        <span className="font-semibold text-sm text-foreground truncate">
                           {obat.nama}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Harga Jual: <span className="font-semibold text-gray-700">{formatCurrency(Number(obat.harga_jual))}</span> per {obat.satuan}
                       </p>
 
@@ -320,7 +320,7 @@ export function TabResepObat({
                 )
               })
             ) : (
-              <div className="text-center py-12 text-gray-400 border border-dashed border-gray-200 rounded-2xl bg-white/50">
+              <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-2xl bg-card/50">
                 <Pill className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                 <p className="text-sm">Tidak ada obat yang cocok.</p>
                 <p className="text-xs mt-1">Gunakan kata kunci pencarian yang lain.</p>
@@ -332,11 +332,11 @@ export function TabResepObat({
 
       {/* Resep Table */}
       {items.length > 0 ? (
-        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-xs bg-white">
+        <div className="border border-border rounded-xl overflow-hidden shadow-xs bg-card">
           <Table>
             <TableHeader>
 
-              <TableRow className="bg-gray-50/80">
+              <TableRow className="bg-muted/80">
                 <TableHead className="w-[30%]">Nama Obat</TableHead>
                 <TableHead className="w-[15%]">
                   Dosis <span className="text-red-500">*</span>
@@ -445,7 +445,7 @@ export function TabResepObat({
           </Table>
 
           {/* Total Footer */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
+          <div className="flex items-center justify-between px-4 py-3 bg-muted border-t">
             <span className="text-sm font-semibold text-gray-700">
               Total Obat
             </span>
@@ -455,7 +455,7 @@ export function TabResepObat({
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 text-sm text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+        <div className="text-center py-8 text-sm text-muted-foreground border-2 border-dashed border-border rounded-xl">
           <Pill className="h-8 w-8 mx-auto mb-2 text-gray-300" />
           <p>Belum ada resep obat.</p>
           {!readOnly && (

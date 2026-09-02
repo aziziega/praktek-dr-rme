@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
@@ -7,7 +7,7 @@ import type { UserRole } from '@/types/database'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Dashboard — RME Praktek Dr. Sudiman',
+  title: 'Dashboard â€” RME Praktek Dr. Sudiman',
   description: 'Dashboard Sistem Rekam Medis Elektronik',
 }
 
@@ -80,3 +80,4 @@ export default async function DashboardLayout({
     </AttendanceProvider>
   )
 }
+

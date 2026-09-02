@@ -419,16 +419,16 @@ export function FormKunjungan({
             size="sm"
             onClick={onBack}
             disabled={saving}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Kembali
           </Button>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               Pendaftaran Kunjungan Pasien
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {pasien.nama} · #{pasien.nrm}
             </p>
           </div>
@@ -436,7 +436,7 @@ export function FormKunjungan({
       </div>
 
       {/* 💾 Draf Auto-save Status Bar */}
-      <div className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-2.5 px-4 text-xs">
+      <div className="flex items-center justify-between bg-muted border border-border rounded-lg p-2.5 px-4 text-xs">
         <div className="flex items-center gap-2">
           {isTyping ? (
             <Badge className="bg-sky-50 text-sky-700 hover:bg-sky-50 border border-sky-200">
@@ -454,7 +454,7 @@ export function FormKunjungan({
               Draf tersimpan otomatis pukul {formatLastSaved()} WIB
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-gray-400 border-gray-200 bg-white">
+            <Badge variant="outline" className="text-muted-foreground border-border bg-card">
               Auto-save aktif (lokal browser)
             </Badge>
           )}
@@ -464,7 +464,7 @@ export function FormKunjungan({
           variant="outline"
           onClick={handleManualSave}
           disabled={savingDraft}
-          className="h-7 text-xs gap-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all bg-white shadow-xs"
+          className="h-7 text-xs gap-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all bg-card shadow-xs"
         >
           <Save className="h-3 w-3" />
           Simpan Draf Sekarang
@@ -476,7 +476,7 @@ export function FormKunjungan({
 
         {/* Kop Lembar Rekam Medis (Sesuai Foto Asli) */}
         <div className="text-center space-y-1">
-          <h2 className="text-2xl font-extrabold tracking-widest text-gray-800 border-b border-gray-400 pb-1 inline-block">
+          <h2 className="text-2xl font-extrabold tracking-widest text-gray-900 border-b border-gray-200 pb-1 inline-block">
             REKAM MEDIS PASIEN
           </h2>
           <p className="text-xs text-gray-500 font-medium">
@@ -486,28 +486,28 @@ export function FormKunjungan({
         </div>
 
         {/* Metadata Pasien dengan Garis Dotted */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-800">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-900">
           {/* Kolom Kiri */}
           <div className="space-y-3">
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Nama Pasien</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-28 shrink-0 pb-0.5">Nama Pasien</span>
+              <span className="text-gray-500">:</span>
               <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
                 {pasien.nama}
               </span>
             </div>
 
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
+              <span className="text-gray-500">:</span>
               <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
                 {pasien.tempat_lahir ?? 'Sragen'}, {formatDate(pasien.tanggal_lahir)}
               </span>
             </div>
 
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Alamat</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-28 shrink-0 pb-0.5">Alamat</span>
+              <span className="text-gray-500">:</span>
               <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all leading-snug">
                 {pasien.alamat ?? '-'}
               </span>
@@ -517,16 +517,16 @@ export function FormKunjungan({
           {/* Kolom Kanan */}
           <div className="space-y-3">
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. RM</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">No. RM</span>
+              <span className="text-gray-500">:</span>
               <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
                 {pasien.nrm}
               </span>
             </div>
 
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Alergi Obat</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">Alergi Obat</span>
+              <span className="text-gray-500">:</span>
               <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all flex items-center justify-between ${alergiObatState ? 'text-red-600 border-red-300' : 'text-blue-900'}`}>
                 <span className="flex items-center gap-1">
                   {alergiObatState ? <AlertTriangle className="h-3.5 w-3.5 text-red-500 inline" /> : null}
@@ -547,16 +547,16 @@ export function FormKunjungan({
             </div>
 
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. HP</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">No. HP</span>
+              <span className="text-gray-500">:</span>
               <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
                 {pasien.no_hp ?? '-'}
               </span>
             </div>
 
             <div className="flex items-end gap-2">
-              <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
-              <span className="text-gray-400">:</span>
+              <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
+              <span className="text-gray-500">:</span>
               <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
                 {pasien.jenis_kelamin === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'}
               </span>
@@ -565,30 +565,30 @@ export function FormKunjungan({
         </div>
 
         {/* 📚 TABEL REKAM MEDIS GRID 4 KOLOM UTAMA (Sama Persis Seperti Tampilan Dokter) */}
-        <div className="border border-gray-400 bg-white rounded-lg overflow-x-auto mt-6">
-          <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
+        <div className="border border-gray-200 bg-white rounded-lg overflow-x-auto mt-6">
+          <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-900">
             <thead>
-              <tr className="bg-gray-100 border-b border-gray-400 text-center font-bold">
-                <th className="p-3 border-r border-gray-400 w-[12%] bg-gray-100 sticky top-0 z-10 shadow-xs">Tanggal</th>
-                <th className="p-3 border-r border-gray-400 w-[43%] bg-gray-100 sticky top-0 z-10 shadow-xs">Anamnesa / Pemeriksaan</th>
-                <th className="p-3 border-r border-gray-400 w-[18%] bg-gray-100 sticky top-0 z-10 shadow-xs">Diagnosis</th>
-                <th className="p-3 bg-gray-100 w-[27%] sticky top-0 z-10 shadow-xs">Terapi</th>
+              <tr className="bg-gray-50 border-b border-gray-200 text-center font-bold">
+                <th className="p-3 border-r border-gray-200 w-[12%] bg-gray-50 sticky top-0 z-10 shadow-xs">Tanggal</th>
+                <th className="p-3 border-r border-gray-200 w-[43%] bg-gray-50 sticky top-0 z-10 shadow-xs">Anamnesa / Pemeriksaan</th>
+                <th className="p-3 border-r border-gray-200 w-[18%] bg-gray-50 sticky top-0 z-10 shadow-xs">Diagnosis</th>
+                <th className="p-3 bg-gray-50 w-[27%] sticky top-0 z-10 shadow-xs">Terapi</th>
               </tr>
             </thead>
             <tbody>
 
               {/* 🛑 BARIS UTAMA EDITABLE STAF (HARI INI) */}
               {historyPage === 1 && (
-                <tr className="border-b border-gray-300 align-top bg-amber-50/20 hover:bg-amber-50/30 transition-colors">
+                <tr className="border-b border-gray-200 align-top bg-amber-50/20 hover:bg-amber-50/30 transition-colors">
 
                   {/* 1. Tanggal + Form Vital Signs */}
-                  <td className="p-3 border-r border-gray-300 space-y-3">
+                  <td className="p-3 border-r border-gray-200 space-y-3">
                     <div className="font-bold text-gray-900 leading-snug">
                       {formatIndonesianDateTime(new Date())}
                     </div>
 
                     <div className="space-y-3 pt-2 border-t border-dashed border-gray-200">
-                      <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1">
+                      <div className="text-[10px] uppercase font-bold text-gray-500 tracking-wider flex items-center gap-1">
                         <Heart className="h-3 w-3 text-red-500 shrink-0" />
                         Tanda Vital (Edit)
                       </div>
@@ -603,16 +603,16 @@ export function FormKunjungan({
                             value={tensiSistolik}
                             onChange={(e) => setTensiSistolik(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <span className="text-gray-400">/</span>
+                          <span className="text-gray-500">/</span>
                           <Input
                             type="number"
                             placeholder="Diastolik"
                             value={tensiDiastolik}
                             onChange={(e) => setTensiDiastolik(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="h-7 text-xs w-16 p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       </div>
@@ -630,7 +630,7 @@ export function FormKunjungan({
                             value={nadi}
                             onChange={(e) => setNadi(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                         <div className="space-y-1">
@@ -645,7 +645,7 @@ export function FormKunjungan({
                             value={suhu}
                             onChange={(e) => setSuhu(e.target.value)}
                             disabled={saving}
-                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="h-7 text-xs w-full p-1 text-center font-handwritten text-blue-900 focus-visible:ring-emerald-500 border-gray-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </div>
                       </div>
@@ -653,27 +653,27 @@ export function FormKunjungan({
                   </td>
 
                   {/* 2. Anamnesa / Keluhan Utama Textarea */}
-                  <td className="p-2 border-r border-gray-300">
+                  <td className="p-2 border-r border-gray-200">
                     <Textarea
                       placeholder="Petugas Pendaftaran menulis keluhan utama pasien saat datang di sini..."
                       value={keluhanUtama}
                       onChange={(e) => setKeluhanUtama(e.target.value)}
                       disabled={saving}
                       rows={12}
-                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-400 leading-relaxed text-base shadow-none break-words"
+                      className="w-full h-full min-h-[220px] p-2 resize-y font-handwritten text-blue-900 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:font-sans placeholder:text-gray-500 leading-relaxed text-base shadow-none break-words"
                     />
                   </td>
 
                   {/* 3. Diagnosis (Read-Only diisi oleh dokter) */}
-                  <td className="p-3 border-r border-gray-300 text-center align-middle">
-                    <span className="text-xs text-gray-400 italic font-medium block p-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                  <td className="p-3 border-r border-gray-200 text-center align-middle">
+                    <span className="text-xs text-gray-500 italic font-medium block p-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
                       (Diisi oleh Dokter)
                     </span>
                   </td>
 
                   {/* 4. Terapi (Read-Only diisi oleh dokter) */}
                   <td className="p-3 text-center align-middle">
-                    <span className="text-xs text-gray-400 italic font-medium block p-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
+                    <span className="text-xs text-gray-500 italic font-medium block p-4 bg-gray-50/50 rounded-lg border border-dashed border-gray-200">
                       (Diisi oleh Dokter)
                     </span>
                   </td>
@@ -684,14 +684,14 @@ export function FormKunjungan({
               {/* 📜 RIWAYAT KUNJUNGAN SEBELUMNYA (READ-ONLY) */}
               {loadingRiwayat ? (
                 <tr>
-                  <td colSpan={4} className="p-4 text-center text-gray-400">
+                  <td colSpan={4} className="p-4 text-center text-gray-500">
                     <Loader2 className="h-4 w-4 animate-spin inline mr-2" />
                     Memuat riwayat rekam medis terdahulu...
                   </td>
                 </tr>
               ) : riwayat.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-400 font-medium italic">
+                  <td colSpan={4} className="p-8 text-center text-gray-500 font-medium italic">
                     Belum ada riwayat kunjungan medis pasien sebelumnya pada sistem.
                   </td>
                 </tr>
@@ -702,7 +702,7 @@ export function FormKunjungan({
                     <tr key={row.id} className="border-b border-gray-200 align-top opacity-85 hover:opacity-100 transition-opacity">
 
                       {/* Kolom Tanggal Riwayat + Vital Signs */}
-                      <td className="p-3 border-r border-gray-200 text-gray-600 font-semibold leading-normal">
+                      <td className="p-3 border-r border-gray-200 text-gray-500 font-semibold leading-normal">
                         <div>{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>
                         <div className="text-[11px] text-sky-700 mt-1 font-sans font-medium">
                           Dr. {row.dokter?.nama || 'Tidak diketahui'}
@@ -817,7 +817,7 @@ export function FormKunjungan({
               size="sm"
               onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 1))}
               disabled={historyPage === 1}
-              className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6] shadow-sm"
+              className="px-4 py-2 border border-border rounded text-xs font-semibold text-gray-700 hover:bg-muted disabled:opacity-40 bg-[#FAF9F6] shadow-sm"
             >
               Sebelumnya
             </Button>
@@ -831,7 +831,7 @@ export function FormKunjungan({
               size="sm"
               onClick={() => setHistoryPage((prev) => Math.min(prev + 1, totalHistoryPages))}
               disabled={historyPage === totalHistoryPages}
-              className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6] shadow-sm"
+              className="px-4 py-2 border border-border rounded text-xs font-semibold text-gray-700 hover:bg-muted disabled:opacity-40 bg-[#FAF9F6] shadow-sm"
             >
               Selanjutnya
             </Button>
@@ -849,7 +849,7 @@ export function FormKunjungan({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="dokter" className="text-xs text-gray-500 font-semibold">
+            <Label htmlFor="dokter" className="text-xs text-muted-foreground font-semibold">
               Kirim Berkas ke Dokter Pemeriksa <span className="text-red-500">*</span>
             </Label>
             {loadingDokters ? (
@@ -865,7 +865,7 @@ export function FormKunjungan({
                 onValueChange={setDokterId}
                 disabled={saving}
               >
-                <SelectTrigger id="dokter" className="border-gray-300 focus:ring-sky-500 max-w-md bg-white">
+                <SelectTrigger id="dokter" className="border-border focus:ring-sky-500 max-w-md bg-card">
                   <SelectValue placeholder="Pilih dokter pemeriksa..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -889,7 +889,7 @@ export function FormKunjungan({
               variant="outline"
               onClick={onBack}
               disabled={saving}
-              className="border-gray-300 hover:bg-gray-50 text-gray-700 bg-white"
+              className="border-border hover:bg-muted text-gray-700 bg-card"
             >
               Batal
             </Button>
@@ -969,7 +969,7 @@ export function FormKunjungan({
               <AlertTriangle className="h-5.5 w-5.5 text-amber-500 animate-bounce" />
               Peringatan Nilai Tanda Vital
             </DialogTitle>
-            <DialogDescription className="text-gray-500 text-xs leading-relaxed">
+            <DialogDescription className="text-muted-foreground text-xs leading-relaxed">
               Sistem mendeteksi beberapa nilai tanda vital berada di luar batas normal atau sangat ekstrem. Silakan tinjau kembali untuk menghindari kesalahan ketik (*typo*).
             </DialogDescription>
           </DialogHeader>
@@ -988,10 +988,10 @@ export function FormKunjungan({
                   </span>
                 )}
                 <div className="space-y-0.5">
-                  <div className="font-bold text-gray-800">
+                  <div className="font-bold text-foreground">
                     {anom.field}: <span className={anom.isExtreme ? 'text-red-600 font-extrabold select-all' : 'text-amber-700 font-extrabold select-all'}>{anom.val}</span>
                   </div>
-                  <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+                  <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
                     {anom.msg}
                   </p>
                 </div>
@@ -1003,7 +1003,7 @@ export function FormKunjungan({
             <Button
               variant="outline"
               onClick={() => setIsVitalsWarningOpen(false)}
-              className="w-full sm:w-auto border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 bg-white"
+              className="w-full sm:w-auto border-border font-semibold text-gray-700 hover:bg-muted bg-card"
             >
               Perbaiki Inputan
             </Button>
@@ -1032,11 +1032,11 @@ export function FormKunjungan({
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
         <DialogContent className="sm:max-w-[750px] p-6 rounded-2xl">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <PenTool className="h-4 w-4 text-blue-600" />
               {selectedImage?.title || 'Preview Canvas Tulisan Tangan'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
+            <DialogDescription className="text-xs text-muted-foreground">
               Berkas tulisan tangan / corat-coret dokter pada rekam medis pasien.
             </DialogDescription>
           </DialogHeader>
@@ -1055,7 +1055,7 @@ export function FormKunjungan({
             <Button
               variant="outline"
               onClick={() => setSelectedImage(null)}
-              className="w-full sm:w-auto border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 bg-white"
+              className="w-full sm:w-auto border-border font-semibold text-gray-700 hover:bg-muted bg-card"
             >
               Tutup
             </Button>

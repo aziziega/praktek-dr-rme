@@ -67,17 +67,17 @@ function MetricCard({
       </div>
 
       <div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
           {label}
         </p>
         <p className={`text-3xl font-extrabold leading-none tracking-tight ${valueColor}`}>
           {value}
         </p>
         {subtext && (
-          <p className="mt-1 text-xs text-gray-400">{subtext}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>
         )}
         {trend && (
-          <p className="mt-2 text-xs font-medium text-gray-500">{trend}</p>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">{trend}</p>
         )}
       </div>
     </div>
@@ -171,8 +171,8 @@ export function AdminDashboardClient({
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-foreground">Overview</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Ringkasan operasional klinik hari ini — data diperbarui setiap kunjungan halaman.
         </p>
       </div>
@@ -189,7 +189,7 @@ export function AdminDashboardClient({
           trend="Pasien terdaftar hari ini"
           iconBg="bg-sky-100"
           iconColor="text-sky-600"
-          cardBg="bg-white"
+          cardBg="bg-card"
           borderColor="border-sky-100"
           valueColor="text-sky-700"
         />
@@ -203,7 +203,7 @@ export function AdminDashboardClient({
           trend={`Periksa ${formatCurrency(pendapatanPeriksa)} · Obat ${formatCurrency(pendapatanObat)}`}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
-          cardBg="bg-white"
+          cardBg="bg-card"
           borderColor="border-emerald-100"
           valueColor="text-emerald-700"
         />
@@ -217,7 +217,7 @@ export function AdminDashboardClient({
           trend="Audit trail sistem"
           iconBg="bg-violet-100"
           iconColor="text-violet-600"
-          cardBg="bg-white"
+          cardBg="bg-card"
           borderColor="border-violet-100"
           valueColor="text-violet-700"
         />
@@ -231,7 +231,7 @@ export function AdminDashboardClient({
           trend={lowStockCount > 0 ? 'Stok di bawah 10 unit' : undefined}
           iconBg={lowStockCount > 0 ? 'bg-rose-100' : 'bg-emerald-100'}
           iconColor={lowStockCount > 0 ? 'text-rose-600' : 'text-emerald-600'}
-          cardBg="bg-white"
+          cardBg="bg-card"
           borderColor={lowStockCount > 0 ? 'border-rose-100' : 'border-emerald-100'}
           valueColor={lowStockCount > 0 ? 'text-rose-700' : 'text-emerald-700'}
         />
@@ -257,15 +257,15 @@ export function AdminDashboardClient({
 
       {/* Low Stock Alert */}
       {lowStockItems.length > 0 && (
-        <div className="rounded-2xl border border-rose-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-rose-200 bg-card shadow-sm">
           <div className="flex items-center justify-between border-b border-rose-100 px-5 py-4">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100">
                 <AlertTriangle className="h-4 w-4 text-rose-600" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900">Peringatan Stok Menipis</h3>
-                <p className="text-[11px] text-gray-400">Obat aktif dengan stok di bawah 10 unit</p>
+                <h3 className="text-sm font-bold text-foreground">Peringatan Stok Menipis</h3>
+                <p className="text-[11px] text-muted-foreground">Obat aktif dengan stok di bawah 10 unit</p>
               </div>
             </div>
             <Button
@@ -285,11 +285,11 @@ export function AdminDashboardClient({
             {lowStockItems.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between px-5 py-3 hover:bg-gray-50/50 transition-colors"
+                className="flex items-center justify-between px-5 py-3 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <Pill className="h-4 w-4 text-gray-400 shrink-0" />
-                  <span className="text-sm font-medium text-gray-800">{item.nama}</span>
+                  <Pill className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{item.nama}</span>
                 </div>
                 <Badge
                   variant="outline"
@@ -298,7 +298,7 @@ export function AdminDashboardClient({
                       ? 'bg-rose-50 text-rose-700 border-rose-200'
                       : item.stok <= 3
                         ? 'bg-amber-50 text-amber-700 border-amber-200'
-                        : 'bg-gray-50 text-gray-700 border-gray-200'
+                        : 'bg-muted text-gray-700 border-border'
                   }`}
                 >
                   {item.stok} {item.satuan}
@@ -310,15 +310,15 @@ export function AdminDashboardClient({
       )}
 
       {/* Recent Activity Timeline */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+      <div className="rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
               <Activity className="h-4 w-4 text-violet-600" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Aktivitas Terbaru</h3>
-              <p className="text-[11px] text-gray-400">Timeline ringkas seluruh aksi dalam sistem</p>
+              <h3 className="text-sm font-bold text-foreground">Aktivitas Terbaru</h3>
+              <p className="text-[11px] text-muted-foreground">Timeline ringkas seluruh aksi dalam sistem</p>
             </div>
           </div>
           <Button
@@ -336,33 +336,33 @@ export function AdminDashboardClient({
 
         <div className="divide-y divide-gray-50">
           {recentActivities.length === 0 ? (
-            <div className="px-5 py-8 text-center text-sm text-gray-400">
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
               Belum ada aktivitas tercatat.
             </div>
           ) : (
             recentActivities.map((activity) => (
               <div
                 key={activity.id}
-                className="flex items-start gap-3.5 px-5 py-3.5 hover:bg-gray-50/50 transition-colors"
+                className="flex items-start gap-3.5 px-5 py-3.5 hover:bg-muted/50 transition-colors"
               >
                 <div className="mt-1.5 flex flex-col items-center">
                   <div className={`h-2.5 w-2.5 rounded-full ${getActionColor(activity.aksi)} ring-4 ring-white`} />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800 leading-snug">
+                  <p className="text-sm text-foreground leading-snug">
                     <span className="font-semibold">{activity.userName}</span>
                     {' '}
-                    <span className="text-gray-500">{getActionLabel(activity.aksi)}</span>
+                    <span className="text-muted-foreground">{getActionLabel(activity.aksi)}</span>
                   </p>
                   <div className="mt-1 flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className={`text-[9px] font-bold px-1.5 py-0 rounded ${roleColors[activity.userRole] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                      className={`text-[9px] font-bold px-1.5 py-0 rounded ${roleColors[activity.userRole] ?? 'bg-muted text-muted-foreground border-border'}`}
                     >
                       {activity.userRole}
                     </Badge>
-                    <span className="text-[11px] text-gray-400">
+                    <span className="text-[11px] text-muted-foreground">
                       {formatTimeAgo(activity.created_at)}
                     </span>
                   </div>

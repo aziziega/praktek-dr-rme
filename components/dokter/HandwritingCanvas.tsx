@@ -456,7 +456,7 @@ export function HandwritingCanvas({
         style={{ minHeight: `${minHeight}px` }}
       >
         {strokes.length === 0 && !currentStroke && !readOnly && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-400/60 text-sm font-handwritten text-center px-4">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-muted-foreground/60 text-sm font-handwritten text-center px-4">
             {placeholder}
           </div>
         )}

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Calendar, User, Activity, ChevronDown, ChevronUp, RefreshCw, Layers, CheckSquare } from 'lucide-react'
@@ -180,12 +180,12 @@ export default function ActivityLogPage() {
       act.startsWith('AKTIF_') ||
       act.includes('IMPORT_')
     ) {
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
     }
     
     // Kuning
     if (act.startsWith('EDIT_')) {
-      return 'bg-amber-50 text-amber-700 border-amber-250'
+      return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-250'
     }
     
     // Merah
@@ -204,7 +204,7 @@ export default function ActivityLogPage() {
       act.startsWith('CETAK_') ||
       act.startsWith('SIMPAN_')
     ) {
-      return 'bg-sky-50 text-sky-700 border-sky-200'
+      return 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800'
     }
     
     // Abu-abu (Lainnya)
@@ -212,9 +212,9 @@ export default function ActivityLogPage() {
   }
 
   const roleColors: Record<string, string> = {
-    staf: 'bg-sky-100 text-sky-700 border-sky-200',
-    dokter: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    admin: 'bg-amber-100 text-amber-700 border-amber-200',
+    staf: 'bg-sky-100 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
+    dokter: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    admin: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
   }
 
   return (
@@ -222,11 +222,11 @@ export default function ActivityLogPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 font-sans">Activity Log</h1>
-          <p className="text-sm text-gray-500 mt-1">Audit trail komprehensif seluruh aksi, perubahan data, dan aktivitas dalam sistem.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground font-sans">Activity Log</h1>
+          <p className="text-sm text-muted-foreground mt-1">Audit trail komprehensif seluruh aksi, perubahan data, dan aktivitas dalam sistem.</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-center">
-          <Button variant="outline" size="sm" onClick={() => fetchLogs(currentPage)} disabled={isLoading} className="h-9 gap-1.5 bg-white shadow-xs">
+          <Button variant="outline" size="sm" onClick={() => fetchLogs(currentPage)} disabled={isLoading} className="h-9 gap-1.5 bg-card shadow-xs">
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
@@ -234,42 +234,42 @@ export default function ActivityLogPage() {
       </div>
 
       {/* Filter Card */}
-      <Card className="shadow-xs border-gray-200 bg-white">
+      <Card className="shadow-xs border-border bg-card">
         <CardContent className="p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 Tanggal Mulai
               </label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
+                className="h-10 text-foreground bg-muted/50 border-border focus:bg-card"
               />
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 Tanggal Selesai
               </label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="h-10 text-gray-800 bg-gray-50/50 border-gray-200 focus:bg-white"
+                className="h-10 text-foreground bg-muted/50 border-border focus:bg-card"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5 text-gray-400" />
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
                 Pelaku (User)
               </label>
               <Select value={selectedUser} onValueChange={setSelectedUser}>
-                <SelectTrigger className="h-10 text-gray-800 bg-gray-50/50 border-gray-200">
+                <SelectTrigger className="h-10 text-foreground bg-muted/50 border-border">
                   <SelectValue placeholder="Pilih User" />
                 </SelectTrigger>
                 <SelectContent>
@@ -284,13 +284,13 @@ export default function ActivityLogPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
-                <Layers className="h-3.5 w-3.5 text-gray-400" />
+              <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                 Filter Aksi ({selectedActions.length === 0 ? 'Semua' : selectedActions.length})
               </label>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full h-10 justify-between text-left text-gray-800 bg-gray-50/50 border-gray-200 font-normal hover:bg-gray-50">
+                  <Button variant="outline" className="w-full h-10 justify-between text-left text-foreground bg-muted/50 border-border font-normal hover:bg-muted">
                     <span className="truncate">
                       {selectedActions.length === 0
                         ? 'Semua Aksi'
@@ -333,20 +333,20 @@ export default function ActivityLogPage() {
       </Card>
 
       {/* Main Logs Table */}
-      <Card className="shadow-xs border-gray-200 bg-white">
-        <div className="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+      <Card className="shadow-xs border-border bg-card">
+        <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between">
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <Activity className="h-4.5 w-4.5 text-sky-500" />
+            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+              <Activity className="h-4.5 w-4.5 text-sky-500 dark:text-sky-300" />
               Catatan Aktivitas Sistem
             </h3>
-            <p className="text-xs text-gray-500">Total data cocok: <strong>{totalCount} log</strong></p>
+            <p className="text-xs text-muted-foreground">Total data cocok: <strong>{totalCount} log</strong></p>
           </div>
         </div>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50/50">
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-[45px]"></TableHead>
                   <TableHead className="w-[180px] font-bold text-gray-700">Waktu</TableHead>
@@ -360,17 +360,17 @@ export default function ActivityLogPage() {
                 {isLoading ? (
                   [1, 2, 3].map(n => (
                     <TableRow key={n}>
-                      <TableCell><div className="h-4 w-4 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-32 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-48 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-24 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell><div className="h-4 w-16 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
-                      <TableCell className="pr-4 sm:pr-6"><div className="h-4 w-28 bg-gray-100 rounded-sm animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-4 bg-muted rounded-sm animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-32 bg-muted rounded-sm animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-48 bg-muted rounded-sm animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-24 bg-muted rounded-sm animate-pulse" /></TableCell>
+                      <TableCell><div className="h-4 w-16 bg-muted rounded-sm animate-pulse" /></TableCell>
+                      <TableCell className="pr-4 sm:pr-6"><div className="h-4 w-28 bg-muted rounded-sm animate-pulse" /></TableCell>
                     </TableRow>
                   ))
                 ) : logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-gray-400 text-sm">
+                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm">
                       Tidak ada catatan aktivitas yang sesuai filter.
                     </TableCell>
                   </TableRow>
@@ -379,21 +379,21 @@ export default function ActivityLogPage() {
                     const isOpen = !!expandedRows[log.id]
                     return (
                       <React.Fragment key={log.id}>
-                        <TableRow className={`hover:bg-gray-50/50 transition-colors duration-150 ${isOpen ? 'bg-sky-50/20' : ''}`}>
+                        <TableRow className={`hover:bg-muted/50 transition-colors duration-150 ${isOpen ? 'bg-sky-50 dark:bg-sky-900/20/20' : ''}`}>
                           <TableCell className="pl-4">
-                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md text-gray-400 hover:text-gray-900" onClick={() => toggleRow(log.id)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground" onClick={() => toggleRow(log.id)}>
                               {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-gray-600 whitespace-nowrap">
+                          <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
                             {formatDateTimeIndo(log.created_at)}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-bold text-gray-900 leading-tight">
+                              <span className="font-bold text-foreground leading-tight">
                                 {log.users?.nama || 'System Trigger'}
                               </span>
-                              <span className="text-[10px] text-gray-400 font-semibold tracking-wide uppercase mt-0.5">
+                              <span className="text-[10px] text-muted-foreground font-semibold tracking-wide uppercase mt-0.5">
                                 {log.users?.role || 'system'}
                               </span>
                             </div>
@@ -406,20 +406,20 @@ export default function ActivityLogPage() {
                           <TableCell className="font-medium text-gray-700 font-mono text-xs">
                             {log.target_tabel || '-'}
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-gray-500 pr-4 sm:pr-6 whitespace-nowrap">
+                          <TableCell className="font-mono text-xs text-muted-foreground pr-4 sm:pr-6 whitespace-nowrap">
                             {log.target_id || '-'}
                           </TableCell>
                         </TableRow>
                         
                         {isOpen && (
-                          <TableRow className="bg-gray-50/40 hover:bg-gray-50/40">
-                            <TableCell colSpan={6} className="p-4 pl-12 border-t border-gray-100">
+                          <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableCell colSpan={6} className="p-4 pl-12 border-t border-border">
                               <div className="space-y-3">
-                                <h4 className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                                  <CheckSquare className="h-3.5 w-3.5 text-sky-500" />
+                                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                  <CheckSquare className="h-3.5 w-3.5 text-sky-500 dark:text-sky-300" />
                                   Rincian Modifikasi / Data Log:
                                 </h4>
-                                <div className="bg-white border border-gray-150 rounded-lg p-3 sm:p-4 shadow-2xs">
+                                <div className="bg-card border border-border rounded-lg p-3 sm:p-4 shadow-2xs">
                                   {log.detail && typeof log.detail === 'object' ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       {Object.entries(log.detail).map(([key, val]: [string, any]) => {
@@ -431,8 +431,8 @@ export default function ActivityLogPage() {
                                         }
                                         return (
                                           <div key={key} className="space-y-1">
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{key.replace('_', ' ')}</span>
-                                            <p className="text-xs text-gray-800 bg-gray-50 border border-gray-100 rounded px-2.5 py-1.5 font-mono break-all leading-normal">
+                                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{key.replace('_', ' ')}</span>
+                                            <p className="text-xs text-foreground bg-muted border border-border rounded px-2.5 py-1.5 font-mono break-all leading-normal">
                                               {displayValue}
                                             </p>
                                           </div>
@@ -440,15 +440,15 @@ export default function ActivityLogPage() {
                                       })}
                                     </div>
                                   ) : (
-                                    <pre className="text-xs font-mono text-gray-700 bg-gray-50 p-2.5 rounded overflow-x-auto">
+                                    <pre className="text-xs font-mono text-gray-700 bg-muted p-2.5 rounded overflow-x-auto">
                                       {JSON.stringify(log.detail, null, 2)}
                                     </pre>
                                   )}
                                 </div>
                                 {log.ip_address && (
-                                  <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                                  <div className="text-[10px] text-muted-foreground flex items-center gap-1">
                                     <span>Alamat IP Pelaksana:</span>
-                                    <strong className="font-mono text-gray-600">{log.ip_address}</strong>
+                                    <strong className="font-mono text-muted-foreground">{log.ip_address}</strong>
                                   </div>
                                 )}
                               </div>
@@ -465,8 +465,8 @@ export default function ActivityLogPage() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="p-4 sm:p-6 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <span className="text-xs text-gray-500 text-center sm:text-left">
+            <div className="p-4 sm:p-6 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <span className="text-xs text-muted-foreground text-center sm:text-left">
                 Menampilkan halaman <strong>{currentPage}</strong> dari <strong>{totalPages}</strong> (Total <strong>{totalCount}</strong> catatan)
               </span>
               <Pagination className="w-auto mx-0">
@@ -527,3 +527,5 @@ export default function ActivityLogPage() {
     </div>
   )
 }
+
+

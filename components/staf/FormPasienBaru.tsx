@@ -169,7 +169,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
   }
 
   return (
-    <Card className="border-gray-100 shadow-lg">
+    <Card className="border-border shadow-lg">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -178,7 +178,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
             </div>
             <div>
               <CardTitle className="text-lg">Pendaftaran Pasien Baru</CardTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Isi data pasien yang diperlukan
               </p>
             </div>
@@ -209,7 +209,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
                 <Hash className="absolute left-3 top-3 h-4 w-4 text-sky-500" />
                 <Input
                   id="nrm"
-                  className="pl-9 font-mono font-semibold text-sky-700 bg-sky-50/10 focus-visible:bg-white"
+                  className="pl-9 font-mono font-semibold text-sky-700 bg-sky-50/10 focus-visible:bg-card"
                   placeholder="Nomor Rekam Medis"
                   value={nrm}
                   onChange={(e) => {
@@ -222,7 +222,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
                   disabled={saving}
                   required
                 />
-                <span className="absolute right-3 top-3.5 text-[10px] text-gray-400">
+                <span className="absolute right-3 top-3.5 text-[10px] text-muted-foreground">
                   (otomatis diisi, bisa diubah)
                 </span>
               </div>
@@ -277,7 +277,7 @@ export function FormPasienBaru({ onSuccess, onCancel }: FormPasienBaruProps) {
                 value={displayDob}
                 onChange={handleDobChange}
                 maxLength={10}
-                className="bg-white border-gray-300 focus-visible:ring-sky-500 font-mono tracking-wide"
+                className="bg-card border-border focus-visible:ring-sky-500 font-mono tracking-wide"
                 disabled={saving}
                 required
               />

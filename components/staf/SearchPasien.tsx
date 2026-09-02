@@ -99,7 +99,7 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
     <div className="space-y-4">
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
         <Input
           ref={inputRef}
           id="search-pasien"
@@ -107,7 +107,7 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
           placeholder="Cari pasien: ketik NRM, nama, atau tanggal lahir (YYYY-MM-DD)..."
           value={query}
           onChange={(e) => handleChange(e.target.value)}
-          className="pl-10 h-12 text-base bg-white border-gray-200 focus:border-sky-400 focus:ring-sky-400/20"
+          className="pl-10 h-12 text-base bg-card border-border focus:border-sky-400 focus:ring-sky-400/20"
         />
       </div>
 
@@ -115,7 +115,7 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="border-gray-100">
+            <Card key={i} className="border-border">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   <Skeleton className="h-10 w-10 rounded-full" />
@@ -133,14 +133,14 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
       {/* Results */}
       {!loading && hasSearched && results.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {results.length} pasien ditemukan
           </p>
           <div className="space-y-2">
             {results.map((pasien) => (
               <Card
                 key={pasien.id}
-                className="border-gray-100 hover:border-sky-200 hover:shadow-md cursor-pointer transition-all duration-150 group"
+                className="border-border hover:border-sky-200 hover:shadow-md cursor-pointer transition-all duration-150 group"
                 onClick={() => onSelectPasien(pasien)}
               >
                 <CardContent className="p-4">
@@ -150,15 +150,15 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
                         {pasien.nama.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">
+                        <p className="font-semibold text-foreground truncate">
                           {pasien.nama}
                         </p>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <Hash className="h-3 w-3" />
                             {pasien.nrm}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             {formatDate(pasien.tanggal_lahir)}
                           </span>
@@ -193,7 +193,7 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
 
       {/* Not Found — Register New */}
       {!loading && hasSearched && results.length === 0 && (
-        <Card className="border-dashed border-gray-200 bg-gray-50/50">
+        <Card className="border-dashed border-border bg-muted/50">
           <CardContent className="flex flex-col items-center py-8 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 mb-3">
               <Search className="h-6 w-6 text-amber-500" />
@@ -201,7 +201,7 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
             <h3 className="text-sm font-semibold text-gray-700">
               Pasien tidak ditemukan
             </h3>
-            <p className="text-xs text-gray-500 mt-1 mb-4">
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
               Tidak ada pasien yang cocok dengan pencarian &ldquo;{query}&rdquo;
             </p>
             <Button
@@ -225,7 +225,7 @@ export function SearchPasien({ onSelectPasien, onNewPasien }: SearchPasienProps)
             <h3 className="text-sm font-semibold text-gray-700">
               Cari Pasien
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Ketik minimal 2 karakter untuk mulai mencari
             </p>
           </div>

@@ -237,8 +237,8 @@ export function AntrianTable() {
       value: total,
       icon: ListOrdered,
       color: 'text-gray-700',
-      bg: 'bg-gray-50',
-      border: 'border-gray-200',
+      bg: 'bg-muted',
+      border: 'border-border',
     },
     {
       label: 'Menunggu',
@@ -269,12 +269,12 @@ export function AntrianTable() {
   return (
     <div className="space-y-5">
       {/* Date Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm mb-1">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-card p-3.5 rounded-2xl border border-border/80 shadow-sm mb-1">
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Antrian Pendaftaran
           </p>
-          <h2 className="text-lg font-bold text-gray-800 mt-0.5">
+          <h2 className="text-lg font-bold text-foreground mt-0.5">
             {selectedDate === todayStr
               ? 'Hari Ini'
               : new Date(selectedDate).toLocaleDateString('id-ID', {
@@ -287,12 +287,12 @@ export function AntrianTable() {
         </div>
 
         {/* Navigation Controls in Soft Light Theme */}
-        <div className="flex items-center gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-150">
+        <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-xl border border-border">
           {/* Prev Button */}
           <button
             type="button"
             onClick={handlePrevDay}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm active:scale-95"
             title="Hari Sebelumnya"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -302,7 +302,7 @@ export function AntrianTable() {
           <button
             type="button"
             onClick={handleToday}
-            className="px-3 h-9 flex items-center justify-center font-semibold text-gray-600 hover:text-gray-900 transition-colors text-xs active:scale-95"
+            className="px-3 h-9 flex items-center justify-center font-semibold text-muted-foreground hover:text-foreground transition-colors text-xs active:scale-95"
           >
             Hari Ini
           </button>
@@ -311,14 +311,14 @@ export function AntrianTable() {
           <button
             type="button"
             onClick={handleNextDay}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm active:scale-95"
             title="Hari Berikutnya"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
 
           {/* Date Pill Capsule (Soft light palette) */}
-          <div className="h-9 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-2 select-none relative hover:bg-gray-50 transition-colors ml-1">
+          <div className="h-9 px-3 rounded-lg bg-card border border-border shadow-sm flex items-center gap-2 select-none relative hover:bg-muted transition-colors ml-1">
             {/* Left Soft Red Calendar Icon */}
             <Calendar className="h-4 w-4 text-rose-500 shrink-0" />
             
@@ -353,7 +353,7 @@ export function AntrianTable() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-gray-500">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {card.label}
                     </p>
                     {loading ? (
@@ -374,7 +374,7 @@ export function AntrianTable() {
 
       {/* Filter */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Filter className="h-4 w-4" />
           <span>Filter Dokter:</span>
         </div>
@@ -392,14 +392,14 @@ export function AntrianTable() {
           </SelectContent>
         </Select>
         <div className="ml-auto">
-          <Badge variant="outline" className="text-xs text-gray-500">
+          <Badge variant="outline" className="text-xs text-muted-foreground">
             Auto-refresh aktif
           </Badge>
         </div>
       </div>
 
       {/* Table */}
-      <Card className="border-gray-100 shadow-sm">
+      <Card className="border-border shadow-sm">
         <CardContent className="p-0">
           {loading ? (
             <div className="p-6 space-y-4">
@@ -416,20 +416,20 @@ export function AntrianTable() {
             </div>
           ) : antrian.length === 0 ? (
             <div className="flex flex-col items-center py-16 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-50 mb-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted mb-3">
                 <Users className="h-7 w-7 text-gray-300" />
               </div>
               <h3 className="text-sm font-semibold text-gray-700">
                 Belum ada antrian hari ini
               </h3>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Kunjungan yang didaftarkan akan muncul di sini.
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50/80">
+                <TableRow className="bg-muted/80">
                   <TableHead className="w-[60px] text-center">No</TableHead>
                   <TableHead>Nama Pasien</TableHead>
                   <TableHead className="hidden sm:table-cell">NRM</TableHead>
@@ -444,27 +444,27 @@ export function AntrianTable() {
                   const StatusIcon = statusCfg.icon
                   return (
                     <TableRow key={item.id} className="group">
-                      <TableCell className="text-center font-semibold text-gray-500">
+                      <TableCell className="text-center font-semibold text-muted-foreground">
                         {item.no_urut}
                       </TableCell>
                       <TableCell>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-foreground">
                           {item.pasien_nama}
                         </p>
                         {/* Mobile-only: show NRM under name */}
-                        <p className="text-xs text-gray-400 sm:hidden">
+                        <p className="text-xs text-muted-foreground sm:hidden">
                           {item.pasien_nrm}
                         </p>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <span className="text-xs font-mono text-gray-500">
+                        <span className="text-xs font-mono text-muted-foreground">
                           {item.pasien_nrm}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-gray-600">
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                         {item.dokter_nama}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-sm text-gray-500">
+                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
                         {formatTime(item.jam_daftar)}
                       </TableCell>
                       <TableCell className="text-center">

@@ -20,7 +20,7 @@ export function HandwritingToggle({
   hasHandwriting = false,
 }: HandwritingToggleProps) {
   return (
-    <div className="inline-flex items-center p-0.5 bg-gray-200/80 rounded-lg border border-gray-300/60 shadow-xs">
+    <div className="inline-flex items-center p-0.5 bg-gray-200/80 rounded-lg border border-border/60 shadow-xs">
       <Button
         type="button"
         size="sm"
@@ -29,8 +29,8 @@ export function HandwritingToggle({
         onClick={() => onChange('text')}
         className={`h-6 px-2 text-[11px] font-medium rounded-md gap-1 transition-all ${
           mode === 'text'
-            ? 'bg-white text-blue-900 shadow-xs font-semibold'
-            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+            ? 'bg-card text-blue-900 shadow-xs font-semibold'
+            : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
         }`}
       >
         <Keyboard className="h-3 w-3" />
@@ -45,7 +45,7 @@ export function HandwritingToggle({
         className={`h-6 px-2 text-[11px] font-medium rounded-md gap-1 transition-all relative ${
           mode === 'handwriting'
             ? 'bg-blue-600 text-white shadow-xs font-semibold'
-            : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+            : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
         }`}
       >
         <PenTool className="h-3 w-3" />

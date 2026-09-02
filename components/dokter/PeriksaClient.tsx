@@ -88,10 +88,10 @@ export function PeriksaClient({
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-gray-900">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               Pemeriksaan Pasien
             </h1>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {pasien.nama} · #{pasien.nrm}
             </p>
           </div>
@@ -105,7 +105,7 @@ export function PeriksaClient({
             className={`gap-1.5 text-xs font-semibold shadow-xs transition-all ${
               isFullMode
                 ? "bg-sky-600 hover:bg-sky-700 text-white"
-                : "border-sky-200 text-sky-700 hover:bg-sky-50 bg-white"
+                : "border-sky-200 text-sky-700 hover:bg-sky-50 bg-card"
             }`}
           >
             {isFullMode ? (
@@ -131,7 +131,7 @@ export function PeriksaClient({
       </div>
 
       {/* Full-width Layout (Sidebar Deleted for a Cleaner, Non-Redundant Aesthetic) */}
-      <Card className="shadow-lg border-gray-100">
+      <Card className="shadow-lg border-border">
         <CardContent className="p-4 md:p-6">
           <Tabs defaultValue="rekam-medis">
             <TabsList className="grid w-full grid-cols-3 mb-6">

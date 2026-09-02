@@ -1,9 +1,9 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { AdminDashboardClient } from '@/components/dashboard/admin/AdminDashboardClient'
 
 export const metadata: Metadata = {
-  title: 'Overview — Dashboard Admin | RME Dr. Sudiman',
+  title: 'Overview â€” Dashboard Admin | RME Dr. Sudiman',
   description: 'Ringkasan operasional klinik hari ini untuk admin.',
 }
 
@@ -101,3 +101,5 @@ export default async function AdminDashboardPage() {
     />
   )
 }
+
+

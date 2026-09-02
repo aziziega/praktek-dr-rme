@@ -35,13 +35,13 @@ function LiveClock() {
       <div className="flex items-center justify-between">
         {/* Date & Time */}
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Waktu Lokal
           </p>
-          <p className="text-lg font-bold font-mono text-gray-800 leading-tight">
+          <p className="text-lg font-bold font-mono text-foreground leading-tight">
             {time ? formatTime(time) : '--:--:--'}
           </p>
-          <p className="text-[10px] text-gray-400">
+          <p className="text-[10px] text-muted-foreground">
             {time ? formatDate(time) : 'Memuat...'}
           </p>
         </div>
@@ -72,10 +72,10 @@ export function SidebarHeader() {
           <Stethoscope className="h-5 w-5 text-white" />
         </div>
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-bold text-gray-900 leading-tight">
+          <h2 className="truncate text-sm font-bold text-foreground leading-tight">
             Dr. Sudiman
           </h2>
-          <p className="text-[11px] text-gray-400">Rekam Medis Elektronik</p>
+          <p className="text-[11px] text-muted-foreground">Rekam Medis Elektronik</p>
         </div>
       </div>
 

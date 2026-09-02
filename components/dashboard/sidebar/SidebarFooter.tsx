@@ -38,7 +38,7 @@ export function SidebarFooter({ userName, userRole }: SidebarFooterProps) {
 
   return (
     <>
-      <div className="border-t border-gray-100 p-4 space-y-3">
+      <div className="border-t border-border p-4 space-y-3">
         {/* User Profile */}
         <div className="flex items-center gap-3">
           {/* Avatar */}
@@ -47,7 +47,7 @@ export function SidebarFooter({ userName, userRole }: SidebarFooterProps) {
           </div>
           {/* Name + Role Badge */}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-gray-900 leading-tight">
+            <p className="truncate text-sm font-semibold text-foreground leading-tight">
               {userName}
             </p>
             <Badge
@@ -62,7 +62,7 @@ export function SidebarFooter({ userName, userRole }: SidebarFooterProps) {
         {/* Logout Button */}
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 text-gray-500 hover:text-red-600 hover:bg-red-50"
+          className="w-full justify-start gap-2 text-muted-foreground hover:text-red-600 hover:bg-red-50"
           onClick={() => setIsDialogOpen(true)}
         >
           <LogOut className="h-4 w-4" />
@@ -87,7 +87,7 @@ export function SidebarFooter({ userName, userRole }: SidebarFooterProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Anda akan dikembalikan ke halaman login dan perlu masuk kembali
               untuk mengakses dashboard.
             </p>

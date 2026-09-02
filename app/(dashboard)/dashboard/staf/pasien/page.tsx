@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { getStafPasien, getRiwayatKunjunganPasienStaf, updatePasienStaf, importPasienStaf } from '@/app/actions/staf'
@@ -243,8 +243,8 @@ export default function StafPasienPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Manajemen Pasien</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Manajemen Pasien</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Cari, edit, dan lihat riwayat pasien yang terdaftar.
           </p>
         </div>
@@ -351,8 +351,8 @@ export default function StafPasienPage() {
       </div>
 
       {debugError && (
-        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
-          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 text-red-900 dark:text-red-300 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700 dark:text-red-300">
             <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
             Diagnostik Kesalahan (Gagal Load Data):
           </p>
@@ -362,7 +362,7 @@ export default function StafPasienPage() {
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Cari berdasarkan nama atau NRM..."
             className="pl-9"
@@ -372,7 +372,7 @@ export default function StafPasienPage() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -406,10 +406,10 @@ export default function StafPasienPage() {
               paginatedPasien.map((p) => (
                 <TableRow 
                   key={p.id} 
-                  className="cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="cursor-pointer hover:bg-muted transition-colors"
                   onClick={() => handleRowClick(p)}
                 >
-                  <TableCell className="font-medium text-blue-600">
+                  <TableCell className="font-medium text-blue-600 dark:text-blue-300">
                     {p.nrm}
                   </TableCell>
                   <TableCell className="font-semibold">{p.nama}</TableCell>
@@ -419,11 +419,11 @@ export default function StafPasienPage() {
                   <TableCell>{p.no_hp || '-'}</TableCell>
                   <TableCell>
                     {p.alergi_obat ? (
-                      <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200">
+                      <Badge variant="destructive" className="bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 hover:bg-red-100 dark:bg-red-900/20 border-red-200 dark:border-red-800">
                         {p.alergi_obat}
                       </Badge>
                     ) : (
-                      <span className="text-gray-400 text-sm">Tidak ada</span>
+                      <span className="text-muted-foreground text-sm">Tidak ada</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -450,7 +450,7 @@ export default function StafPasienPage() {
             size="sm"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="text-gray-500 hover:text-sky-600 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
+            className="text-muted-foreground hover:text-sky-600 dark:text-sky-300 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
           >
             &lt; &nbsp; Sebelumnya
           </Button>
@@ -464,8 +464,8 @@ export default function StafPasienPage() {
                 variant={isActive ? 'outline' : 'ghost'}
                 className={`h-9 w-9 rounded-xl font-bold transition-all ${
                   isActive
-                    ? 'border border-gray-200 bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'border border-border bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => setCurrentPage(pageNum)}
               >
@@ -479,7 +479,7 @@ export default function StafPasienPage() {
             size="sm"
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="text-gray-500 hover:text-sky-600 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
+            className="text-muted-foreground hover:text-sky-600 dark:text-sky-300 font-semibold flex items-center gap-1 cursor-pointer disabled:opacity-40"
           >
             Selanjutnya &nbsp; &gt;
           </Button>
@@ -490,7 +490,7 @@ export default function StafPasienPage() {
       <Dialog open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <DialogContent className="w-full sm:max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-4 sm:p-6 rounded-2xl">
           <DialogHeader className="pb-4 border-b">
-            <DialogTitle className="text-xl font-bold text-gray-900">Berkas Rekam Medis Elektronik</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-foreground">Berkas Rekam Medis Elektronik</DialogTitle>
             <DialogDescription>
               Lembaran riwayat lengkap rekam medis dan data kunjungan pasien.
             </DialogDescription>
@@ -504,7 +504,7 @@ export default function StafPasienPage() {
                   
                   {/* Kop Lembar Rekam Medis */}
                   <div className="text-center space-y-1">
-                    <h2 className="text-2xl font-extrabold tracking-widest text-gray-800 border-b border-gray-400 pb-1 inline-block">
+                    <h2 className="text-2xl font-extrabold tracking-widest text-gray-900 border-b border-gray-200 pb-1 inline-block">
                       REKAM MEDIS PASIEN
                     </h2>
                     <p className="text-xs text-gray-500 font-medium">
@@ -514,28 +514,28 @@ export default function StafPasienPage() {
                   </div>
 
                   {/* Metadata Pasien dengan Garis Dotted */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-800">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs md:text-sm text-gray-900">
                     {/* Kolom Kiri */}
                     <div className="space-y-3">
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Nama Pasien</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-28 shrink-0 pb-0.5">Nama Pasien</span>
+                        <span className="text-gray-500">:</span>
                         <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
                           {selectedPasien.nama}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-28 shrink-0 pb-0.5">Tempat/Tgl Lahir</span>
+                        <span className="text-gray-500">:</span>
                         <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
                           {selectedPasien.tempat_lahir ?? 'Sragen'}, {selectedPasien.tanggal_lahir ? new Date(selectedPasien.tanggal_lahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-28 shrink-0 pb-0.5">Alamat</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-28 shrink-0 pb-0.5">Alamat</span>
+                        <span className="text-gray-500">:</span>
                         <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all leading-snug">
                           {selectedPasien.alamat ?? '-'}
                         </span>
@@ -545,16 +545,16 @@ export default function StafPasienPage() {
                     {/* Kolom Kanan */}
                     <div className="space-y-3">
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. RM</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">No. RM</span>
+                        <span className="text-gray-500">:</span>
                         <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 font-bold text-lg select-all">
                           {selectedPasien.nrm}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Alergi Obat</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">Alergi Obat</span>
+                        <span className="text-gray-500">:</span>
                         <span className={`grow border-b border-dotted border-gray-500 font-handwritten px-2 font-semibold select-all ${selectedPasien.alergi_obat ? 'text-red-600 border-red-300' : 'text-blue-900'}`}>
                           {selectedPasien.alergi_obat ? (
                             <span className="flex items-center gap-1">
@@ -566,16 +566,16 @@ export default function StafPasienPage() {
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">No. HP</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">No. HP</span>
+                        <span className="text-gray-500">:</span>
                         <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
                           {selectedPasien.no_hp ?? '-'}
                         </span>
                       </div>
 
                       <div className="flex items-end gap-2">
-                        <span className="font-semibold text-gray-600 w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
-                        <span className="text-gray-400">:</span>
+                        <span className="font-semibold text-gray-500 w-24 shrink-0 pb-0.5">Jenis Kelamin</span>
+                        <span className="text-gray-500">:</span>
                         <span className="grow border-b border-dotted border-gray-500 font-handwritten text-blue-900 px-2 select-all">
                           {selectedPasien.jenis_kelamin === 'L' ? 'Laki-laki (L)' : 'Perempuan (P)'}
                         </span>
@@ -584,27 +584,27 @@ export default function StafPasienPage() {
                   </div>
 
                   {/* Tabel Rekam Medis Grid 4 Kolom Utama */}
-                  <div className="border border-gray-400 bg-white rounded-lg overflow-x-auto mt-6">
-                    <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-800">
+                  <div className="border border-gray-200 bg-white rounded-lg overflow-x-auto mt-6">
+                    <table className="w-full min-w-[750px] sm:min-w-0 table-fixed border-collapse text-xs md:text-sm text-gray-900">
                       <thead>
-                        <tr className="bg-gray-100 border-b border-gray-400 text-center font-bold">
-                          <th className="p-3 border-r border-gray-400 w-[12%] bg-gray-100">Tanggal / Dokter / Vital</th>
-                          <th className="p-3 border-r border-gray-400 w-[43%] bg-gray-100">Anamnesa / Pemeriksaan</th>
-                          <th className="p-3 border-r border-gray-400 w-[18%] bg-gray-100">Diagnosis</th>
-                          <th className="p-3 bg-gray-100 w-[27%]">Terapi</th>
+                        <tr className="bg-gray-50 border-b border-gray-200 text-center font-bold">
+                          <th className="p-3 border-r border-gray-200 w-[12%] bg-gray-50">Tanggal / Dokter / Vital</th>
+                          <th className="p-3 border-r border-gray-200 w-[43%] bg-gray-50">Anamnesa / Pemeriksaan</th>
+                          <th className="p-3 border-r border-gray-200 w-[18%] bg-gray-50">Diagnosis</th>
+                          <th className="p-3 bg-gray-50 w-[27%]">Terapi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {loadingRiwayat ? (
                           <tr>
-                            <td colSpan={4} className="p-8 text-center text-gray-400">
+                            <td colSpan={4} className="p-8 text-center text-gray-500">
                               <Loader2 className="h-6 w-6 animate-spin inline mr-2" />
                               Memuat berkas rekam medis...
                             </td>
                           </tr>
                         ) : riwayat.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="p-8 text-center text-gray-400 font-medium italic">
+                            <td colSpan={4} className="p-8 text-center text-gray-500 font-medium italic">
                               Belum ada riwayat kunjungan medis pasien pada sistem.
                             </td>
                           </tr>
@@ -615,7 +615,7 @@ export default function StafPasienPage() {
                               <tr key={row.id} className="border-b border-gray-200 align-top hover:bg-gray-50/50 transition-colors">
                                 
                                 {/* Kolom Tanggal Riwayat + Vital Signs */}
-                                <td className="p-3 border-r border-gray-200 text-gray-600 font-semibold leading-normal">
+                                <td className="p-3 border-r border-gray-200 text-gray-500 font-semibold leading-normal">
                                   <div className="text-gray-900">{formatIndonesianDateTime(row.jam_daftar || row.tanggal)}</div>
                                   <div className="text-[11px] text-sky-700 mt-1 font-sans font-medium">
                                     Dr. {row.dokter?.nama || 'Tidak diketahui'}
@@ -735,7 +735,7 @@ export default function StafPasienPage() {
                         size="sm"
                         onClick={() => setHistoryPage((prev) => Math.max(prev - 1, 1))}
                         disabled={historyPage === 1}
-                        className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6]"
+                        className="px-4 py-2 border border-border rounded text-xs font-semibold text-gray-700 hover:bg-muted disabled:opacity-40 bg-[#FAF9F6]"
                       >
                         Sebelumnya
                       </Button>
@@ -749,7 +749,7 @@ export default function StafPasienPage() {
                         size="sm"
                         onClick={() => setHistoryPage((prev) => Math.min(prev + 1, totalHistoryPages))}
                         disabled={historyPage === totalHistoryPages}
-                        className="px-4 py-2 border border-gray-300 rounded text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 bg-[#FAF9F6]"
+                        className="px-4 py-2 border border-border rounded text-xs font-semibold text-gray-700 hover:bg-muted disabled:opacity-40 bg-[#FAF9F6]"
                       >
                         Selanjutnya
                       </Button>
@@ -846,17 +846,17 @@ export default function StafPasienPage() {
       <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
         <DialogContent className="sm:max-w-[750px] p-6 rounded-2xl">
           <DialogHeader className="space-y-1">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <PenTool className="h-4 w-4 text-blue-600" />
+            <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+              <PenTool className="h-4 w-4 text-blue-600 dark:text-blue-300" />
               {selectedImage?.title || 'Preview Canvas Tulisan Tangan'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
+            <DialogDescription className="text-xs text-muted-foreground">
               Berkas tulisan tangan / corat-coret dokter pada rekam medis pasien.
             </DialogDescription>
           </DialogHeader>
 
           {selectedImage && (
-            <div className="my-3 flex justify-center bg-[#FAF9F6] border-2 border-amber-200/80 rounded-xl p-4 shadow-inner max-h-[70vh] overflow-auto">
+            <div className="my-3 flex justify-center bg-[#FAF9F6] border-2 border-amber-200 dark:border-amber-800/80 rounded-xl p-4 shadow-inner max-h-[70vh] overflow-auto">
               <img
                 src={selectedImage.url}
                 alt={selectedImage.title}
@@ -869,7 +869,7 @@ export default function StafPasienPage() {
             <Button
               variant="outline"
               onClick={() => setSelectedImage(null)}
-              className="w-full sm:w-auto border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 bg-white"
+              className="w-full sm:w-auto border-border font-semibold text-gray-700 hover:bg-muted bg-card"
             >
               Tutup
             </Button>
@@ -879,3 +879,4 @@ export default function StafPasienPage() {
     </div>
   )
 }
+

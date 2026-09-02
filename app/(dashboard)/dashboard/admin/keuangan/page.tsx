@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
@@ -135,13 +135,13 @@ interface ChartData {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs space-y-1.5">
-      <p className="font-bold text-gray-800">{label}</p>
+    <div className="bg-card border border-border rounded-xl shadow-lg p-3 text-xs space-y-1.5">
+      <p className="font-bold text-foreground">{label}</p>
       {payload.map((entry: any) => (
         <div key={entry.name} className="flex items-center gap-2">
           <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-          <span className="text-gray-500">{entry.name}:</span>
-          <span className="font-semibold text-gray-800">{formatRupiah(entry.value)}</span>
+          <span className="text-muted-foreground">{entry.name}:</span>
+          <span className="font-semibold text-foreground">{formatRupiah(entry.value)}</span>
         </div>
       ))}
     </div>
@@ -293,7 +293,7 @@ export default function KeuanganPage() {
       const totalPeriksa = rangeData.reduce((s: number, r: any) => s + Number(r.tarif_periksa), 0)
       const totalObat = rangeData.reduce((s: number, r: any) => s + Number(r.total_obat), 0)
       const summaryRows = [
-        { Keterangan: 'Periode', Nilai: `${formatDateToDDMMYYYY(dari)} — ${formatDateToDDMMYYYY(sampai)}` },
+        { Keterangan: 'Periode', Nilai: `${formatDateToDDMMYYYY(dari)} â€” ${formatDateToDDMMYYYY(sampai)}` },
         { Keterangan: 'Total Pendapatan', Nilai: formatRupiah(totalPendapatan) },
         { Keterangan: 'Jasa Periksa', Nilai: formatRupiah(totalPeriksa) },
         { Keterangan: 'Omset Obat', Nilai: formatRupiah(totalObat) },
@@ -355,7 +355,7 @@ export default function KeuanganPage() {
       doc.text('Laporan Pendapatan Keuangan', 14, 15)
       doc.setFontSize(10)
       doc.text(`Periode: ${formatDateToDDMMYYYY(dari)} s.d. ${formatDateToDDMMYYYY(sampai)}`, 14, 22)
-      doc.text('Praktek Dr. Umum Sudiman — Gupolo, Prambanan, Klaten', 14, 27)
+      doc.text('Praktek Dr. Umum Sudiman â€” Gupolo, Prambanan, Klaten', 14, 27)
 
       // Tabel ringkasan
       autoTable(doc, {
@@ -410,8 +410,8 @@ export default function KeuanganPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Laporan Keuangan</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Laporan Keuangan</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Rekap pendapatan, grafik tren, dan rincian transaksi klinik.
           </p>
         </div>
@@ -421,9 +421,9 @@ export default function KeuanganPage() {
             size="sm"
             onClick={() => openExportModal('xlsx')}
             disabled={exporting !== null}
-            className="gap-1.5 bg-white shadow-xs"
+            className="gap-1.5 bg-card shadow-xs"
           >
-            {exporting === 'xlsx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
+            {exporting === 'xlsx' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />}
             Export Excel
           </Button>
           <Button
@@ -431,7 +431,7 @@ export default function KeuanganPage() {
             size="sm"
             onClick={() => openExportModal('pdf')}
             disabled={exporting !== null}
-            className="gap-1.5 bg-white shadow-xs"
+            className="gap-1.5 bg-card shadow-xs"
           >
             {exporting === 'pdf' ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4 text-rose-600" />}
             Export PDF
@@ -444,7 +444,7 @@ export default function KeuanganPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loadingSummary ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="shadow-xs border-gray-200 bg-white">
+            <Card key={i} className="shadow-xs border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-8 w-8 rounded-lg" />
@@ -457,47 +457,47 @@ export default function KeuanganPage() {
           ))
         ) : (
           <>
-            <Card className="shadow-xs border-gray-200 bg-white">
+            <Card className="shadow-xs border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-bold text-gray-600 uppercase">Total Pendapatan</CardTitle>
-                <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center"><DollarSign className="h-4 w-4" /></div>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Total Pendapatan</CardTitle>
+                <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300 flex items-center justify-center"><DollarSign className="h-4 w-4" /></div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-extrabold text-gray-900">{formatRupiah(summary?.totalPendapatan ?? 0)}</div>
-                <p className="text-[10px] text-gray-400 mt-1">{summary?.jumlahTransaksi ?? 0} transaksi lunas</p>
+                <div className="text-2xl font-extrabold text-foreground">{formatRupiah(summary?.totalPendapatan ?? 0)}</div>
+                <p className="text-[10px] text-muted-foreground mt-1">{summary?.jumlahTransaksi ?? 0} transaksi lunas</p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-xs border-gray-200 bg-white">
+            <Card className="shadow-xs border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-bold text-gray-600 uppercase">Jasa Periksa</CardTitle>
-                <div className="h-8 w-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center"><User className="h-4 w-4" /></div>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Jasa Periksa</CardTitle>
+                <div className="h-8 w-8 rounded-lg bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-300 flex items-center justify-center"><User className="h-4 w-4" /></div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-extrabold text-gray-900">{formatRupiah(summary?.totalPeriksa ?? 0)}</div>
-                <p className="text-[10px] text-gray-400 mt-1">{periksaPersen}% dari total pendapatan</p>
+                <div className="text-2xl font-extrabold text-foreground">{formatRupiah(summary?.totalPeriksa ?? 0)}</div>
+                <p className="text-[10px] text-muted-foreground mt-1">{periksaPersen}% dari total pendapatan</p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-xs border-gray-200 bg-white">
+            <Card className="shadow-xs border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-bold text-gray-600 uppercase">Omset Obat</CardTitle>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Omset Obat</CardTitle>
                 <div className="h-8 w-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center"><TrendingUp className="h-4 w-4" /></div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-extrabold text-gray-900">{formatRupiah(summary?.totalObat ?? 0)}</div>
-                <p className="text-[10px] text-gray-400 mt-1">{obatPersen}% dari total pendapatan</p>
+                <div className="text-2xl font-extrabold text-foreground">{formatRupiah(summary?.totalObat ?? 0)}</div>
+                <p className="text-[10px] text-muted-foreground mt-1">{obatPersen}% dari total pendapatan</p>
               </CardContent>
             </Card>
 
-            <Card className="shadow-xs border-gray-200 bg-white">
+            <Card className="shadow-xs border-border bg-card">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs font-bold text-gray-600 uppercase">Jumlah Transaksi</CardTitle>
-                <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center"><Receipt className="h-4 w-4" /></div>
+                <CardTitle className="text-xs font-bold text-muted-foreground uppercase">Jumlah Transaksi</CardTitle>
+                <div className="h-8 w-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-300 flex items-center justify-center"><Receipt className="h-4 w-4" /></div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-extrabold text-gray-900">{summary?.jumlahTransaksi ?? 0}</div>
-                <p className="text-[10px] text-gray-400 mt-1">Bulan {BULAN_LABELS[selectBulan - 1]} {selectTahun}</p>
+                <div className="text-2xl font-extrabold text-foreground">{summary?.jumlahTransaksi ?? 0}</div>
+                <p className="text-[10px] text-muted-foreground mt-1">Bulan {BULAN_LABELS[selectBulan - 1]} {selectTahun}</p>
               </CardContent>
             </Card>
           </>
@@ -505,18 +505,18 @@ export default function KeuanganPage() {
       </div>
 
       {/* Chart Section */}
-      <Card className="shadow-xs border-gray-200 bg-white">
+      <Card className="shadow-xs border-border bg-card">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
-              <Coins className="h-5 w-5 text-emerald-500" />
-              <CardTitle className="text-sm font-bold text-gray-900">
+              <Coins className="h-5 w-5 text-emerald-500 dark:text-emerald-300" />
+              <CardTitle className="text-sm font-bold text-foreground">
                 Tren Pendapatan Tahun {chartTahun}
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <Select value={String(chartTahun)} onValueChange={(v) => setChartTahun(Number(v))}>
-                <SelectTrigger className="w-[90px] h-8 text-xs bg-white shadow-xs">
+                <SelectTrigger className="w-[90px] h-8 text-xs bg-card shadow-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -525,13 +525,13 @@ export default function KeuanganPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+              <div className="flex rounded-lg border border-border overflow-hidden">
                 <button
                   onClick={() => setChartType('bar')}
                   className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium transition-colors ${
                     chartType === 'bar'
-                      ? 'bg-sky-50 text-sky-700'
-                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                      ? 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300'
+                      : 'bg-card text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <BarChart3 className="h-3.5 w-3.5" />
@@ -539,10 +539,10 @@ export default function KeuanganPage() {
                 </button>
                 <button
                   onClick={() => setChartType('line')}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border-l border-gray-200 transition-colors ${
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border-l border-border transition-colors ${
                     chartType === 'line'
-                      ? 'bg-sky-50 text-sky-700'
-                      : 'bg-white text-gray-500 hover:bg-gray-50'
+                      ? 'bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300'
+                      : 'bg-card text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   <LineChartIcon className="h-3.5 w-3.5" />
@@ -589,16 +589,16 @@ export default function KeuanganPage() {
       </Card>
 
       {/* Detail Table */}
-      <Card className="shadow-xs border-gray-200 bg-white">
+      <Card className="shadow-xs border-border bg-card">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-sky-500" />
+              <Receipt className="h-5 w-5 text-sky-500 dark:text-sky-300" />
               <div>
-                <CardTitle className="text-sm font-bold text-gray-900">
+                <CardTitle className="text-sm font-bold text-foreground">
                   Rincian Transaksi
                 </CardTitle>
-                <p className="text-xs text-gray-400 mt-0.5">{detail.length} transaksi tercatat</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{detail.length} transaksi tercatat</p>
               </div>
             </div>
 
@@ -609,7 +609,7 @@ export default function KeuanganPage() {
                 variant="outline"
                 size="icon"
                 onClick={handlePrevDay}
-                className="h-8 w-8 bg-white border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg shrink-0"
+                className="h-8 w-8 bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -619,7 +619,7 @@ export default function KeuanganPage() {
                 variant="outline"
                 size="sm"
                 onClick={handleGoToToday}
-                className="h-8 px-3 bg-white border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg font-bold text-xs"
+                className="h-8 px-3 bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg font-bold text-xs"
               >
                 Hari Ini
               </Button>
@@ -629,7 +629,7 @@ export default function KeuanganPage() {
                 variant="outline"
                 size="icon"
                 onClick={handleNextDay}
-                className="h-8 w-8 bg-white border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg shrink-0"
+                className="h-8 w-8 bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg shrink-0"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -651,11 +651,11 @@ export default function KeuanganPage() {
                   variant="outline"
                   size="sm"
                   type="button"
-                  className="h-8 px-3 bg-white border-gray-200 text-gray-700 rounded-full font-bold flex items-center gap-2 hover:bg-gray-50 shadow-2xs"
+                  className="h-8 px-3 bg-card border-border text-gray-700 rounded-full font-bold flex items-center gap-2 hover:bg-muted shadow-2xs"
                 >
-                  <Calendar className="h-3.5 w-3.5 text-red-500 shrink-0 fill-red-500/10" />
+                  <Calendar className="h-3.5 w-3.5 text-red-500 dark:text-red-300 shrink-0 fill-red-500/10" />
                   <span className="font-mono text-xs tracking-wide">{formatDateToDDMMYYYY(tanggal)}</span>
-                  <Calendar className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 </Button>
               </div>
             </div>
@@ -664,7 +664,7 @@ export default function KeuanganPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-50/50">
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-[40px]" />
                   <TableHead className="font-bold text-gray-700 w-[170px]">Tanggal</TableHead>
@@ -692,7 +692,7 @@ export default function KeuanganPage() {
                   ))
                 ) : detail.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-gray-400 text-sm">
+                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground text-sm">
                       Tidak ada transaksi pada periode ini.
                     </TableCell>
                   </TableRow>
@@ -702,32 +702,32 @@ export default function KeuanganPage() {
                     const resep = item.kunjungan?.resep_obat ?? []
                     return (
                       <React.Fragment key={item.id}>
-                        <TableRow className={`hover:bg-gray-50/50 transition-colors ${isOpen ? 'bg-sky-50/20' : ''}`}>
+                        <TableRow className={`hover:bg-muted/50 transition-colors ${isOpen ? 'bg-sky-50 dark:bg-sky-900/20/20' : ''}`}>
                           <TableCell className="pl-4">
                             {resep.length > 0 && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 rounded-md text-gray-400 hover:text-gray-900"
+                                className="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
                                 onClick={() => toggleRow(item.id)}
                               >
                                 {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                               </Button>
                             )}
                           </TableCell>
-                          <TableCell className="font-mono text-xs text-gray-600 whitespace-nowrap">
+                          <TableCell className="font-mono text-xs text-muted-foreground whitespace-nowrap">
                             {formatDateTimeIndo(item.created_at)}
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-gray-900 text-sm">{item.kunjungan?.pasien?.nama ?? '-'}</span>
-                              <span className="text-[10px] text-gray-400 font-mono">#{item.kunjungan?.pasien?.nrm ?? '-'}</span>
+                              <span className="font-semibold text-foreground text-sm">{item.kunjungan?.pasien?.nama ?? '-'}</span>
+                              <span className="text-[10px] text-muted-foreground font-mono">#{item.kunjungan?.pasien?.nrm ?? '-'}</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-gray-700">{item.dokter?.nama ?? '-'}</TableCell>
                           <TableCell className="text-right font-mono text-sm text-gray-700">{formatRupiah(Number(item.tarif_periksa))}</TableCell>
                           <TableCell className="text-right font-mono text-sm text-gray-700">{formatRupiah(Number(item.total_obat))}</TableCell>
-                          <TableCell className="text-right font-mono text-sm font-bold text-gray-900">{formatRupiah(Number(item.total_bayar))}</TableCell>
+                          <TableCell className="text-right font-mono text-sm font-bold text-foreground">{formatRupiah(Number(item.total_bayar))}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="text-[10px] font-bold uppercase">
                               {item.metode_bayar}
@@ -736,17 +736,17 @@ export default function KeuanganPage() {
                         </TableRow>
 
                         {isOpen && resep.length > 0 && (
-                          <TableRow className="bg-gray-50/40 hover:bg-gray-50/40">
-                            <TableCell colSpan={8} className="p-4 pl-12 border-t border-gray-100">
+                          <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableCell colSpan={8} className="p-4 pl-12 border-t border-border">
                               <div className="space-y-2">
                                 <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
                                   <Pill className="h-3.5 w-3.5 text-violet-500" />
                                   Detail Resep Obat ({resep.length} item)
                                 </h4>
-                                <div className="bg-white border border-gray-150 rounded-lg overflow-hidden shadow-2xs">
+                                <div className="bg-card border border-border rounded-lg overflow-hidden shadow-2xs">
                                   <table className="w-full text-xs">
                                     <thead>
-                                      <tr className="bg-gray-50 text-gray-500 font-semibold">
+                                      <tr className="bg-muted text-muted-foreground font-semibold">
                                         <th className="text-left px-3 py-2">Nama Obat</th>
                                         <th className="text-left px-3 py-2">Dosis</th>
                                         <th className="text-right px-3 py-2">Jumlah</th>
@@ -757,11 +757,11 @@ export default function KeuanganPage() {
                                     <tbody>
                                       {resep.map((r: any, idx: number) => (
                                         <tr key={idx} className="border-t border-gray-50">
-                                          <td className="px-3 py-2 font-medium text-gray-800">{r.nama_obat}</td>
-                                          <td className="px-3 py-2 text-gray-600">{r.dosis}</td>
+                                          <td className="px-3 py-2 font-medium text-foreground">{r.nama_obat}</td>
+                                          <td className="px-3 py-2 text-muted-foreground">{r.dosis}</td>
                                           <td className="px-3 py-2 text-right font-mono text-gray-700">{r.jumlah}</td>
                                           <td className="px-3 py-2 text-right font-mono text-gray-700">{formatRupiah(Number(r.harga_satuan))}</td>
-                                          <td className="px-3 py-2 text-right font-mono font-semibold text-gray-900">{formatRupiah(Number(r.subtotal))}</td>
+                                          <td className="px-3 py-2 text-right font-mono font-semibold text-foreground">{formatRupiah(Number(r.subtotal))}</td>
                                         </tr>
                                       ))}
                                     </tbody>
@@ -769,8 +769,8 @@ export default function KeuanganPage() {
                                 </div>
                               </div>
                               {item.catatan && (
-                                <p className="mt-2 text-[11px] text-gray-400">
-                                  Catatan: <span className="text-gray-600">{item.catatan}</span>
+                                <p className="mt-2 text-[11px] text-muted-foreground">
+                                  Catatan: <span className="text-muted-foreground">{item.catatan}</span>
                                 </p>
                               )}
                             </TableCell>
@@ -786,17 +786,17 @@ export default function KeuanganPage() {
         </CardContent>
       </Card>
 
-      {/* ── Export Modal ── */}
+      {/* â”€â”€ Export Modal â”€â”€ */}
       <Dialog open={exportModalType !== null} onOpenChange={(open) => { if (!open) setExportModalType(null) }}>
-        <DialogContent className="sm:max-w-md bg-white">
+        <DialogContent className="sm:max-w-md bg-card">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               {exportModalType === 'xlsx'
-                ? <><FileSpreadsheet className="h-5 w-5 text-emerald-600" /> Export Excel (.xlsx)</>
+                ? <><FileSpreadsheet className="h-5 w-5 text-emerald-600 dark:text-emerald-300" /> Export Excel (.xlsx)</>
                 : <><FileText className="h-5 w-5 text-rose-600" /> Export PDF</>
               }
             </DialogTitle>
-            <DialogDescription className="text-sm text-gray-500">
+            <DialogDescription className="text-sm text-muted-foreground">
               Pilih rentang tanggal laporan keuangan yang ingin di-export.
             </DialogDescription>
           </DialogHeader>
@@ -814,7 +814,7 @@ export default function KeuanganPage() {
                     setExportDariTanggal(e.target.value)
                     setExportError(null)
                   }}
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 dark:border-sky-800 transition"
                 />
               </div>
               <div className="space-y-1.5">
@@ -827,20 +827,20 @@ export default function KeuanganPage() {
                     setExportSampaiTanggal(e.target.value)
                     setExportError(null)
                   }}
-                  className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 transition"
+                  className="w-full h-10 px-3 rounded-lg border border-border bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-400 dark:border-sky-800 transition"
                 />
               </div>
             </div>
 
             {/* Error message */}
             {exportError && (
-              <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                ⚠ {exportError}
+              <p className="text-xs text-red-500 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg px-3 py-2">
+                âš  {exportError}
               </p>
             )}
 
             {/* Info note */}
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {exportModalType === 'xlsx'
                 ? 'File Excel akan memiliki 2 sheet: "Ringkasan" berisi total, dan "Rincian Transaksi" berisi data per-baris.'
                 : 'File PDF akan memuat ringkasan keuangan dan tabel rincian transaksi yang rapi untuk dicetak.'
@@ -852,7 +852,7 @@ export default function KeuanganPage() {
             <Button
               variant="outline"
               onClick={() => setExportModalType(null)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50"
+              className="border-border text-muted-foreground hover:bg-muted"
             >
               Batal
             </Button>
@@ -880,3 +880,5 @@ export default function KeuanganPage() {
     </div>
   )
 }
+
+

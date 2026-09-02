@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { getAdminUsers, createUser, updateUser, toggleUserStatus, changeUserPassword } from '@/app/actions/admin'
@@ -196,8 +196,8 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Manajemen User</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Manajemen User</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola staf, dokter, dan admin sistem.
           </p>
         </div>
@@ -277,8 +277,8 @@ export default function AdminUsersPage() {
       </div>
 
       {debugError && (
-        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
-          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 text-red-900 dark:text-red-300 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700 dark:text-red-300">
             <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
             Diagnostik Kesalahan (Gagal Load Data):
           </p>
@@ -302,7 +302,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -375,7 +375,7 @@ export default function AdminUsersPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                        className="text-amber-600 dark:text-amber-300 hover:text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:bg-amber-900/20"
                         onClick={() => {
                           setPasswordForm({ id: user.id, email: user.email, nama: user.nama, password: '', showPassword: true })
                           setIsPasswordOpen(true)
@@ -473,7 +473,7 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>Ganti Password User</DialogTitle>
             <DialogDescription>
-              Ubah password untuk user <strong className="text-gray-900">{passwordForm.nama}</strong> ({passwordForm.email}).
+              Ubah password untuk user <strong className="text-foreground">{passwordForm.nama}</strong> ({passwordForm.email}).
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-4">
@@ -492,7 +492,7 @@ export default function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setPasswordForm({ ...passwordForm, showPassword: !passwordForm.showPassword })}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                 >
                   {passwordForm.showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -513,3 +513,5 @@ export default function AdminUsersPage() {
     </div>
   )
 }
+
+

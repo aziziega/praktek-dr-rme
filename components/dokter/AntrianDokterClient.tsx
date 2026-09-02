@@ -460,16 +460,16 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
       {!hasInteracted && (
         <div 
           onClick={handleInteraction}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/70 backdrop-blur-sm cursor-pointer transition-all duration-500 animate-in fade-in"
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-card/70 backdrop-blur-sm cursor-pointer transition-all duration-500 animate-in fade-in"
         >
-          <div className="flex flex-col items-center p-8 bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-sm w-[90%] text-center transform transition-transform hover:scale-105 active:scale-95">
+          <div className="flex flex-col items-center p-8 bg-card/90 rounded-3xl shadow-2xl border border-border max-w-sm w-[90%] text-center transform transition-transform hover:scale-105 active:scale-95">
             <div className="w-16 h-16 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-sm ring-4 ring-sky-50">
               <MousePointerClick className="w-8 h-8" />
             </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">
+            <h2 className="text-xl font-bold text-foreground mb-2">
               Tap untuk Melanjutkan
             </h2>
-            <p className="text-sm text-gray-500 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Interaksi diperlukan untuk mengaktifkan 
               <strong className="text-sky-600 font-semibold px-1">Suara</strong> dan
               <strong className="text-sky-600 font-semibold px-1">Notifikasi</strong>
@@ -480,7 +480,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
       )}
       
       {isNavigating && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/85 backdrop-blur-md transition-all duration-300">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-card/85 backdrop-blur-md transition-all duration-300">
           <div className="flex flex-col items-center space-y-4">
             <div className="relative w-16 h-16">
               <div className="absolute inset-0 rounded-full border-4 border-sky-100 animate-pulse"></div>
@@ -498,12 +498,12 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
         </div>
       )}
       {/* Date Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm mb-1">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-card p-3.5 rounded-2xl border border-border/80 shadow-sm mb-1">
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Antrian Dokter
           </p>
-          <h2 className="text-lg font-bold text-gray-800 mt-0.5">
+          <h2 className="text-lg font-bold text-foreground mt-0.5">
             {selectedDate === todayStr
               ? 'Hari Ini'
               : new Date(selectedDate).toLocaleDateString('id-ID', {
@@ -516,12 +516,12 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
         </div>
 
         {/* Navigation Controls in Soft Light Theme */}
-        <div className="flex items-center gap-1.5 bg-gray-50 p-1.5 rounded-xl border border-gray-150">
+        <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-xl border border-border">
           {/* Prev Button */}
           <button
             type="button"
             onClick={handlePrevDay}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm active:scale-95"
             title="Hari Sebelumnya"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -531,7 +531,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
           <button
             type="button"
             onClick={handleToday}
-            className="px-3 h-9 flex items-center justify-center font-semibold text-gray-600 hover:text-gray-900 transition-colors text-xs active:scale-95"
+            className="px-3 h-9 flex items-center justify-center font-semibold text-muted-foreground hover:text-foreground transition-colors text-xs active:scale-95"
           >
             Hari Ini
           </button>
@@ -540,14 +540,14 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
           <button
             type="button"
             onClick={handleNextDay}
-            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-lg bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm active:scale-95"
             title="Hari Berikutnya"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
 
           {/* Date Pill Capsule (Soft light palette) */}
-          <div className="h-9 px-3 rounded-lg bg-white border border-gray-200 shadow-sm flex items-center gap-2 select-none relative hover:bg-gray-50 transition-colors ml-1">
+          <div className="h-9 px-3 rounded-lg bg-card border border-border shadow-sm flex items-center gap-2 select-none relative hover:bg-muted transition-colors ml-1">
             {/* Left Soft Red Calendar Icon */}
             <Calendar className="h-4 w-4 text-rose-500 shrink-0" />
             
@@ -578,8 +578,8 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
             value: total,
             icon: Users,
             color: 'text-gray-700',
-            bg: 'bg-gray-50',
-            border: 'border-gray-200',
+            bg: 'bg-muted',
+            border: 'border-border',
           },
           {
             label: 'Menunggu',
@@ -612,7 +612,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-gray-500">{card.label}</p>
+                    <p className="text-xs font-medium text-muted-foreground">{card.label}</p>
                     <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
                   </div>
                   <Icon className={`h-8 w-8 ${card.color} opacity-30`} />
@@ -625,9 +625,9 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
 
       {/* Patient Cards */}
       {antrian.length === 0 ? (
-        <Card className="border-dashed border-gray-200 bg-gray-50/50">
+        <Card className="border-dashed border-border bg-muted/50">
           <CardContent className="flex flex-col items-center py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 mb-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted mb-3">
               <Users className="h-7 w-7 text-gray-300" />
             </div>
             <h3 className="text-sm font-semibold text-gray-700">
@@ -635,7 +635,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
                 ? 'Belum ada antrian hari ini'
                 : `Belum ada antrian untuk tanggal ${formatDateDisplay(selectedDate)}`}
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {selectedDate === todayStr
                 ? 'Pasien yang di-assign ke Anda akan muncul di sini secara realtime.'
                 : 'Tidak ada riwayat kunjungan pasien yang di-assign ke Anda pada tanggal ini.'}
@@ -673,13 +673,13 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-foreground">
                             {item.pasien_nama}
                           </p>
-                          <span className="text-xs font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                          <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             #{item.pasien_nrm}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-muted-foreground">
                             {calculateAge(item.pasien_tanggal_lahir)} ·{' '}
                             {item.pasien_jenis_kelamin === 'L' ? 'L' : 'P'}
                           </span>
@@ -702,7 +702,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
                         )}
 
                         {/* Vital Signs & Keluhan */}
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {formatTime(item.jam_daftar)}
@@ -727,7 +727,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
                           )}
                         </div>
                         {item.keluhan_utama && (
-                          <p className="mt-1.5 text-xs text-gray-600 italic line-clamp-2">
+                          <p className="mt-1.5 text-xs text-muted-foreground italic line-clamp-2">
                             &ldquo;{item.keluhan_utama}&rdquo;
                           </p>
                         )}
@@ -766,7 +766,7 @@ export function AntrianDokterClient({ dokterId }: AntrianDokterClientProps) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="text-gray-400"
+                          className="text-muted-foreground"
                           onClick={() => handleLihat(item.id)}
                         >
                           <Eye className="h-4 w-4 mr-1.5" />

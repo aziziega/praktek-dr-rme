@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { getAdminObat, createObat, updateObat, addObatStock, toggleObatStatus, deleteObat } from '@/app/actions/admin'
@@ -199,8 +199,8 @@ export default function AdminObatPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Stok Obat</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Stok Obat</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Kelola daftar obat, ketersediaan stok, dan harga jual.
           </p>
         </div>
@@ -275,8 +275,8 @@ export default function AdminObatPage() {
       </div>
 
       {debugError && (
-        <div className="bg-red-50 border-2 border-red-500 text-red-900 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
-          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700">
+        <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-800 text-red-900 dark:text-red-300 p-4 rounded-xl font-mono text-xs whitespace-pre-wrap shadow-md mb-4">
+          <p className="font-bold text-sm mb-2 flex items-center gap-2 text-red-700 dark:text-red-300">
             <span className="animate-ping h-2.5 w-2.5 rounded-full bg-red-600"></span>
             Diagnostik Kesalahan (Gagal Load Data):
           </p>
@@ -301,13 +301,13 @@ export default function AdminObatPage() {
               <SelectItem value="all">Semua Status</SelectItem>
               <SelectItem value="aktif">Aktif</SelectItem>
               <SelectItem value="nonaktif">Nonaktif</SelectItem>
-              <SelectItem value="menipis">Stok Menipis (≤ 10)</SelectItem>
+              <SelectItem value="menipis">Stok Menipis (â‰¤ 10)</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -398,7 +398,7 @@ export default function AdminObatPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 dark:text-red-300 hover:text-red-700 dark:text-red-300 hover:bg-red-50 dark:bg-red-900/20"
                         onClick={() => {
                           setDeleteTarget({ id: item.id, nama: item.nama })
                           setIsDeleteOpen(true)
@@ -471,7 +471,7 @@ export default function AdminObatPage() {
           <DialogHeader>
             <DialogTitle>Tambah Stok Barang Masuk</DialogTitle>
             <DialogDescription>
-              Obat: <strong className="text-gray-900">{stockForm.nama}</strong> <br/>
+              Obat: <strong className="text-foreground">{stockForm.nama}</strong> <br/>
               Stok saat ini: {stockForm.stokSaatIni}
             </DialogDescription>
           </DialogHeader>
@@ -500,14 +500,14 @@ export default function AdminObatPage() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
-              <Trash2 className="h-6 w-6 text-red-600" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+              <Trash2 className="h-6 w-6 text-red-600 dark:text-red-300" />
             </div>
-            <DialogTitle className="text-center text-lg font-semibold text-gray-900">
+            <DialogTitle className="text-center text-lg font-semibold text-foreground">
               Hapus Master Obat
             </DialogTitle>
-            <DialogDescription className="text-center text-sm text-gray-500 pt-2">
-              Apakah Anda yakin ingin menghapus obat <strong className="text-gray-900">"{deleteTarget?.nama}"</strong>? <br />
+            <DialogDescription className="text-center text-sm text-muted-foreground pt-2">
+              Apakah Anda yakin ingin menghapus obat <strong className="text-foreground">"{deleteTarget?.nama}"</strong>? <br />
               Tindakan ini tidak dapat dibatalkan dan obat akan dihapus permanen dari sistem.
             </DialogDescription>
           </DialogHeader>
@@ -548,3 +548,5 @@ export default function AdminObatPage() {
     </div>
   )
 }
+
+

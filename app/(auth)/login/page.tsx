@@ -81,12 +81,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="w-full max-w-md space-y-6 relative z-10">
       {/* Tombol Kembali ke Landing Page */}
       <div className="flex justify-start">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium group"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
           Kembali ke Beranda
@@ -95,19 +95,19 @@ export default function LoginPage() {
 
       {/* Header / Branding */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-emerald-500 shadow-lg shadow-sky-500/25">
-          <Stethoscope className="w-8 h-8 text-white" />
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-emerald-500 shadow-lg shadow-primary/25">
+          <Stethoscope className="w-8 h-8 text-primary-foreground" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Praktek Dr. Umum Sudiman
         </h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Sistem Rekam Medis Elektronik
         </p>
       </div>
 
       {/* Login Card */}
-      <Card className="border-0 shadow-xl shadow-gray-200/50">
+      <Card className="border-border shadow-xl bg-card text-card-foreground">
         <CardHeader className="space-y-1 pb-4">
           <CardTitle className="text-xl">Masuk ke Sistem</CardTitle>
           <CardDescription>
@@ -148,7 +148,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
                   disabled={loading}
                 >
                   {showPassword ? (
@@ -161,14 +161,14 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             )}
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-sky-600 to-emerald-600 hover:from-sky-700 hover:to-emerald-700 text-white shadow-md"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
               disabled={loading}
             >
               {loading ? (
@@ -185,7 +185,7 @@ export default function LoginPage() {
       </Card>
 
       {/* Footer */}
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-muted-foreground">
         Gupolo Rt. 04 Rw. 02, Cucukan, Prambanan, Klaten 57454
       </p>
     </div>

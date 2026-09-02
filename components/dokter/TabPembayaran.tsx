@@ -156,7 +156,7 @@ export function TabPembayaran({
           Tarif Periksa
         </Label>
         {readOnly ? (
-          <p className="text-lg font-semibold text-gray-800">
+          <p className="text-lg font-semibold text-foreground">
             {formatCurrency(tarifPeriksa)}
           </p>
         ) : (
@@ -177,10 +177,10 @@ export function TabPembayaran({
           <Receipt className="h-4 w-4 text-sky-500" />
           Total Obat
         </Label>
-        <p className="text-lg font-semibold text-gray-800">
+        <p className="text-lg font-semibold text-foreground">
           {formatCurrency(totalObat)}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted-foreground">
           Dihitung otomatis dari tab Resep & Obat
         </p>
       </div>
@@ -212,7 +212,7 @@ export function TabPembayaran({
           onChange={(e) => setCatatanBayar(e.target.value)}
           disabled={readOnly}
           rows={2}
-          className={readOnly ? 'bg-gray-50' : ''}
+          className={readOnly ? 'bg-muted' : ''}
         />
       </div>
 
@@ -244,7 +244,7 @@ export function TabPembayaran({
                 Anda akan menyelesaikan kunjungan ini. Tindakan ini akan:
               </DialogDescription>
             </DialogHeader>
-            <ul className="text-sm text-gray-600 space-y-1.5 ml-4 list-disc">
+            <ul className="text-sm text-muted-foreground space-y-1.5 ml-4 list-disc">
               <li>Menyimpan rekam medis</li>
               <li>Menyimpan resep obat ({resepItems.length} item)</li>
               <li>Mencatat pembayaran: {formatCurrency(totalBayar)}</li>

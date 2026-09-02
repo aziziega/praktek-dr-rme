@@ -68,33 +68,33 @@ export function PendaftaranClient() {
       {view === 'search' && (
         <div className="space-y-6">
           {/* Glassmorphic Daily Stats Bar */}
-          <div className="grid grid-cols-3 gap-4 bg-white border border-gray-150 rounded-2xl p-4 shadow-sm">
+          <div className="grid grid-cols-3 gap-4 bg-card border border-border rounded-2xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Kunjungan</span>
-                <p className="text-lg font-extrabold text-gray-900 leading-none mt-0.5">{stats.total} Pasien</p>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Kunjungan</span>
+                <p className="text-lg font-extrabold text-foreground leading-none mt-0.5">{stats.total} Pasien</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 border-l border-gray-100 pl-4">
+            <div className="flex items-center gap-3 border-l border-border pl-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                 <UserPlus className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pasien Baru</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pasien Baru</span>
                 <p className="text-lg font-extrabold text-emerald-600 leading-none mt-0.5">{stats.baru} Orang</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 border-l border-gray-100 pl-4">
+            <div className="flex items-center gap-3 border-l border-border pl-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                 <RefreshCw className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pasien Lama</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pasien Lama</span>
                 <p className="text-lg font-extrabold text-indigo-600 leading-none mt-0.5">{stats.lama} Orang</p>
               </div>
             </div>

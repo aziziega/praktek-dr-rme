@@ -54,7 +54,7 @@ export function SidebarNav({ userRole, onNavigate }: SidebarNavProps) {
 
   return (
     <ScrollArea className="flex-1 px-3 py-3">
-      <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+      <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         Menu Utama
       </p>
       <nav className="space-y-0.5">
@@ -69,13 +69,13 @@ export function SidebarNav({ userRole, onNavigate }: SidebarNavProps) {
               onClick={onNavigate}
               className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${isActive
                   ? 'bg-gradient-to-r from-sky-50 to-emerald-50 text-sky-700 shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
             >
               <Icon
                 className={`h-[18px] w-[18px] shrink-0 transition-colors ${isActive
                     ? 'text-sky-600'
-                    : 'text-gray-400 group-hover:text-gray-600'
+                    : 'text-muted-foreground group-hover:text-muted-foreground'
                   }`}
               />
               <span className="truncate">{item.title}</span>
