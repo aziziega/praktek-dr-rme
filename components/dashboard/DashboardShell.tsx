@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import type { UserRole } from '@/types/database'
-import { resolveBreadcrumbLabel, logout } from '@/app/actions/auth'
+import { logout } from '@/app/actions/auth'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -19,17 +19,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb'
+
 import { 
   Menu, Stethoscope, Sun, Moon, LogOut, ChevronRight,
-  ClipboardPlus, ListOrdered, Users, UserCog, Pill, Clock, Activity, Coins, LayoutDashboard 
+  ClipboardPlus, ListOrdered, Users, UserCog, Pill, Clock, Activity, Coins, LayoutDashboard, FileText
 } from 'lucide-react'
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -58,6 +51,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
   ],
   dokter: [
     { title: 'Antrian Saya', href: '/dashboard/dokter/antrian', icon: ListOrdered },
+    { title: 'Cetak Surat', href: '/dashboard/dokter/surat', icon: FileText },
   ],
   admin: [
     { title: 'Overview', href: '/dashboard/admin/overview', icon: LayoutDashboard },
@@ -67,6 +61,7 @@ const NAV_ITEMS: Record<UserRole, NavItem[]> = {
     { title: 'Keuangan', href: '/dashboard/admin/keuangan', icon: Coins },
     { title: 'Activity Log', href: '/dashboard/admin/activity', icon: Activity },
     { title: 'Attendance', href: '/dashboard/admin/attendance', icon: Clock },
+    { title: 'Cetak Surat', href: '/dashboard/dokter/surat', icon: FileText },
   ],
 }
 
@@ -109,94 +104,7 @@ export function DashboardShell({
     }
   }, [userName, userRole])
 
-  // ── UUID dynamic breadcrumb resolver ───────────────────────────────────────
-  const [resolvedLabels, setResolvedLabels] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    const paths = pathname.split('/').filter(Boolean)
-    const isUUID = (s: string) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
-    const uuids = paths.filter(isUUID)
-    const missing = uuids.filter((u) => !resolvedLabels[u])
-    if (missing.length === 0) return
-
-    async function resolve() {
-      const updates: Record<string, string> = {}
-      for (const uuid of missing) {
-        try {
-          const name = await resolveBreadcrumbLabel(uuid)
-          updates[uuid] = name ?? uuid.substring(0, 8) + '...'
-        } catch {
-          updates[uuid] = uuid.substring(0, 8) + '...'
-        }
-      }
-      if (Object.keys(updates).length > 0) {
-        setResolvedLabels((prev) => ({ ...prev, ...updates }))
-      }
-    }
-
-    resolve()
-  }, [pathname, resolvedLabels])
-
-  // ── Breadcrumb renderer ────────────────────────────────────────────────────
-  function renderBreadcrumbs() {
-    const paths = pathname.split('/').filter(Boolean)
-    if (paths.length <= 1) return null
-
-    const pathLabels: Record<string, string> = {
-      dashboard: 'Beranda',
-      staf: 'Staf Pendaftaran',
-      dokter: 'Dokter',
-      admin: 'Administrator',
-      pendaftaran: 'Pendaftaran Pasien',
-      antrian: 'Antrean Pasien',
-      users: 'Manajemen User',
-      pasien: 'Manajemen Pasien',
-      obat: 'Stok Obat',
-      attendance: 'Log Kehadiran',
-      activity: 'Log Aktivitas',
-      keuangan: 'Laporan Pendapatan',
-      periksa: 'Periksa',
-    }
-
-    const isUUID = (s: string) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
-
-    return (
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          {paths.map((path, idx) => {
-            const isLast = idx === paths.length - 1
-            const href = '/' + paths.slice(0, idx + 1).join('/')
-            const label =
-              pathLabels[path] ||
-              resolvedLabels[path] ||
-              (isUUID(path) ? '...' : path.charAt(0).toUpperCase() + path.slice(1))
-
-            return (
-              <React.Fragment key={href}>
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage className="font-semibold text-foreground">
-                      {label}
-                    </BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      href={href}
-                      className="text-muted-foreground hover:text-primary transition-colors font-medium"
-                    >
-                      {label}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-                {!isLast && <BreadcrumbSeparator className="text-muted-foreground" />}
-              </React.Fragment>
-            )
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
-    )
-  }
 
   const navItems = NAV_ITEMS[userRole]
 
@@ -342,7 +250,6 @@ export function DashboardShell({
         <main className="flex-1 overflow-hidden relative bg-background">
           <div id="main-scroll-container" className="h-full overflow-y-auto p-4 lg:p-6 bg-grid opacity-100">
             <div className="relative z-10 bg-card rounded-2xl shadow-sm border border-border min-h-full p-4 lg:p-6 text-card-foreground">
-              {renderBreadcrumbs()}
               <div key={pathname} className="animate-fade-in pb-20">
                 {children}
               </div>

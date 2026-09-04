@@ -307,3 +307,40 @@ CREATE POLICY "Semua user terautentikasi bisa menginput log aktivitas dirinya" O
 -- Jalankan di Supabase Dashboard → SQL Editor.
 
 ALTER PUBLICATION supabase_realtime ADD TABLE public.kunjungan;
+
+-- ==========================================
+-- 📝 J. Tabel Surat (Keterangan Sehat, Rujukan, Sakit)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.surat (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  pasien_id UUID NOT NULL REFERENCES public.pasien(id) ON DELETE CASCADE,
+  kunjungan_id UUID REFERENCES public.kunjungan(id) ON DELETE SET NULL,
+  dokter_id UUID NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
+  tipe_surat TEXT NOT NULL CHECK (tipe_surat IN ('sehat', 'sakit', 'rujukan')),
+  nomor_surat TEXT NOT NULL,
+  data JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_surat_pasien ON public.surat(pasien_id);
+CREATE INDEX IF NOT EXISTS idx_surat_kunjungan ON public.surat(kunjungan_id);
+
+ALTER TABLE public.surat ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Semua user terautentikasi bisa membaca surat" ON public.surat;
+CREATE POLICY "Semua user terautentikasi bisa membaca surat" ON public.surat
+  FOR SELECT TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
+
+DROP POLICY IF EXISTS "Dokter, Staf, dan Admin bisa membuat/mengelola surat" ON public.surat;
+CREATE POLICY "Dokter, Staf, dan Admin bisa membuat/mengelola surat" ON public.surat
+  FOR ALL TO authenticated USING (
+    public.get_user_role(auth.uid()) IN ('admin', 'staf', 'dokter')
+  );
+
+-- Opsional: Realtime broadcast jika dokter/staf ingin melihat surat baru secara live
+-- ALTER PUBLICATION supabase_realtime ADD TABLE public.surat;
+
+

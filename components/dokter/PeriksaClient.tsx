@@ -97,6 +97,17 @@ export function PeriksaClient({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link href={`/dashboard/dokter/surat?kunjunganId=${kunjungan.id}&patientId=${pasien.id}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-semibold shadow-xs transition-all text-amber-700 border-amber-200 hover:bg-amber-50"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Buat Surat
+            </Button>
+          </Link>
+          
           {/* Tombol Mode Penuh (iPad / Wide Screen Focus Mode) */}
           <Button
             variant={isFullMode ? "default" : "outline"}

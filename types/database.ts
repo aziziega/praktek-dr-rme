@@ -376,6 +376,46 @@ export interface ActivityLogUpdate {
   created_at?: string
 }
 
+// --- Table: surat ---
+
+export type TipeSurat = 'sehat' | 'sakit' | 'rujukan'
+
+export interface SuratRow {
+  id: string
+  pasien_id: string
+  kunjungan_id: string | null
+  dokter_id: string
+  tipe_surat: TipeSurat
+  nomor_surat: string
+  data: Record<string, any>
+  created_at: string
+  updated_at: string
+}
+
+export interface SuratInsert {
+  id?: string
+  pasien_id: string
+  kunjungan_id?: string | null
+  dokter_id: string
+  tipe_surat: TipeSurat
+  nomor_surat: string
+  data: Record<string, any>
+  created_at?: string
+  updated_at?: string
+}
+
+export interface SuratUpdate {
+  id?: string
+  pasien_id?: string
+  kunjungan_id?: string | null
+  dokter_id?: string
+  tipe_surat?: TipeSurat
+  nomor_surat?: string
+  data?: Record<string, any>
+  created_at?: string
+  updated_at?: string
+}
+
 // --- Database Umbrella Type (for Supabase generic) ---
 
 export interface Database {
@@ -426,6 +466,12 @@ export interface Database {
         Insert: ActivityLogInsert
         Update: ActivityLogUpdate
       }
+      surat: {
+        Row: SuratRow
+        Insert: SuratInsert
+        Update: SuratUpdate
+      }
     }
   }
 }
+

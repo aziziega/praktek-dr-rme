@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { AntrianDokterClient } from '@/components/dokter/AntrianDokterClient'
 
 export const metadata: Metadata = {
-  title: 'Antrian Saya â€” RME Praktek Dr. Sudiman',
+  title: 'Antrian Saya - RME Praktek Dr. Sudiman',
 }
 
 export default async function AntrianDokterPage() {

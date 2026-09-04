@@ -26,12 +26,12 @@ export default function HomePage() {
     <div className="relative h-screen w-screen overflow-y-auto bg-background text-foreground">
       {/* Fullscreen Background - Using .bg-grid from globals.css */}
       <div className="fixed inset-0 z-0 bg-grid animate-fade-in opacity-40"></div>
-      
+
       {/* Decorative ECG Line across the screen */}
       <div className="fixed inset-0 z-0 flex items-center justify-center pointer-events-none opacity-20">
-         <div className="w-full ecg-line scale-y-[3]"></div>
+        <div className="w-full ecg-line scale-y-[3]"></div>
       </div>
-      
+
       {/* Overlay gradient */}
       <div className="fixed inset-0 z-0 bg-gradient-to-br from-background/80 via-background to-background/50"></div>
 
@@ -76,7 +76,7 @@ export default function HomePage() {
                     Mengarahkan ke Sistem...
                   </span>
                 ) : (
-                  'Masuk ke Portal RME →'
+                  'Masuk ke Portal →'
                 )}
               </Button>
             </div>
